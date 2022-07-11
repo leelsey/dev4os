@@ -1,0 +1,10 @@
+.idea
+.vscode
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+build
+internal
+pkg
+vendor
