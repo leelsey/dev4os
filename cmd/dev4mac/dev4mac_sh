@@ -1,0 +1,169 @@
+# mad4dev universial installer
+echo '\nStart mad4dev'
+
+# Install Homebrew
+echo '\nInstall Homebrew...\n'
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+brew tap homebrew/cask-versions
+
+# GIt update
+echo '\nGit updating...\n'
+brew install git git-lfs && git lfs install
+git config --global init.defaultBranch main
+
+# Basic dependency and zsh helper download
+echo '\nInstall Useful tool for ZSH...\n'
+brew install ncurses openssl
+brew install zsh zsh-syntax-highlighting zsh-autosuggestions zsh-completions z tree
+brew install romkatv/powerlevel10k/powerlevel10k
+touch ${ZDOTDIR:-~}/.zshrc ${ZDOTDIR:-~}/.z
+chmod 600 ${ZDOTDIR:-~}/.zshrc
+
+echo '# POWERLEVEL10K' >> ${ZDOTDIR:-~}/.zshrc
+echo "source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme" >> ${ZDOTDIR:-~}/.zshrc
+echo '\n# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.' >> ${ZDOTDIR:-~}/.zshrc
+echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n#   _________  _   _ ____   ____    __  __    _    ___ _   _ \n#  |__  / ___|| | | |  _ \ / ___|  |  \/  |  / \  |_ _| \ | | \n#    / /\___ \| |_| | |_) | |      | |\/| | / _ \  | ||  \| | \n#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \ | || |\  | \n#  /____|____/|_| |_|_| \_\\\____|  |_|  |_/_/   \_\___|_| \_| \n#' >> ${ZDOTDIR:-~}/.zshrc
+echo '\n# ZSH' >>~/.zshrc
+echo 'export SHELL=zsh' >>~/.zshrc
+
+# Alias resource
+
+# Alias and zsh helper add on zshrc
+sh ./Aliasrsh/install.sh
+
+echo '\n# ZSH SYNTAX HIGHTLIGHTING' >> ${ZDOTDIR:-~}/.zshrc
+echo "source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> ${ZDOTDIR:-~}/.zshrc
+echo '\n# ZSH AUTOSUGGESTIONS' >> ${ZDOTDIR:-~}/.zshrc
+echo "source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ${ZDOTDIR:-~}/.zshrc
+echo '\n# Z' >> ${ZDOTDIR:-~}/.zshrc
+echo "source $(brew --prefix)/etc/profile.d/z.sh" >> ${ZDOTDIR:-~}/.zshrc
+#source ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# NCURSES' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/ncurses/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/ncurses/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/ncurses/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/ncurses/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+echo '\n# OPENSSL' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/openssl@3/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/openssl@3/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/openssl@3/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/openssl@3/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+
+# Install Dependency process
+echo '\nInstall depenedncy for build and development...\n'
+brew install krb5 gnupg curl wget xz gzip libzip bzip2 zlib pkg-config readline libffi guile gnu-getopt coreutils bison libiconv icu4c re2c gd html-xml-utils xmlto gmp libsodium imagemagick ghostscript
+
+echo '\n# KRB5' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/krb5/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/krb5/sbin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/krb5/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/krb5/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/krb5/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# CURL' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/curl/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/curl/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/curl/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/curl/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# BZIP2' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/bzip2/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/bzip2/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/bzip2/include\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# ZLIB' >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/zlib/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/zlib/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/zlib/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# GNU GETOPT' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/gnu-getopt/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# COREUTILS (GNUBIN)' >> ${ZDOTDIR:-~}/.zshrc
+echo "PATH=\"$(brew --prefix)/opt/coreutils/libexec/gnubin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# BISON' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/bison/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/bison/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# LIBICONV' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/libiconv/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/libiconv/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/libiconv/include\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# ICU4C' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/icu4c/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/icu4c/sbin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/icu4c/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/icu4c/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/icu4c/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+
+# Devloper tools
+echo '\nInstall developer tools...\n'
+brew install gawk tig jq direnv watchman qemu ccache make vim bat gh
+echo '\n# DIRENV' >> ${ZDOTDIR:-~}/.zshrc
+echo 'eval "$(direnv hook zsh)"' >> ${ZDOTDIR:-~}/.zshrc
+
+brew install asdf
+echo '\n# ASDF VM' >> ${ZDOTDIR:-~}/.zshrc
+echo "source $(brew --prefix asdf)/libexec/asdf.sh" >> ${ZDOTDIR:-~}/.zshrc
+asdf plugin add java
+asdf plugin add python
+asdf plugin add ruby
+asdf plugin add perl
+asdf plugin add golang
+asdf plugin add rust
+asdf plugin add nodejs
+asdf plugin add lua
+asdf plugin add php
+asdf plugin add erlang
+asdf plugin add elixir
+asdf reshim
+
+brew install httpd tomcat sqlite postgresql mysql redis
+echo '\n# SQLITE3' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/sqlite/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/sqlite/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/sqlite/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/sqlite/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+brew install openjdk ruby perl go rust node typescript lua php
+echo '\n# JAVA (OPENJDK)' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/openjdk/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/openjdk/include\"" >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# RUBY' >> ${ZDOTDIR:-~}/.zshrc
+echo "export PATH=\"$(brew --prefix)/opt/ruby/bin:\$PATH\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export LDFLAGS=\"-L$(brew --prefix)/opt/ruby/lib\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export CPPFLAGS=\"-I$(brew --prefix)/opt/ruby/include\"" >> ${ZDOTDIR:-~}/.zshrc
+echo "export PKG_CONFIG_PATH=\"$(brew --prefix)/opt/ruby/lib/pkgconfig\"" >> ${ZDOTDIR:-~}/.zshrc
+
+brew install python@3.10
+brew link --overwrite python@3.10
+echo '\n# PYTHON' >> ${ZDOTDIR:-~}/.zshrc
+echo '# brew link --overwrite python@[version]' >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n# ANDROID STUDIO' >> ${ZDOTDIR:-~}/.zshrc
+echo 'export ANDROID_HOME=$HOME/Library/Android/sdk' >> ${ZDOTDIR:-~}/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/emulator' >> ${ZDOTDIR:-~}/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/tools' >> ${ZDOTDIR:-~}/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/tools/bin' >> ${ZDOTDIR:-~}/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ${ZDOTDIR:-~}/.zshrc
+
+echo '\n\n######## ADD CUSTOM VALUES UNDER HERE ########\n' >> ${ZDOTDIR:-~}/.zshrc
+echo 'Install useful tools...\n'
+brew install tmux tmuxinator fzf neofetch asciinema
+
+
+#cp /usr/share/vim/vim82/vimrc_example.vim ${ZDOTDIR:-~}/.vimrc
+mkdir -p ${ZDOTDIR:-~}/.vim/colors
+
+echo '\n\n\n-------Finished!-------'
+echo 'Please RESTART your terminal!'
+echo ' - Restart termonal yourself.'
+echo ' - Or use this command: source ~/.zshrc\n'
