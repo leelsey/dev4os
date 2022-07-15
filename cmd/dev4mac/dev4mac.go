@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	appver     = "0.1"
+	appVer     = "0.1"
 	Git4setVer = "Git4set-0.1"
-	lstdot     = " • "
+	lstDot     = " • "
 	cmdPMS     = "brew"
 	cmdIn      = "install"
 	cmdRein    = "reinstall"
@@ -105,21 +105,12 @@ func confGit4set() {
 
 	fmt.Println(" - Finished to download Git4sh: " + mvLoc + " (Your download directory)\n" +
 		"\nPlease extract zip file and run shell script on terminal.\n" +
-		lstdot + "Configure global author & ignore: sh ./initial-git.sh\n" +
-		lstdot + "Only want configure global author: sh ./git-conf.sh\n" +
-		lstdot + "Only want configure global ignore: sh ./git-ignore.sh")
+		lstDot + "Configure global author & ignore: sh ./initial-git.sh\n" +
+		lstDot + "Only want configure global author: sh ./git-conf.sh\n" +
+		lstDot + "Only want configure global ignore: sh ./git-ignore.sh")
 }
 
-func endConfig() {
-	zshrcAppend := "######## ADD CUSTOM VALUES UNDER HERE ########\n\n"
-	openZSHRC(zshrcAppend)
-	fmt.Println("\n----------Finished!----------\n" +
-		"Please RESTART your terminal!\n" +
-		lstdot + "Enter this on terminal: source ~/.zshrc\n" +
-		lstdot + "Or restart the Terminal.app by yourself.")
-}
-
-func installBrew() {
+func forBrew() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing homebrew..."
 	ldBar.FinalMSG = " - Installed brew!\n"
@@ -224,19 +215,19 @@ func forTerminal() {
 	checkError(err)
 	defer ZFile.Close()
 
-	zshrcInitial := "# POWERLEVEL10K\n" +
-		"source " + prefixPath + "/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
-		"# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.\n" +
+	zshrcInitial := "# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.\n" +
 		"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
+		"# POWERLEVEL10K\n" +
+		"source " + prefixPath + "/opt/powerlevel10k/powerlevel10k.zsh-theme\n\n" +
 		"#   _________  _   _ ____   ____    __  __    _    ___ _   _\n" +
 		"#  |__  / ___|| | | |  _ \\ / ___|  |  \\/  |  / \\  |_ _| \\ | |\n" +
 		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
 		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
 		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n" +
-		"# Alias4sh\n" +
-		"# source ~/.config/alias4sh/aliasrc\n\n" +
 		"# ZSH\n" +
 		"export SHELL=zsh\n\n" +
+		"# Alias4sh\n" +
+		"source ~/.config/alias4sh/aliasrc\n\n" +
 		"# ZSH SYNTAX HIGHTLIGHTING\n" +
 		"source " + prefixPath + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
 		"# ZSH AUTOSUGGESTIONS\n" +
@@ -384,7 +375,7 @@ func forDependency() {
 		"export CPPFLAGS=\"" + prefixPath + "opt/curl/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/curl/lib/pkgconfig\"\n\n" +
 		"# BZIP2\n" +
-		"export PATH=\"" + prefixPath + "opt/bzip2/bin:\\$PATH\"\n" +
+		"export PATH=\"" + prefixPath + "opt/bzip2/bin:$PATH\"\n" +
 		"export LDFLAGS=\"" + prefixPath + "opt/bzip2/lib\"\n" +
 		"export CPPFLAGS=\"" + prefixPath + "opt/bzip2/include\"\n\n" +
 		"# ZLIB\n" +
@@ -727,7 +718,7 @@ func forUtility() {
 
 	installTmux := exec.Command(cmdPMS, cmdIn, "tmux")
 	installTmuxinator := exec.Command(cmdPMS, cmdIn, "tmuxinator")
-	installfzf := exec.Command(cmdPMS, cmdIn, "fzf")
+	installFzf := exec.Command(cmdPMS, cmdIn, "fzf")
 	installNeofetch := exec.Command(cmdPMS, cmdIn, "neofetch")
 	installAsciinema := exec.Command(cmdPMS, cmdIn, "asciinema")
 
@@ -735,7 +726,7 @@ func forUtility() {
 	checkError(err)
 	installingTmuxinator, err := installTmuxinator.Output()
 	checkError(err)
-	installingfzf, err := installfzf.Output()
+	installingFzf, err := installFzf.Output()
 	checkError(err)
 	installingNeofetch, err := installNeofetch.Output()
 	checkError(err)
@@ -744,22 +735,32 @@ func forUtility() {
 
 	fmt.Sprintf(string(installingTmux))
 	fmt.Sprintf(string(installingTmuxinator))
-	fmt.Sprintf(string(installingfzf))
+	fmt.Sprintf(string(installingFzf))
 	fmt.Sprintf(string(installingNeofetch))
 	fmt.Sprintf(string(installingAsciinema))
 	ldBar.Stop()
 }
 
+func forEnd() {
+	zshrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
+	openZSHRC(zshrcAppend)
+	fmt.Println("\n----------Finished!----------\n" +
+		"Please RESTART your terminal!\n" +
+		lstDot + "Enter this on terminal: source ~/.zshrc\n" +
+		lstDot + "Or restart the Terminal.app by yourself.")
+}
+
 func main() {
-	//installBrew()
-	//forGit()
-	//forTerminal()
-	//forDependency()
-	//forDevToolCLI()
-	//forASDF()
-	//forServer()
-	//forLanguage()
-	//forUtility()
+	fmt.Println("\nDev4mac v" + appVer + "\n")
+	forBrew()
+	forGit()
+	forTerminal()
+	forDependency()
+	forDevToolCLI()
+	forASDF()
+	forServer()
+	forLanguage()
+	forUtility()
 	fmt.Printf("\nPress any key to finish, " +
 		"or press (i) if you want configure global git... ")
 	var setCMD string
@@ -767,5 +768,5 @@ func main() {
 	if setCMD == "i" || setCMD == "I" {
 		confGit4set()
 	}
-	endConfig()
+	forEnd()
 }
