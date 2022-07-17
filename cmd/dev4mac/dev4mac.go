@@ -55,10 +55,6 @@ func workingDir() string {
 }
 
 func brewPrefix() string {
-	//checkBrewPrefix := exec.Command("sh", "-c", "echo $(brew --prefix)")
-	//outputBrewPrefix, err := checkBrewPrefix.Output()
-	//checkError(err)
-	//return string(outputBrewPrefix)
 	switch runtime.GOARCH {
 	case "arm64":
 		return "/opt/homebrew/"
@@ -112,31 +108,39 @@ func confGit4set() {
 
 func forBrew() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing homebrew..."
-	ldBar.FinalMSG = " - Installed brew!\n"
+	ldBar.Suffix = " Checking homebrew..."
 	ldBar.Start()
 
 	checkBrew := exec.Command("which", cmdPMS)
 	checkingBrew, err := checkBrew.Output()
 	checkError(err)
+	ldBar.Stop()
 	if string(checkingBrew) == "/opt/homebrew/bin/brew\n" || string(checkingBrew) == "/usr/local/bin/brew\n" {
-		updateHomebrew := exec.Command(cmdPMS, "update")
-		updatingHomebrew, err := updateHomebrew.Output()
-		checkError(err)
-		fmt.Sprintf(string(updatingHomebrew))
-	} else {
-		installHomebrew := exec.Command("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
-		updateBrewCask := exec.Command(cmdPMS, "tap homebrew/cask-versions")
+		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+		ldBar.Suffix = " Updating homebrew..."
+		ldBar.FinalMSG = " - Updated brew!\n"
+		ldBar.Start()
 
-		installingBrew, err := installHomebrew.Output()
+		updateHomebrew := exec.Command(cmdPMS, "update")
+		updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
+
+		updatingHomebrew, err := updateHomebrew.Output()
 		checkError(err)
 		updatingBrewCask, err := updateBrewCask.Output()
 		checkError(err)
 
-		fmt.Sprintf(string(installingBrew))
+		fmt.Sprintf(string(updatingHomebrew))
 		fmt.Sprintf(string(updatingBrewCask))
+		ldBar.Stop()
+	} else {
+		//installHomebrew := exec.Command("/bin/bash", "-c", "\"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
+		//installingBrew, err := installHomebrew.Output()
+		//checkError(err)
+		//fmt.Sprintf(string(installingBrew))
+		fmt.Println("You need the Homebrew first, and run Dev4mac again. Check detail on this site: https://brew.sh")
+		fmt.Println(lstDot + "Enter on terminal: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
+		os.Exit(0)
 	}
-	ldBar.Stop()
 }
 
 func forGit() {
