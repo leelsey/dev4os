@@ -16,7 +16,7 @@ import (
 
 var (
 	appVer     = "0.1"
-	Git4setVer = "Git4set-0.1"
+	Git4setV   = "Git4set-0.1"
 	lstDot     = " • "
 	cmdPMS     = "brew"
 	cmdIn      = "install"
@@ -86,7 +86,7 @@ func confGit4set() {
 		"https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
 	resp, _ := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
-	file, _ := os.OpenFile(Git4setVer+".zip", os.O_CREATE|os.O_WRONLY, 0755)
+	file, _ := os.OpenFile(Git4setV+".zip", os.O_CREATE|os.O_WRONLY, 0755)
 	defer file.Close()
 	bar := progressbar.DefaultBytes(
 		resp.ContentLength,
@@ -94,8 +94,8 @@ func confGit4set() {
 	)
 	io.Copy(io.MultiWriter(file, bar), resp.Body)
 
-	dlLoc := workingDir() + Git4setVer + ".zip"
-	mvLoc := homeDir() + "Downloads/" + Git4setVer + ".zip"
+	dlLoc := workingDir() + Git4setV + ".zip"
+	mvLoc := homeDir() + "Downloads/" + Git4setV + ".zip"
 	err := os.Rename(dlLoc, mvLoc)
 	checkError(err)
 
@@ -106,7 +106,7 @@ func confGit4set() {
 		lstDot + "Only want configure global ignore: sh ./git-ignore.sh")
 }
 
-func forBrew() {
+func macBrew() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Checking homebrew..."
 	ldBar.Start()
@@ -133,17 +133,13 @@ func forBrew() {
 		fmt.Sprintf(string(updatingBrewCask))
 		ldBar.Stop()
 	} else {
-		//installHomebrew := exec.Command("/bin/bash", "-c", "\"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
-		//installingBrew, err := installHomebrew.Output()
-		//checkError(err)
-		//fmt.Sprintf(string(installingBrew))
 		fmt.Println("You need the Homebrew first, and run Dev4mac again. Check detail on this site: https://brew.sh")
 		fmt.Println(lstDot + "Enter on terminal: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
 		os.Exit(0)
 	}
 }
 
-func forGit() {
+func macGit() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing git..."
 	ldBar.FinalMSG = " - Installed git!\n"
@@ -170,21 +166,23 @@ func forGit() {
 	ldBar.Stop()
 }
 
-func forTerminal() {
+func macTerminal() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing zsh with useful tools..."
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
 
+	installNCurses := exec.Command(cmdPMS, cmdIn, "ncurses")
 	installSSL := exec.Command(cmdPMS, cmdIn, "openssl")
 	installZsh := exec.Command(cmdPMS, cmdIn, "zsh")
 	installZshSyntax := exec.Command(cmdPMS, cmdIn, "zsh-syntax-highlighting")
 	installZshAuto := exec.Command(cmdPMS, cmdIn, "zsh-autosuggestions")
 	installZshComp := exec.Command(cmdPMS, cmdIn, "zsh-completions")
-	installZ := exec.Command(cmdPMS, cmdIn, "z")
 	installTree := exec.Command(cmdPMS, cmdIn, "tree")
 	installZshTheme := exec.Command(cmdPMS, cmdIn, "romkatv/powerlevel10k/powerlevel10k")
 
+	installingNCurses, err := installNCurses.Output()
+	checkError(err)
 	installingSSL, err := installSSL.Output()
 	checkError(err)
 	installingZsh, err := installZsh.Output()
@@ -195,19 +193,17 @@ func forTerminal() {
 	checkError(err)
 	installingZshComp, err := installZshComp.Output()
 	checkError(err)
-	installingZ, err := installZ.Output()
-	checkError(err)
 	installingTree, err := installTree.Output()
 	checkError(err)
 	installingZshTheme, err := installZshTheme.Output()
 	checkError(err)
 
+	fmt.Sprintf(string(installingNCurses))
 	fmt.Sprintf(string(installingSSL))
 	fmt.Sprintf(string(installingZsh))
 	fmt.Sprintf(string(installingZshSyntax))
 	fmt.Sprintf(string(installingZshAuto))
 	fmt.Sprintf(string(installingZshComp))
-	fmt.Sprintf(string(installingZ))
 	fmt.Sprintf(string(installingTree))
 	fmt.Sprintf(string(installingZshTheme))
 	confAlias4sh()
@@ -215,9 +211,6 @@ func forTerminal() {
 	zshrcFile, err := os.OpenFile(zshrcPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
 	checkError(err)
 	defer zshrcFile.Close()
-	ZFile, err := os.OpenFile(homeDir()+".z", os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err)
-	defer ZFile.Close()
 
 	zshrcInitial := "# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.\n" +
 		"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
@@ -236,8 +229,6 @@ func forTerminal() {
 		"source " + prefixPath + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
 		"# ZSH AUTOSUGGESTIONS\n" +
 		"source " + prefixPath + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-		"# Z\n" +
-		"source " + prefixPath + "etc/profile.d/z.sh\n\n" +
 		"# NCURSES\n" +
 		"export PATH=\"" + prefixPath + "opt/ncurses/bin:$PATH\"\n" +
 		"export LDFLAGS=\"" + prefixPath + "opt/ncurses/lib\"\n" +
@@ -254,7 +245,7 @@ func forTerminal() {
 	ldBar.Stop()
 }
 
-func forDependency() {
+func macDependency() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing dependencies for development work"
 	ldBar.FinalMSG = " - Installed dependencies!\n"
@@ -407,7 +398,7 @@ func forDependency() {
 	ldBar.Stop()
 }
 
-func forDevToolCLI() {
+func macDevToolCLI() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing developer tools for CLI"
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
@@ -466,7 +457,7 @@ func forDevToolCLI() {
 	ldBar.Stop()
 }
 
-func forASDF() {
+func macASDF() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing ASDF-VM with plugin "
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
@@ -575,7 +566,7 @@ func forASDF() {
 	ldBar.Stop()
 }
 
-func forServer() {
+func macServer() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing developing tools for server"
 	ldBar.FinalMSG = " - Installed server and database!\n"
@@ -617,7 +608,7 @@ func forServer() {
 	ldBar.Stop()
 }
 
-func forLanguage() {
+func macLanguage() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing computer programming language"
 	ldBar.FinalMSG = " - Installed basic languages!\n"
@@ -626,6 +617,7 @@ func forLanguage() {
 	installPerl := exec.Command(cmdPMS, cmdIn, "perl")
 	installRuby := exec.Command(cmdPMS, cmdIn, "ruby")
 	installPython := exec.Command(cmdPMS, cmdIn, "python@3.10")
+	fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
 	installLua := exec.Command(cmdPMS, cmdIn, "lua")
 	installGo := exec.Command(cmdPMS, cmdIn, "go")
 	installRust := exec.Command(cmdPMS, cmdIn, "rust")
@@ -639,7 +631,6 @@ func forLanguage() {
 	installClojure := exec.Command(cmdPMS, cmdIn, "clojure")
 	installErlang := exec.Command(cmdPMS, cmdIn, "erlang")
 	installElixir := exec.Command(cmdPMS, cmdIn, "elixir")
-	fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
 
 	installingPerl, err := installPerl.Output()
 	checkError(err)
@@ -714,7 +705,7 @@ func forLanguage() {
 	ldBar.Stop()
 }
 
-func forUtility() {
+func macUtility() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing advanced utilities for terminal..."
 	ldBar.FinalMSG = " - Installed advanced utilities!\n"
@@ -745,7 +736,7 @@ func forUtility() {
 	ldBar.Stop()
 }
 
-func forEnd() {
+func macEnd() {
 	zshrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
 	openZSHRC(zshrcAppend)
 	fmt.Println("\n----------Finished!----------\n" +
@@ -756,15 +747,15 @@ func forEnd() {
 
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
-	forBrew()
-	forGit()
-	forTerminal()
-	forDependency()
-	forDevToolCLI()
-	forASDF()
-	forServer()
-	forLanguage()
-	forUtility()
+	macBrew()
+	macGit()
+	macTerminal()
+	macDependency()
+	macDevToolCLI()
+	macASDF()
+	macServer()
+	macLanguage()
+	macUtility()
 	fmt.Printf("\nPress any key to finish, " +
 		"or press (i) if you want configure global git... ")
 	var setCMD string
@@ -772,5 +763,5 @@ func main() {
 	if setCMD == "i" || setCMD == "I" {
 		confGit4set()
 	}
-	forEnd()
+	macEnd()
 }
