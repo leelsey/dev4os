@@ -156,13 +156,13 @@ func macGit() {
 	checkError(err)
 	gitLfsInstalling, err := gitLfsInstall.Output()
 	checkError(err)
-	confGitMain, err := gitBranchMain.Output()
+	confGitBranchMain, err := gitBranchMain.Output()
 	checkError(err)
 
 	fmt.Sprintf(string(installingGit))
 	fmt.Sprintf(string(installingGitLfs))
 	fmt.Sprintf(string(gitLfsInstalling))
-	fmt.Sprintf(string(confGitMain))
+	fmt.Sprintf(string(confGitBranchMain))
 	ldBar.Stop()
 }
 
@@ -247,7 +247,7 @@ func macTerminal() {
 
 func macDependency() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing dependencies for development work"
+	ldBar.Suffix = " Installing dependencies for development work..."
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
@@ -270,7 +270,7 @@ func macDependency() {
 	installLibIconv := exec.Command(cmdPMS, cmdIn, "libiconv")
 	installICU4C := exec.Command(cmdPMS, cmdIn, "icu4c")
 	installRe2C := exec.Command(cmdPMS, cmdIn, "re2c")
-	installGB := exec.Command(cmdPMS, cmdIn, "gd")
+	installGD := exec.Command(cmdPMS, cmdIn, "gd")
 	installHTMLXMLUtils := exec.Command(cmdPMS, cmdIn, "html-xml-utils")
 	installXMLto := exec.Command(cmdPMS, cmdIn, "xmlto")
 	installGMP := exec.Command(cmdPMS, cmdIn, "gmp")
@@ -316,7 +316,7 @@ func macDependency() {
 	checkError(err)
 	installingRe2C, err := installRe2C.Output()
 	checkError(err)
-	installingGB, err := installGB.Output()
+	installingGD, err := installGD.Output()
 	checkError(err)
 	installingHTMLXMLUtils, err := installHTMLXMLUtils.Output()
 	checkError(err)
@@ -350,7 +350,7 @@ func macDependency() {
 	fmt.Sprintf(string(installingLibIconv))
 	fmt.Sprintf(string(installingICU4C))
 	fmt.Sprintf(string(installingRe2C))
-	fmt.Sprintf(string(installingGB))
+	fmt.Sprintf(string(installingGD))
 	fmt.Sprintf(string(installingHTMLXMLUtils))
 	fmt.Sprintf(string(installingXMLto))
 	fmt.Sprintf(string(installingGMP))
@@ -459,7 +459,7 @@ func macDevToolCLI() {
 
 func macASDF() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing ASDF-VM with plugin "
+	ldBar.Suffix = " Installing ASDF-VM with plugin..."
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
 	ldBar.Start()
 
@@ -568,7 +568,7 @@ func macASDF() {
 
 func macServer() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing developing tools for server"
+	ldBar.Suffix = " Installing developing tools for server..."
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
@@ -610,7 +610,7 @@ func macServer() {
 
 func macLanguage() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing computer programming language"
+	ldBar.Suffix = " Installing computer programming language..."
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
