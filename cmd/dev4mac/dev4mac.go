@@ -29,6 +29,7 @@ var (
 	asdfReshim = "reshim"
 	zshrcPath  = homeDir() + ".zshrc"
 	prefixPath = brewPrefix()
+	setCMD     string
 )
 
 func checkError(err error) bool {
@@ -766,7 +767,6 @@ func main() {
 	macUtility()
 	fmt.Printf("\nPress any key to finish, " +
 		"or press (i) if you want configure global git... ")
-	var setCMD string
 	fmt.Scanln(&setCMD)
 	if setCMD == "i" || setCMD == "I" {
 		confGit4set()
