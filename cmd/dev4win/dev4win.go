@@ -51,6 +51,28 @@ func workingDir() string {
 	return workingDirPath + "\\"
 }
 
+func amAdmin() bool {
+	_, err := os.Open("\\\\.\\PHYSICALDRIVE0")
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func runElevated() {
+	verb := "runas"
+	exe, _ := os.Executable()
+	cwd, _ := os.Getwd()
+	args := strings.Join(os.Args[1:], " ")
+	verbPtr, _ := syscall.UTF16PtrFromString(verb)
+	exePtr, _ := syscall.UTF16PtrFromString(exe)
+	cwdPtr, _ := syscall.UTF16PtrFromString(cwd)
+	argPtr, _ := syscall.UTF16PtrFromString(args)
+	var showCmd int32 = 1
+	err := windows.ShellExecute(0, verbPtr, exePtr, argPtr, cwdPtr, showCmd)
+	checkError(err)
+}
+
 func confGit4setWin() {
 	req, _ := http.NewRequest("GET",
 		"https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
@@ -321,37 +343,28 @@ func winLanguage() {
 	ldBar.Stop()
 }
 
+func winWLS() {
+	ldBar := spinner.New(spinner.CharSets[43], 500*time.Millisecond)
+	ldBar.Suffix = " Installing Windows Subsystem for Linux with Ubuntu..."
+	ldBar.FinalMSG = " - Installed WSL with Ubuntu!\n"
+	ldBar.Start()
+
+	setWSL := exec.Command(pSh, "wsl", "--install")
+	settingWSL, err := setWSL.Output()
+	checkError(err)
+	fmt.Sprintf(string(settingWSL))
+	ldBar.Stop()
+}
+
 func winEnd() {
 	fmt.Println("\n----------Finished!----------\n" +
 		"Please RESTART your terminal!\n" +
 		lstDot + "Restart the Terminal by yourself.")
 }
 
-func runMeElevated() {
-	verb := "runas"
-	exe, _ := os.Executable()
-	cwd, _ := os.Getwd()
-	args := strings.Join(os.Args[1:], " ")
-	verbPtr, _ := syscall.UTF16PtrFromString(verb)
-	exePtr, _ := syscall.UTF16PtrFromString(exe)
-	cwdPtr, _ := syscall.UTF16PtrFromString(cwd)
-	argPtr, _ := syscall.UTF16PtrFromString(args)
-	var showCmd int32 = 1
-	err := windows.ShellExecute(0, verbPtr, exePtr, argPtr, cwdPtr, showCmd)
-	checkError(err)
-}
-
-func amAdmin() bool {
-	_, err := os.Open("\\\\.\\PHYSICALDRIVE0")
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 func main() {
 	if !amAdmin() {
-		runMeElevated()
+		runElevated()
 	}
 	if amAdmin() {
 		fmt.Println("\nDev4win v" + appVer + "\n")
@@ -361,6 +374,7 @@ func main() {
 		winDevToolCLI()
 		winServer()
 		winLanguage()
+		winWLS()
 		fmt.Printf("\nPress any key to finish, " +
 			"or press (i) if you want configure global git... ")
 		var setCMD string
