@@ -26,6 +26,7 @@ var (
 	cmdRm    = "uninstall"
 	cmdY     = "-y"
 	cmdGit   = "C:\\'Program Files'\\git\\bin\\git.exe"
+	setCMD   string
 )
 
 func checkError(err error) bool {
@@ -51,12 +52,19 @@ func workingDir() string {
 	return workingDirPath + "\\"
 }
 
-func amAdmin() bool {
+func checkAdmin() bool {
 	_, err := os.Open("\\\\.\\PHYSICALDRIVE0")
 	if err != nil {
 		return false
 	}
 	return true
+}
+
+func restartWin() {
+	if err := exec.Command(pSh, "/C", "shutdown", "/s").Run(); err != nil {
+		fmt.Println(" - Failed to restart Windows")
+		winEnd()
+	}
 }
 
 func runElevated() {
@@ -359,14 +367,15 @@ func winWLS() {
 func winEnd() {
 	fmt.Println("\n----------Finished!----------\n" +
 		"Please RESTART your terminal!\n" +
-		lstDot + "Restart the Terminal by yourself.")
+		lstDot + "Restart the terminal (CMD or PowerShell) for the changes to take effect.\n" +
+		lstDot + "WSL has been setup. Restart for the changes to take effect.")
 }
 
 func main() {
-	if !amAdmin() {
+	if !checkAdmin() {
 		runElevated()
 	}
-	if amAdmin() {
+	if checkAdmin() {
 		fmt.Println("\nDev4win v" + appVer + "\n")
 		winChoco()
 		winGit()
@@ -375,13 +384,31 @@ func main() {
 		winServer()
 		winLanguage()
 		winWLS()
-		fmt.Printf("\nPress any key to finish, " +
-			"or press (i) if you want configure global git... ")
-		var setCMD string
-		fmt.Scanln(&setCMD)
-		if setCMD == "i" || setCMD == "I" {
-			confGit4setWin()
+		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 3)\n" +
+			"1. Download easily configure global git (Git4set)\n" +
+			"2. Restart operating system\n" +
+			"3. Both (Download Git4set and restart OS)\n" +
+			"0. Nothing, finish Dev4win")
+		for {
+			fmt.Scanln("Select command: ", &setCMD)
+			if setCMD == "1" {
+				confGit4setWin()
+				break
+			} else if setCMD == "2" {
+				restartWin()
+				break
+			} else if setCMD == "3" {
+				confGit4setWin()
+				restartWin()
+				break
+			} else if setCMD == "0" {
+				confGit4setWin()
+				break
+			} else {
+				fmt.Println("Wrong answer. Please choose between 1, 2, 3, 0.")
+			}
+			winEnd()
 		}
-		winEnd()
+
 	}
 }
