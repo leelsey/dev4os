@@ -61,7 +61,7 @@ func checkAdmin() bool {
 }
 
 func restartWin() {
-	if err := exec.Command(pSh, "/C", "shutdown", "/s").Run(); err != nil {
+	if err := exec.Command(pSh, "shutdown", "/r", "/t", "0").Run(); err != nil {
 		fmt.Println(" - Failed to restart Windows")
 		winEnd()
 	}
