@@ -221,6 +221,9 @@ func winDevToolCLI() {
 	installVim := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "vim")
 	installBat := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "bat")
 	installGH := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "gh")
+	installPS := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "powershell")
+	installCygwin := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "cygwin")
+	installVS := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "visualstudio2022community")
 
 	installingGawk, err := installGawk.Output()
 	checkError(err)
@@ -240,6 +243,12 @@ func winDevToolCLI() {
 	checkError(err)
 	installingGH, err := installGH.Output()
 	checkError(err)
+	installingPS, err := installPS.Output()
+	checkError(err)
+	installingCygwin, err := installCygwin.Output()
+	checkError(err)
+	installingVS, err := installVS.Output()
+	checkError(err)
 
 	fmt.Sprintf(string(installingGawk))
 	fmt.Sprintf(string(installingJQ))
@@ -250,6 +259,9 @@ func winDevToolCLI() {
 	fmt.Sprintf(string(installingVim))
 	fmt.Sprintf(string(installingBat))
 	fmt.Sprintf(string(installingGH))
+	fmt.Sprintf(string(installingPS))
+	fmt.Sprintf(string(installingCygwin))
+	fmt.Sprintf(string(installingVS))
 	ldBar.Stop()
 }
 
