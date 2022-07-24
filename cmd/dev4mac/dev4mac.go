@@ -268,6 +268,8 @@ func macDependency() {
 	installICU4C := exec.Command(cmdPMS, cmdIn, "icu4c")
 	installRe2C := exec.Command(cmdPMS, cmdIn, "re2c")
 	installGD := exec.Command(cmdPMS, cmdIn, "gd")
+	installCaCert := exec.Command(cmdPMS, cmdIn, "ca-certificates")
+	installLDNS := exec.Command(cmdPMS, cmdIn, "ldns")
 	installHTMLXMLUtils := exec.Command(cmdPMS, cmdIn, "html-xml-utils")
 	installXMLto := exec.Command(cmdPMS, cmdIn, "xmlto")
 	installGMP := exec.Command(cmdPMS, cmdIn, "gmp")
@@ -315,6 +317,10 @@ func macDependency() {
 	checkError(err)
 	installingGD, err := installGD.Output()
 	checkError(err)
+	installingCaCert, err := installCaCert.Output()
+	checkError(err)
+	installingLDNS, err := installLDNS.Output()
+	checkError(err)
 	installingHTMLXMLUtils, err := installHTMLXMLUtils.Output()
 	checkError(err)
 	installingXMLto, err := installXMLto.Output()
@@ -348,6 +354,8 @@ func macDependency() {
 	fmt.Sprintf(string(installingICU4C))
 	fmt.Sprintf(string(installingRe2C))
 	fmt.Sprintf(string(installingGD))
+	fmt.Sprintf(string(installingCaCert))
+	fmt.Sprintf(string(installingLDNS))
 	fmt.Sprintf(string(installingHTMLXMLUtils))
 	fmt.Sprintf(string(installingXMLto))
 	fmt.Sprintf(string(installingGMP))
@@ -401,6 +409,7 @@ func macDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
+	installSSH := exec.Command(cmdPMS, cmdIn, "openssh")
 	installGawk := exec.Command(cmdPMS, cmdIn, "gawk")
 	installTig := exec.Command(cmdPMS, cmdIn, "tig")
 	installJQ := exec.Command(cmdPMS, cmdIn, "jq")
@@ -413,6 +422,8 @@ func macDevToolCLI() {
 	installBat := exec.Command(cmdPMS, cmdIn, "bat")
 	installGH := exec.Command(cmdPMS, cmdIn, "gh")
 
+	installingSSH, err := installSSH.Output()
+	checkError(err)
 	installingGawk, err := installGawk.Output()
 	checkError(err)
 	installingTig, err := installTig.Output()
@@ -436,6 +447,7 @@ func macDevToolCLI() {
 	installingGH, err := installGH.Output()
 	checkError(err)
 
+	fmt.Sprintf(string(installingSSH))
 	fmt.Sprintf(string(installingGawk))
 	fmt.Sprintf(string(installingTig))
 	fmt.Sprintf(string(installingJQ))
