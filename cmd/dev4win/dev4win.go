@@ -26,7 +26,7 @@ var (
 	cmdRm    = "uninstall"
 	cmdY     = "-y"
 	cmdGit   = "C:\\'Program Files'\\git\\bin\\git.exe"
-	setCMD   string
+	cmdOpt   string
 )
 
 func checkError(err error) bool {
@@ -414,25 +414,25 @@ func main() {
 			"3. Both (Download Git4set and restart OS)\n" +
 			"0. Nothing, finish Dev4win")
 		for {
-			fmt.Scanln("Select command: ", &setCMD)
-			if setCMD == "1" {
+			fmt.Printf("Select command: ")
+			fmt.Scanln(&cmdOpt)
+
+			if cmdOpt == "1" {
 				confGit4setWin()
 				break
-			} else if setCMD == "2" {
+			} else if cmdOpt == "2" {
 				restartWin()
 				break
-			} else if setCMD == "3" {
+			} else if cmdOpt == "3" {
 				confGit4setWin()
 				restartWin()
 				break
-			} else if setCMD == "0" {
-				confGit4setWin()
+			} else if cmdOpt == "0" {
+				winEnd()
 				break
 			} else {
 				fmt.Println("Wrong answer. Please choose between 1, 2, 3, 0.")
 			}
-			winEnd()
 		}
-
 	}
 }
