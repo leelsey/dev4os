@@ -18,6 +18,7 @@ var (
 	appVer     = "0.1"
 	Git4setV   = "Git4set-0.1"
 	lstDot     = " • "
+	dlPath     = homeDir() + "Downloads/"
 	cmdPMS     = "brew"
 	cmdIn      = "install"
 	cmdRein    = "reinstall"
@@ -29,7 +30,7 @@ var (
 	asdfReshim = "reshim"
 	zshrcPath  = homeDir() + ".zshrc"
 	prefixPath = brewPrefix()
-	setCMD     string
+	cmdOpt     string
 )
 
 func checkError(err error) bool {
@@ -82,12 +83,12 @@ func confAlias4sh() {
 	checkError(err)
 }
 
-func confGit4set() {
-	req, _ := http.NewRequest("GET",
-		"https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
+func confG4s() {
+	dlG4s := dlPath + Git4setV + ".zip"
+	req, _ := http.NewRequest("GET", "https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
 	resp, _ := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
-	file, _ := os.OpenFile(Git4setV+".zip", os.O_CREATE|os.O_WRONLY, 0755)
+	file, _ := os.OpenFile(dlG4s, os.O_CREATE|os.O_WRONLY, 0755)
 	defer file.Close()
 	bar := progressbar.DefaultBytes(
 		resp.ContentLength,
@@ -95,16 +96,11 @@ func confGit4set() {
 	)
 	io.Copy(io.MultiWriter(file, bar), resp.Body)
 
-	dlLoc := workingDir() + Git4setV + ".zip"
-	mvLoc := homeDir() + "Downloads/" + Git4setV + ".zip"
-	err := os.Rename(dlLoc, mvLoc)
-	checkError(err)
-
-	fmt.Println(" - Finished to download Git4sh: " + mvLoc + " (Your download directory)\n" +
-		"\nPlease extract zip file and run shell script on terminal.\n" +
-		lstDot + "Configure global author & ignore: sh ./initial-git.sh\n" +
-		lstDot + "Only want configure global author: sh ./git-conf.sh\n" +
-		lstDot + "Only want configure global ignore: sh ./git-ignore.sh")
+	fmt.Println(" - Finished to download Git4sh: " + dlG4s + " (Your download directory)\n" +
+		"\nPlease extract zip file and run script on terminal.\n" +
+		lstDot + "Configure global author & ignore: initial-git\n" +
+		lstDot + "Only want configure global author: git-conf\n" +
+		lstDot + "Only want configure global ignore: git-ignore")
 }
 
 func macBrew() {
@@ -767,9 +763,9 @@ func main() {
 	macUtility()
 	fmt.Printf("\nPress any key to finish, " +
 		"or press (i) if you want configure global git... ")
-	fmt.Scanln(&setCMD)
-	if setCMD == "i" || setCMD == "I" {
-		confGit4set()
+	fmt.Scanln(&cmdOpt)
+	if cmdOpt == "i" || cmdOpt == "I" {
+		confG4s()
 	}
 	macEnd()
 }

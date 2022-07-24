@@ -19,6 +19,7 @@ var (
 	appVer   = "0.1"
 	Git4setV = "Git4set-0.1"
 	lstDot   = " • "
+	dlPath   = homeDir() + "Downloads\\"
 	pSh      = "powershell"
 	cmdPMS   = "C:\\ProgramData\\chocolatey\\choco.exe"
 	cmdIn    = "install"
@@ -42,14 +43,6 @@ func homeDir() string {
 		log.Fatal(err)
 	}
 	return homeDirPath + "\\"
-}
-
-func workingDir() string {
-	workingDirPath, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return workingDirPath + "\\"
 }
 
 func checkAdmin() bool {
@@ -82,12 +75,12 @@ func runElevated() {
 	checkError(err)
 }
 
-func confGit4setWin() {
-	req, _ := http.NewRequest("GET",
-		"https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
+func confG4s() {
+	dlG4s := dlPath + Git4setV + ".zip"
+	req, _ := http.NewRequest("GET", "https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
 	resp, _ := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
-	file, _ := os.OpenFile(Git4setV+".zip", os.O_CREATE|os.O_WRONLY, 0755)
+	file, _ := os.OpenFile(dlG4s, os.O_CREATE|os.O_WRONLY, 0755)
 	defer file.Close()
 	bar := progressbar.DefaultBytes(
 		resp.ContentLength,
@@ -95,16 +88,11 @@ func confGit4setWin() {
 	)
 	io.Copy(io.MultiWriter(file, bar), resp.Body)
 
-	dlLoc := workingDir() + Git4setV + ".zip"
-	mvLoc := homeDir() + "Downloads\\" + Git4setV + ".zip"
-	err := os.Rename(dlLoc, mvLoc)
-	checkError(err)
-
-	fmt.Println(" - Finished to download Git4sh: " + mvLoc + " (Your download directory)\n" +
-		"\nPlease extract zip file and run shell script on terminal.\n" +
-		lstDot + "Configure global author & ignore: .\\initial-git.bat\n" +
-		lstDot + "Only want configure global author: .\\git-conf.bat\n" +
-		lstDot + "Only want configure global ignore: .\\git-ignore.bat")
+	fmt.Println(" - Finished to download Git4sh: " + dlG4s + " (Your download directory)\n" +
+		"\nPlease extract zip file and run script on terminal.\n" +
+		lstDot + "Configure global author & ignore: initial-git\n" +
+		lstDot + "Only want configure global author: git-conf\n" +
+		lstDot + "Only want configure global ignore: git-ignore")
 }
 
 func winChoco() {
@@ -418,14 +406,14 @@ func main() {
 			fmt.Printf("\nSelect command: ")
 			fmt.Scanln(&cmdOpt)
 			if cmdOpt == "1" {
-				confGit4setWin()
+				confG4s()
 				restartWin()
 				break
 			} else if cmdOpt == "2" {
 				restartWin()
 				break
 			} else if cmdOpt == "3" {
-				confGit4setWin()
+				confG4s()
 				winEnd()
 				break
 			} else if cmdOpt == "0" {
