@@ -290,6 +290,9 @@ func winLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
+	installGCC := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "mingw")
+	installLLVM := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "llvm")
+	installNuGet := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "nuget.commandline")
 	installPerl := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "strawberryperl")
 	installRuby := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "ruby")
 	installPython := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "python")
@@ -305,6 +308,12 @@ func winLanguage() {
 	installErlang := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "erlang")
 	installElixir := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "elixir")
 
+	installingGCC, err := installGCC.Output()
+	checkError(err)
+	installingLLVM, err := installLLVM.Output()
+	checkError(err)
+	installingNuGet, err := installNuGet.Output()
+	checkError(err)
 	installingPerl, err := installPerl.Output()
 	checkError(err)
 	installingRuby, err := installRuby.Output()
@@ -334,6 +343,9 @@ func winLanguage() {
 	installingElixir, err := installElixir.Output()
 	checkError(err)
 
+	fmt.Sprintf(string(installingGCC))
+	fmt.Sprintf(string(installingLLVM))
+	fmt.Sprintf(string(installingNuGet))
 	fmt.Sprintf(string(installingPerl))
 	fmt.Sprintf(string(installingRuby))
 	fmt.Sprintf(string(installingPython))
