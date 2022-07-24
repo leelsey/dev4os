@@ -61,6 +61,7 @@ func checkAdmin() bool {
 }
 
 func restartWin() {
+	fmt.Println("Restarting now ...")
 	if err := exec.Command(pSh, "shutdown", "/r", "/t", "0").Run(); err != nil {
 		fmt.Println(" - Failed to restart Windows")
 		winEnd()
@@ -390,9 +391,9 @@ func winWLS() {
 
 func winEnd() {
 	fmt.Println("\n----------Finished!----------\n" +
-		"Please RESTART your terminal!\n" +
+		"Please RESTART your terminal and OS!\n" +
 		lstDot + "Restart the terminal (CMD or PowerShell) for the changes to take effect.\n" +
-		lstDot + "WSL has been setup. Restart for the changes to take effect.")
+		lstDot + "WSL has been setup. Restart OS for the changes to take effect.")
 }
 
 func main() {
@@ -408,30 +409,30 @@ func main() {
 		winServer()
 		winLanguage()
 		winWLS()
-		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 3)\n" +
-			"1. Download easily configure global git (Git4set)\n" +
-			"2. Restart operating system\n" +
-			"3. Both (Download Git4set and restart OS)\n" +
-			"0. Nothing, finish Dev4win")
+		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
+			"\t1. Restart OS after download Git4set\n" +
+			"\t2. Restart Windows operating system\n" +
+			"\t3. Download easily configure global git (Git4set)\n" +
+			"\t0. Nothing, finish Dev4win")
 		for {
-			fmt.Printf("Select command: ")
+			fmt.Printf("\nSelect command: ")
 			fmt.Scanln(&cmdOpt)
-
 			if cmdOpt == "1" {
 				confGit4setWin()
+				restartWin()
 				break
 			} else if cmdOpt == "2" {
 				restartWin()
 				break
 			} else if cmdOpt == "3" {
 				confGit4setWin()
-				restartWin()
+				winEnd()
 				break
 			} else if cmdOpt == "0" {
 				winEnd()
 				break
 			} else {
-				fmt.Println("Wrong answer. Please choose between 1, 2, 3, 0.")
+				fmt.Println("Wrong answer. Please choose between 1,2,3,0.")
 			}
 		}
 	}
