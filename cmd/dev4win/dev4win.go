@@ -113,7 +113,7 @@ func winChoco() {
 		ldBar.FinalMSG = " - Installed choco!\n"
 		ldBar.Start()
 
-		installChocolatey := exec.Command(pSh, "Set-ExecutionPolicy", "Bypass", "-Scope", "Process", "-Force;", "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol", "-bor", "3072;", "iex", "((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))")
+		installChocolatey := exec.Command(pSh, `Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))`)
 		installingChocolatey, err := installChocolatey.Output()
 		checkError(err)
 		fmt.Sprintf(string(installingChocolatey))
@@ -367,7 +367,7 @@ func winLanguage() {
 func winWLS() {
 	ldBar := spinner.New(spinner.CharSets[43], 500*time.Millisecond)
 	ldBar.Suffix = " Installing Windows Subsystem for Linux with Ubuntu..."
-	ldBar.FinalMSG = " - Installed WSL with Ubuntu!\n"
+	ldBar.FinalMSG = " - Installed WSL2 with Ubuntu!\n"
 	ldBar.Start()
 
 	setWSL := exec.Command(pSh, "wsl", "--install")
@@ -381,7 +381,9 @@ func winEnd() {
 	fmt.Println("\n----------Finished!----------\n" +
 		"Please RESTART your terminal and OS!\n" +
 		lstDot + "Restart the terminal (CMD or PowerShell) for the changes to take effect.\n" +
-		lstDot + "WSL has been setup. Restart OS for the changes to take effect.")
+		lstDot + "WSL has been setup. Restart OS for the changes to take effect.\n" +
+		"\nPress 'Enter' to exit...")
+	fmt.Scanln()
 }
 
 func main() {
