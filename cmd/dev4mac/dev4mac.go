@@ -840,7 +840,6 @@ func macEnd() {
 
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
-
 	if checkOnline() == true {
 		macBrew()
 		macGit()
@@ -851,13 +850,30 @@ func main() {
 		macServer()
 		macLanguage()
 		macUtility()
-		fmt.Printf("\nPress any key to finish, " +
-			"or press (i) if you want configure global git... ")
-		fmt.Scanln(&cmdOpt)
-		if cmdOpt == "i" || cmdOpt == "I" {
-			confG4s()
+		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
+			"\t1. Setup default zsh theme after download Git4set\n" +
+			"\t2. Setup default zsh theme which is minimal type\n" +
+			"\t3. Download easily configure global git (Git4set)\n" +
+			"\t0. Nothing, finish Dev4mac")
+	endOpt:
+		for {
+			fmt.Printf("Select command: ")
+			fmt.Scanln(&cmdOpt)
+			if cmdOpt == "1" {
+				confG4s()
+				confZshTheme()
+			} else if cmdOpt == "2" {
+				confZshTheme()
+			} else if cmdOpt == "3" {
+				confG4s()
+			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
+			} else {
+				fmt.Println("Wrong answer. Please choose number 0-3")
+				goto endOpt
+			}
+			macEnd()
+			break
 		}
-		macEnd()
 	} else {
 		fmt.Println(lstDot + "Please check your internet connection and try again.\n")
 	}
