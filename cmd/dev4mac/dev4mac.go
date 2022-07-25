@@ -103,16 +103,30 @@ func confG4s() {
 		lstDot + "Only want configure global ignore: git-ignore")
 }
 
-func macBrew() {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Checking homebrew..."
-	ldBar.Start()
+func checkBrew() bool {
+	if _, err := os.Stat("/opt/homebrew/bin/brew"); !os.IsNotExist(err) {
+		return true
+	} else if _, err := os.Stat("/usr/local/bin/brew"); !os.IsNotExist(err) {
+		return true
+	} else {
+		return false
+	}
+}
 
-	checkBrew := exec.Command("which", cmdPMS)
-	checkingBrew, err := checkBrew.Output()
-	checkError(err)
-	ldBar.Stop()
-	if string(checkingBrew) == "/opt/homebrew/bin/brew\n" || string(checkingBrew) == "/usr/local/bin/brew\n" {
+func macBrew() {
+	//ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	//ldBar.Suffix = " Checking homebrew..."
+	//ldBar.Start()
+
+	//checkBrew := exec.Command("which", cmdPMS)
+	//checkingBrew, err := checkBrew.Output()
+	//checkError(err)
+
+	//checkXcode := exec.Command("xcode-select", "-v")
+	//checkingXcode, err := checkXcode.Output()
+	//checkError(err)
+	//ldBar.Stop()
+	if checkBrew() == true {
 		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 		ldBar.Suffix = " Updating homebrew..."
 		ldBar.FinalMSG = " - Updated brew!\n"
@@ -129,10 +143,52 @@ func macBrew() {
 		fmt.Sprintf(string(updatingHomebrew))
 		fmt.Sprintf(string(updatingBrewCask))
 		ldBar.Stop()
+		//} else if string(checkingXcode[0:20]) != "xcode-select version" {
+		//	fmt.Println(lstDot + "Please install Xcode Command Line Tools first.")
+		//	installXcode := exec.Command("xcode-select", "--install")
+		//	installingXcode, err := installXcode.Output()
+		//	checkError(err)
+		//	fmt.Sprintf(string(installingXcode))
+		//	os.Exit(0)
 	} else {
-		fmt.Println("You need the Homebrew first, and run Dev4mac again. Check detail on this site: https://brew.sh")
-		fmt.Println(lstDot + "Enter on terminal: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
-		os.Exit(0)
+		sudoPW := exec.Command("sudo", "whoami")
+		sudoPW.Env = os.Environ()
+		sudoPW.Stdin = os.Stdin
+		sudoPW.Stderr = os.Stderr
+		correctPW, err := sudoPW.Output()
+		if err != nil {
+			fmt.Println("Root permission error", err)
+		} else {
+			fmt.Sprintln(string(correctPW))
+		}
+
+		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+		ldBar.Suffix = " Installing homebrew..."
+		ldBar.FinalMSG = " - Installed brew!\n"
+		ldBar.Start()
+
+		//binary, lookErr := exec.LookPath("bash")
+		//if lookErr != nil {
+		//	panic(lookErr)
+		//}
+		//args := []string{"bash", "-c", "./install.sh"}
+		//env := os.Environ()
+		//execErr := syscall.Exec(binary, args, env)
+		//if execErr != nil {
+		//	panic(execErr)
+		//}
+
+		installHomebrew := exec.Command("/bin/sh", "-c", workingDir()+"install.sh")
+		installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
+		//installHomebrew.Stdout = os.Stdout
+		//installHomebrew.Stderr = os.Stderr
+		if err := installHomebrew.Run(); err != nil {
+			fmt.Println(err)
+		}
+		ldBar.Stop()
+		//} else {
+		//	fmt.Println(lstDot + "Something error in the Homebrew part")
+		//	os.Exit(0)
 	}
 }
 
