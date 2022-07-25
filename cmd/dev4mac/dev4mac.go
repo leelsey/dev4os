@@ -97,6 +97,7 @@ func confAlias4sh() {
 }
 
 func confG4s() {
+	fmt.Println("")
 	dlG4sPath := dlDir + Git4setV + ".zip"
 	req, _ := http.NewRequest("GET", "https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
 	resp, _ := http.DefaultClient.Do(req)
@@ -109,11 +110,28 @@ func confG4s() {
 	)
 	io.Copy(io.MultiWriter(file, bar), resp.Body)
 
-	fmt.Println(" - Finished to download Git4sh: " + dlG4sPath + " (Your download directory)\n" +
+	fmt.Println(" - Downloaded in \"Download\" directory (" + dlG4sPath + ")\n" +
 		"\nPlease extract zip file and run script on terminal.\n" +
 		lstDot + "Configure global author & ignore: initial-git\n" +
 		lstDot + "Only want configure global author: git-conf\n" +
-		lstDot + "Only want configure global ignore: git-ignore\n")
+		lstDot + "Only want configure global ignore: git-ignore")
+}
+
+func confZshTheme() {
+	dlP10kPath := homeDir() + ".p10k.zsh"
+	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Dev4os/main/cmd/dev4os/dev4p10k")
+	if err != nil {
+		fmt.Println(lstDot + "Dev4os's p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
+		os.Exit(0)
+	}
+	defer resp.Body.Close()
+	rawFile, _ := ioutil.ReadAll(resp.Body)
+
+	p10kConf, err := os.OpenFile(dlP10kPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	checkError(err)
+	defer p10kConf.Close()
+	_, err = p10kConf.Write([]byte(rawFile))
+	checkError(err)
 }
 
 func checkBrew() bool {
@@ -151,7 +169,7 @@ func macBrew() {
 		sudoPW.Stderr = os.Stderr
 		whoAmI, err := sudoPW.Output()
 		if err != nil {
-			fmt.Println(lstDot+"SUDO Error: ", err)
+			fmt.Println(lstDot+"Shell command sudo error: ", err)
 			os.Exit(0)
 		} else if string(whoAmI) == "root\n" {
 			ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
@@ -168,10 +186,10 @@ func macBrew() {
 			defer resp.Body.Close()
 			rawFile, _ := ioutil.ReadAll(resp.Body)
 
-			zshrcFile, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+			brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
 			checkError(err)
-			defer zshrcFile.Close()
-			_, err = zshrcFile.Write([]byte(rawFile))
+			defer brewInstaller.Close()
+			_, err = brewInstaller.Write([]byte(rawFile))
 			checkError(err)
 
 			installHomebrew := exec.Command("/bin/sh", "-c", dlBrewPath)
