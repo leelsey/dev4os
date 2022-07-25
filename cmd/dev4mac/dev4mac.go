@@ -6,6 +6,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/schollz/progressbar/v3"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +19,7 @@ var (
 	appVer     = "0.1"
 	Git4setV   = "Git4set-0.1"
 	lstDot     = " • "
-	dlPath     = homeDir() + "Downloads/"
+	dlDir      = homeDir() + "Downloads/"
 	cmdPMS     = "brew"
 	cmdIn      = "install"
 	cmdRein    = "reinstall"
@@ -84,11 +85,11 @@ func confAlias4sh() {
 }
 
 func confG4s() {
-	dlG4s := dlPath + Git4setV + ".zip"
+	dlG4sPath := dlDir + Git4setV + ".zip"
 	req, _ := http.NewRequest("GET", "https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
 	resp, _ := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
-	file, _ := os.OpenFile(dlG4s, os.O_CREATE|os.O_WRONLY, 0755)
+	file, _ := os.OpenFile(dlG4sPath, os.O_CREATE|os.O_WRONLY, 0755)
 	defer file.Close()
 	bar := progressbar.DefaultBytes(
 		resp.ContentLength,
@@ -96,7 +97,7 @@ func confG4s() {
 	)
 	io.Copy(io.MultiWriter(file, bar), resp.Body)
 
-	fmt.Println(" - Finished to download Git4sh: " + dlG4s + " (Your download directory)\n" +
+	fmt.Println(" - Finished to download Git4sh: " + dlG4sPath + " (Your download directory)\n" +
 		"\nPlease extract zip file and run script on terminal.\n" +
 		lstDot + "Configure global author & ignore: initial-git\n" +
 		lstDot + "Only want configure global author: git-conf\n" +
@@ -114,18 +115,6 @@ func checkBrew() bool {
 }
 
 func macBrew() {
-	//ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	//ldBar.Suffix = " Checking homebrew..."
-	//ldBar.Start()
-
-	//checkBrew := exec.Command("which", cmdPMS)
-	//checkingBrew, err := checkBrew.Output()
-	//checkError(err)
-
-	//checkXcode := exec.Command("xcode-select", "-v")
-	//checkingXcode, err := checkXcode.Output()
-	//checkError(err)
-	//ldBar.Stop()
 	if checkBrew() == true {
 		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 		ldBar.Suffix = " Updating homebrew..."
@@ -143,52 +132,53 @@ func macBrew() {
 		fmt.Sprintf(string(updatingHomebrew))
 		fmt.Sprintf(string(updatingBrewCask))
 		ldBar.Stop()
-		//} else if string(checkingXcode[0:20]) != "xcode-select version" {
-		//	fmt.Println(lstDot + "Please install Xcode Command Line Tools first.")
-		//	installXcode := exec.Command("xcode-select", "--install")
-		//	installingXcode, err := installXcode.Output()
-		//	checkError(err)
-		//	fmt.Sprintf(string(installingXcode))
-		//	os.Exit(0)
 	} else {
 		sudoPW := exec.Command("sudo", "whoami")
 		sudoPW.Env = os.Environ()
 		sudoPW.Stdin = os.Stdin
 		sudoPW.Stderr = os.Stderr
-		correctPW, err := sudoPW.Output()
+		whoAmI, err := sudoPW.Output()
 		if err != nil {
-			fmt.Println("Root permission error", err)
+			fmt.Println(lstDot+"SUDO Error: ", err)
+			os.Exit(0)
+		} else if string(whoAmI) == "root\n" {
+			ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+			ldBar.Suffix = " Installing homebrew..."
+			ldBar.FinalMSG = " - Installed brew!\n"
+			ldBar.Start()
+
+			dlBrewPath := workingDir() + ".dev4mac-brew.sh"
+			resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
+			if err != nil {
+				fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/Homebrew/install\n")
+				os.Exit(0)
+			}
+			defer resp.Body.Close()
+			rawFile, _ := ioutil.ReadAll(resp.Body)
+
+			zshrcFile, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+			checkError(err)
+			defer zshrcFile.Close()
+			_, err = zshrcFile.Write([]byte(rawFile))
+			checkError(err)
+
+			installHomebrew := exec.Command("/bin/sh", "-c", dlBrewPath)
+			installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
+			if err := installHomebrew.Run(); err != nil {
+				checkError(err)
+			}
+
+			if _, err := os.Stat(dlBrewPath); !os.IsNotExist(err) {
+				err := os.Remove(dlBrewPath)
+				checkError(err)
+			}
+			ldBar.Stop()
 		} else {
-			fmt.Sprintln(string(correctPW))
+			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
+				lstDot + "It need sudo command of \"root\" user's permission.\n" +
+				lstDot + "Now your username: " + string(whoAmI))
+			os.Exit(0)
 		}
-
-		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-		ldBar.Suffix = " Installing homebrew..."
-		ldBar.FinalMSG = " - Installed brew!\n"
-		ldBar.Start()
-
-		//binary, lookErr := exec.LookPath("bash")
-		//if lookErr != nil {
-		//	panic(lookErr)
-		//}
-		//args := []string{"bash", "-c", "./install.sh"}
-		//env := os.Environ()
-		//execErr := syscall.Exec(binary, args, env)
-		//if execErr != nil {
-		//	panic(execErr)
-		//}
-
-		installHomebrew := exec.Command("/bin/sh", "-c", workingDir()+"install.sh")
-		installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
-		//installHomebrew.Stdout = os.Stdout
-		//installHomebrew.Stderr = os.Stderr
-		if err := installHomebrew.Run(); err != nil {
-			fmt.Println(err)
-		}
-		ldBar.Stop()
-		//} else {
-		//	fmt.Println(lstDot + "Something error in the Homebrew part")
-		//	os.Exit(0)
 	}
 }
 
