@@ -65,6 +65,18 @@ func brewPrefix() string {
 	return "/usr/local/"
 }
 
+func checkOnline() bool {
+	getTimeout := time.Duration(10000 * time.Millisecond)
+	client := http.Client{
+		Timeout: getTimeout,
+	}
+	_, err := client.Get("https://9.9.9.9")
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func openZSHRC(zshrcAppend string) {
 	zshrcFile, err := os.OpenFile(zshrcPath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
 	checkError(err)
@@ -101,7 +113,7 @@ func confG4s() {
 		"\nPlease extract zip file and run script on terminal.\n" +
 		lstDot + "Configure global author & ignore: initial-git\n" +
 		lstDot + "Only want configure global author: git-conf\n" +
-		lstDot + "Only want configure global ignore: git-ignore")
+		lstDot + "Only want configure global ignore: git-ignore\n")
 }
 
 func checkBrew() bool {
@@ -805,25 +817,30 @@ func macEnd() {
 	fmt.Println("\n----------Finished!----------\n" +
 		"Please RESTART your terminal!\n" +
 		lstDot + "Enter this on terminal: source ~/.zshrc\n" +
-		lstDot + "Or restart the Terminal.app by yourself.")
+		lstDot + "Or restart the Terminal.app by yourself.\n")
 }
 
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
-	macBrew()
-	macGit()
-	macTerminal()
-	macDependency()
-	macDevToolCLI()
-	macASDF()
-	macServer()
-	macLanguage()
-	macUtility()
-	fmt.Printf("\nPress any key to finish, " +
-		"or press (i) if you want configure global git... ")
-	fmt.Scanln(&cmdOpt)
-	if cmdOpt == "i" || cmdOpt == "I" {
-		confG4s()
+
+	if checkOnline() == true {
+		macBrew()
+		macGit()
+		macTerminal()
+		macDependency()
+		macDevToolCLI()
+		macASDF()
+		macServer()
+		macLanguage()
+		macUtility()
+		fmt.Printf("\nPress any key to finish, " +
+			"or press (i) if you want configure global git... ")
+		fmt.Scanln(&cmdOpt)
+		if cmdOpt == "i" || cmdOpt == "I" {
+			confG4s()
+		}
+		macEnd()
+	} else {
+		fmt.Println(lstDot + "Please check your internet connection and try again.\n")
 	}
-	macEnd()
 }
