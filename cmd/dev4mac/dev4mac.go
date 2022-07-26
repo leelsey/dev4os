@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/briandowns/spinner"
-	"github.com/schollz/progressbar/v3"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -99,24 +97,52 @@ func confAlias4sh() {
 }
 
 func confG4s() {
-	fmt.Println("")
-	dlG4sPath := dlDir + Git4setV + ".zip"
-	req, _ := http.NewRequest("GET", "https://github.com/leelsey/Git4set/archive/refs/tags/v0.1.zip", nil)
-	resp, _ := http.DefaultClient.Do(req)
-	defer resp.Body.Close()
-	file, _ := os.OpenFile(dlG4sPath, os.O_CREATE|os.O_WRONLY, 0755)
-	defer file.Close()
-	bar := progressbar.DefaultBytes(
-		resp.ContentLength,
-		"Downloading Git4set...",
-	)
-	io.Copy(io.MultiWriter(file, bar), resp.Body)
+	fmt.Println("\nGit global configuration")
+	fmt.Println(" 1) Main branch default name changed master -> main")
+	setBranchMain := exec.Command("git", "config", "--global", "init.defaultBranch", "main")
+	setBranchMain.Run()
 
-	fmt.Println(" - Downloaded in \"Download\" directory (" + dlG4sPath + ")\n" +
-		"\nPlease extract zip file and run script on terminal.\n" +
-		lstDot + "Configure global author & ignore: initial-git\n" +
-		lstDot + "Only want configure global author: git-conf\n" +
-		lstDot + "Only want configure global ignore: git-ignore")
+	fmt.Println(" 2) Add your information to the global git config")
+	fmt.Printf(" " + lstDot + "User name: ")
+	fmt.Scanln(&userName)
+	fmt.Printf(" " + lstDot + "User email: ")
+	fmt.Scanln(&userEmail)
+	unsetUserName := exec.Command("git", "config", "--unset", "--global", "user.name")
+	unsetUserEmail := exec.Command("git", "config", "--unset", "--global", "user.email")
+	setUserName := exec.Command("git", "config", "--global", "user.name", userName)
+	setUserEmail := exec.Command("git", "config", "--global", "user.email", userEmail)
+	unsetUserName.Run()
+	unsetUserEmail.Run()
+	setUserName.Run()
+	setUserEmail.Run()
+
+	fmt.Println(" 3) Setup git global ignore file with directories")
+	ignoreDir := homeDir() + ".config/git/"
+	if err := os.MkdirAll(ignoreDir, 0755); err != nil {
+		log.Fatal(err)
+	}
+
+	dlIgnorePath := ignoreDir + "gitignore_global"
+	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
+	if err != nil {
+		fmt.Println(lstDot + "Git Ignore sample URL is maybe changed, please check https://github.com/leelsey/Git4set\n")
+		os.Exit(0)
+	}
+	defer resp.Body.Close()
+	rawFile, _ := ioutil.ReadAll(resp.Body)
+
+	gitIgnore, err := os.OpenFile(dlIgnorePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	checkError(err)
+	defer gitIgnore.Close()
+	_, err = gitIgnore.Write([]byte(rawFile))
+	checkError(err)
+
+	unsetExcludesFile := exec.Command("git", "config", "--unset", "--global", "core.excludesfile")
+	setExcludesFile := exec.Command("git", "config", "--unset", "core.excludesfile", homeDir()+".config/git/gitignore_global")
+	unsetExcludesFile.Run()
+	setExcludesFile.Run()
+
+	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + homeDir() + ".config/git")
 }
 
 func confZshTheme() {
