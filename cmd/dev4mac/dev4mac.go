@@ -32,6 +32,8 @@ var (
 	zshrcPath  = homeDir() + ".zshrc"
 	prefixPath = brewPrefix()
 	cmdOpt     string
+	userName   string
+	userEmail  string
 )
 
 func checkError(err error) bool {
@@ -144,6 +146,19 @@ func checkBrew() bool {
 	}
 }
 
+func updateBrew() {
+	updateHomebrew := exec.Command(cmdPMS, "update")
+	updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
+
+	updatingHomebrew, err := updateHomebrew.Output()
+	checkError(err)
+	updatingBrewCask, err := updateBrewCask.Output()
+	checkError(err)
+
+	fmt.Sprintf(string(updatingHomebrew))
+	fmt.Sprintf(string(updatingBrewCask))
+}
+
 func macBrew() {
 	if checkBrew() == true {
 		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
@@ -151,16 +166,7 @@ func macBrew() {
 		ldBar.FinalMSG = " - Updated brew!\n"
 		ldBar.Start()
 
-		updateHomebrew := exec.Command(cmdPMS, "update")
-		updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
-
-		updatingHomebrew, err := updateHomebrew.Output()
-		checkError(err)
-		updatingBrewCask, err := updateBrewCask.Output()
-		checkError(err)
-
-		fmt.Sprintf(string(updatingHomebrew))
-		fmt.Sprintf(string(updatingBrewCask))
+		updateBrew()
 		ldBar.Stop()
 	} else {
 		sudoPW := exec.Command("sudo", "whoami")
@@ -192,7 +198,7 @@ func macBrew() {
 			_, err = brewInstaller.Write([]byte(rawFile))
 			checkError(err)
 
-			installHomebrew := exec.Command("/bin/sh", "-c", dlBrewPath)
+			installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
 			installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
 			if err := installHomebrew.Run(); err != nil {
 				checkError(err)
@@ -202,7 +208,6 @@ func macBrew() {
 				err := os.Remove(dlBrewPath)
 				checkError(err)
 			}
-			ldBar.Stop()
 		} else {
 			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
 				lstDot + "It need sudo command of \"root\" user's permission.\n" +
