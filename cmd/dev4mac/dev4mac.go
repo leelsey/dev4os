@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"github.com/briandowns/spinner"
@@ -98,15 +99,20 @@ func confAlias4sh() {
 
 func confG4s() {
 	fmt.Println("\nGit global configuration")
+
 	fmt.Println(" 1) Main branch default name changed master -> main")
 	setBranchMain := exec.Command("git", "config", "--global", "init.defaultBranch", "main")
 	setBranchMain.Run()
 
 	fmt.Println(" 2) Add your information to the global git config")
+	consoleReader := bufio.NewScanner(os.Stdin)
 	fmt.Printf(" " + lstDot + "User name: ")
-	fmt.Scanln(&userName)
+	consoleReader.Scan()
+	userName := consoleReader.Text()
 	fmt.Printf(" " + lstDot + "User email: ")
-	fmt.Scanln(&userEmail)
+	consoleReader.Scan()
+	userEmail := consoleReader.Text()
+
 	unsetUserName := exec.Command("git", "config", "--unset", "--global", "user.name")
 	unsetUserEmail := exec.Command("git", "config", "--unset", "--global", "user.email")
 	setUserName := exec.Command("git", "config", "--global", "user.name", userName)
@@ -908,17 +914,17 @@ func main() {
 		macLanguage()
 		macUtility()
 		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
-			"\t1. Setup default zsh theme after download Git4set\n" +
-			"\t2. Setup default zsh theme which is minimal type\n" +
-			"\t3. Download easily configure global git (Git4set)\n" +
-			"\t0. Nothing, finish Dev4mac")
+			"\t1. Setup zsh theme & Configure git global\n" +
+			"\t2. Only setup zsh theme that minimal type\n" +
+			"\t3. Only configure git global easily\n" +
+			"\t0. Nothing, finish Dev4mac (manual setup)\n")
 	endOpt:
 		for {
 			fmt.Printf("Select command: ")
 			fmt.Scanln(&cmdOpt)
 			if cmdOpt == "1" {
-				confG4s()
 				confZshTheme()
+				confG4s()
 			} else if cmdOpt == "2" {
 				confZshTheme()
 			} else if cmdOpt == "3" {
