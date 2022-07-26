@@ -122,7 +122,7 @@ func confG4s() {
 		log.Fatal(err)
 	}
 
-	dlIgnorePath := ignoreDir + "gitignore_global"
+	ignorePath := ignoreDir + "gitignore_global"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
 	if err != nil {
 		fmt.Println(lstDot + "Git Ignore sample URL is maybe changed, please check https://github.com/leelsey/Git4set\n")
@@ -131,14 +131,14 @@ func confG4s() {
 	defer resp.Body.Close()
 	rawFile, _ := ioutil.ReadAll(resp.Body)
 
-	gitIgnore, err := os.OpenFile(dlIgnorePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	gitIgnore, err := os.OpenFile(ignorePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
 	checkError(err)
 	defer gitIgnore.Close()
 	_, err = gitIgnore.Write([]byte(rawFile))
 	checkError(err)
 
 	unsetExcludesFile := exec.Command("git", "config", "--unset", "--global", "core.excludesfile")
-	setExcludesFile := exec.Command("git", "config", "--unset", "core.excludesfile", homeDir()+".config/git/gitignore_global")
+	setExcludesFile := exec.Command("git", "config", "--unset", "core.excludesfile", ignorePath)
 	unsetExcludesFile.Run()
 	setExcludesFile.Run()
 
@@ -160,6 +160,44 @@ func confZshTheme() {
 	defer p10kConf.Close()
 	_, err = p10kConf.Write([]byte(rawFile))
 	checkError(err)
+}
+
+func installBrew(whichBrew string) {
+	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
+	resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
+	if err != nil {
+		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/Homebrew/install\n")
+		os.Exit(0)
+	}
+	defer resp.Body.Close()
+	rawFile, _ := ioutil.ReadAll(resp.Body)
+
+	brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	checkError(err)
+	defer brewInstaller.Close()
+	_, err = brewInstaller.Write([]byte(rawFile))
+	checkError(err)
+
+	installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
+	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
+	if err := installHomebrew.Run(); err != nil {
+		checkError(err)
+	}
+
+	if _, err := os.Stat(dlBrewPath); !os.IsNotExist(err) {
+		err := os.Remove(dlBrewPath)
+		checkError(err)
+	}
+
+	if checkBrew() == true {
+		envBrewPrefix := exec.Command("eval", whichBrew)
+		envBrewPrefix.Env = append(os.Environ())
+		envBrewPrefix.Run()
+		updateBrew()
+	} else {
+		fmt.Println(lstDot + "Brew install failed, please check your system\n")
+		os.Exit(0)
+	}
 }
 
 func checkBrew() bool {
@@ -200,6 +238,7 @@ func macBrew() {
 		sudoPW.Stdin = os.Stdin
 		sudoPW.Stderr = os.Stderr
 		whoAmI, err := sudoPW.Output()
+
 		if err != nil {
 			fmt.Println(lstDot+"Shell command sudo error: ", err)
 			os.Exit(0)
@@ -209,40 +248,18 @@ func macBrew() {
 			ldBar.FinalMSG = " - Installed brew!\n"
 			ldBar.Start()
 
-			dlBrewPath := workingDir() + ".dev4mac-brew.sh"
-			resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
-			if err != nil {
-				fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/Homebrew/install\n")
+			switch runtime.GOARCH {
+			case "arm64":
+				whichBrew := "\"$(/opt/homebrew/bin/brew shellenv)\""
+				installBrew(whichBrew)
+			case "amd64":
+				whichBrew := "\"$(/usr/local/bin/brew shellenv)\""
+				installBrew(whichBrew)
+			default:
+				fmt.Println(lstDot + "Sorry, your architecture is not supported\n")
 				os.Exit(0)
 			}
-			defer resp.Body.Close()
-			rawFile, _ := ioutil.ReadAll(resp.Body)
-
-			brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
-			checkError(err)
-			defer brewInstaller.Close()
-			_, err = brewInstaller.Write([]byte(rawFile))
-			checkError(err)
-
-			installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
-			installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
-			if err := installHomebrew.Run(); err != nil {
-				checkError(err)
-			}
-
-			if _, err := os.Stat(dlBrewPath); !os.IsNotExist(err) {
-				err := os.Remove(dlBrewPath)
-				checkError(err)
-			}
-
-			if checkBrew() == true {
-				updateBrew()
-				ldBar.Stop()
-			} else {
-				ldBar.Stop()
-				fmt.Println(lstDot + "Brew install failed, please check your system\n")
-				os.Exit(0)
-			}
+			ldBar.Stop()
 		} else {
 			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
 				lstDot + "It need sudo command of \"root\" user's permission.\n" +
