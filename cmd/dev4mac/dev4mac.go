@@ -234,6 +234,15 @@ func macBrew() {
 				err := os.Remove(dlBrewPath)
 				checkError(err)
 			}
+
+			if checkBrew() == true {
+				updateBrew()
+				ldBar.Stop()
+			} else {
+				ldBar.Stop()
+				fmt.Println(lstDot + "Brew install failed, please check your system\n")
+				os.Exit(0)
+			}
 		} else {
 			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
 				lstDot + "It need sudo command of \"root\" user's permission.\n" +
