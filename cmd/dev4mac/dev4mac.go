@@ -128,14 +128,39 @@ func addZSHRC(zshrcAppend string) {
 }
 
 func confA4s() {
-	err := os.MkdirAll(homeDir()+".config/alias4sh", 0755)
+	//err := os.MkdirAll(homeDir()+".config/alias4sh", 0755)
+	//checkError(err)
+	//alias4shFile, err := os.OpenFile(homeDir()+".config/alias4sh/aliasrc", os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	//checkError(err)
+	//defer alias4shFile.Close()
+	//aliasrcContents := "#             _ _           _  _       _ \n#       /\\   | (_)         | || |     | | \n#      /  \\  | |_  __ _ ___| || |_ ___| |__ \n#     / /\\ \\ | | |/ _` / __|__   _/ __| '_ \\ \n#    / ____ \\| | | (_| \\__ \\  | | \\__ \\ | | | \n#   /_/    \\_\\_|_|\\__,_|___/  |_| |___/_| |_| \n#\n\nalias shrl=\"exec $SHELL\"\nalias zshrl=\"source ~/.zprofile ~/.zshrc\"\nalias his=\"history\"\nalias hisp=\"history -p\"\nalias hisc=\"echo -n > ~/.zsh_history && history -p  && exec $SHELL -l\"\nalias hiscl=\"rm -f ~/.bash_history && rm -f ~/.node_repl_history && rm -f ~/.python_history\"\nalias grep=\"grep --color=auto\"\nalias egrep=\"egrep --color=auto\"\nalias fgrep=\"fgrep --color=auto\"\nalias diff=\"diff --color=auto\"\nalias ls=\"ls --color=auto\"\nalias l=\"ls -CF\"\nalias ll=\"ls -l\"\nalias la=\"ls -A\"\nalias lla=\"ls -al\"\nalias lld=\"ls -al --group-directories-first\"\nalias lst=\"ls -al | grep -v '^[d|b|c|l|p|s|-]'\"\nalias lr=\"ls -lR\"\nalias tree=\"tree -Csu\"\nalias dir=\"dir --color=auto\"\nalias dird=\"dir -al --group-directories-first\"\nalias vdir=\"vdir --color=auto\"\nalias cls=\"clear\"\nalias ip=\"ipconfig\"\nalias dfh=\"df -h\"\nalias duh=\"du -h\"\nalias cdh=\"cd ~\"\nalias p=\"cd ..\"\nalias f=\"finger\"\nalias j=\"jobs -l\"\nalias d=\"date\"\nalias c=\"cal\"\n#alias curl=\"curl -w '\\n'\"\n#alias rm=\"rm -i\"\n#alias cp=\"cp -i\"\n#alias mv=\"mv -i\"\n#alias mkdir=\"mkdir -p\"\n#alias rmdir=\"rmdir -p\""
+	//_, err = alias4shFile.Write([]byte(aliasrcContents))
+	//checkError(err)
+
+	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
+	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
+	if err != nil {
+		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/leelsey/Alias4sh\n")
+		os.Exit(0)
+	}
+	defer resp.Body.Close()
+	rawFile, _ := ioutil.ReadAll(resp.Body)
+
+	a4sInstaller, err := os.OpenFile(dlA4sPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
 	checkError(err)
-	alias4shFile, err := os.OpenFile(homeDir()+".config/alias4sh/aliasrc", os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	defer a4sInstaller.Close()
+	_, err = a4sInstaller.Write([]byte(rawFile))
 	checkError(err)
-	defer alias4shFile.Close()
-	aliasrcContents := "#             _ _           _  _       _ \n#       /\\   | (_)         | || |     | | \n#      /  \\  | |_  __ _ ___| || |_ ___| |__ \n#     / /\\ \\ | | |/ _` / __|__   _/ __| '_ \\ \n#    / ____ \\| | | (_| \\__ \\  | | \\__ \\ | | | \n#   /_/    \\_\\_|_|\\__,_|___/  |_| |___/_| |_| \n#\n\nalias shrl=\"exec $SHELL\"\nalias zshrl=\"source ~/.zprofile ~/.zshrc\"\nalias his=\"history\"\nalias hisp=\"history -p\"\nalias hisc=\"echo -n > ~/.zsh_history && history -p  && exec $SHELL -l\"\nalias hiscl=\"rm -f ~/.bash_history && rm -f ~/.node_repl_history && rm -f ~/.python_history\"\nalias grep=\"grep --color=auto\"\nalias egrep=\"egrep --color=auto\"\nalias fgrep=\"fgrep --color=auto\"\nalias diff=\"diff --color=auto\"\nalias ls=\"ls --color=auto\"\nalias l=\"ls -CF\"\nalias ll=\"ls -l\"\nalias la=\"ls -A\"\nalias lla=\"ls -al\"\nalias lld=\"ls -al --group-directories-first\"\nalias lst=\"ls -al | grep -v '^[d|b|c|l|p|s|-]'\"\nalias lr=\"ls -lR\"\nalias tree=\"tree -Csu\"\nalias dir=\"dir --color=auto\"\nalias dird=\"dir -al --group-directories-first\"\nalias vdir=\"vdir --color=auto\"\nalias cls=\"clear\"\nalias ip=\"ipconfig\"\nalias dfh=\"df -h\"\nalias duh=\"du -h\"\nalias cdh=\"cd ~\"\nalias p=\"cd ..\"\nalias f=\"finger\"\nalias j=\"jobs -l\"\nalias d=\"date\"\nalias c=\"cal\"\n#alias curl=\"curl -w '\\n'\"\n#alias rm=\"rm -i\"\n#alias cp=\"cp -i\"\n#alias mv=\"mv -i\"\n#alias mkdir=\"mkdir -p\"\n#alias rmdir=\"rmdir -p\""
-	_, err = alias4shFile.Write([]byte(aliasrcContents))
-	checkError(err)
+
+	installA4s := exec.Command("sh", dlA4sPath)
+	if err := installA4s.Run(); err != nil {
+		checkError(err)
+	}
+
+	if _, err := os.Stat(dlA4sPath); !os.IsNotExist(err) {
+		err := os.Remove(dlA4sPath)
+		checkError(err)
+	}
 }
 
 func confG4s() {
