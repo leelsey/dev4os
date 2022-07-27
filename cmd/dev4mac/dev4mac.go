@@ -15,58 +15,38 @@ import (
 )
 
 var (
-	appVer     = "0.1"
-	Git4setV   = "Git4set-0.1"
-	lstDot     = " • "
-	dlDir      = homeDir() + "Downloads/"
-	cmdPMS     = "brew"
-	cmdIn      = "install"
-	cmdRein    = "reinstall"
-	cmdRm      = "remove"
-	cmdEcho    = "echo"
-	cmdASDF    = "asdf"
-	asdfPlugin = "plugin"
-	asdfAdd    = "add"
-	asdfReshim = "reshim"
-	zshrcPath  = homeDir() + ".zshrc"
-	prefixPath = brewPrefix()
-	cmdOpt     string
-	userName   string
-	userEmail  string
+	appVer      = "0.1"
+	Git4setV    = "Git4set-0.1"
+	lstDot      = " • "
+	shrcPath    = homeDir() + ".zshrc"
+	profilePath = homeDir() + ".zprofile"
+	prefixPath  = brewPrefix()
+	dlDir       = homeDir() + "Downloads/"
+	arm64Path   = "/opt/homebrew/"
+	amd64Path   = "/usr/local/"
+	cmdPMS      = checkBrewPath()
+	cmdIn       = "install"
+	cmdReIn     = "reinstall"
+	cmdRm       = "remove"
+	cmdASDF     = checkASDFPath()
+	asdfPlugin  = "plugin"
+	asdfAdd     = "add"
+	asdfReshim  = "reshim"
+	cmdOpt      string
+	userName    string
+	userEmail   string
 )
 
 func checkError(err error) bool {
 	if err != nil {
 		fmt.Println(err.Error())
+		log.Fatal(err)
+		os.Exit(0)
 	}
 	return err != nil
 }
 
-func homeDir() string {
-	homeDirPath, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return homeDirPath + "/"
-}
-
-func workingDir() string {
-	workingDirPath, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return workingDirPath + "/"
-}
-
-func brewPrefix() string {
-	switch runtime.GOARCH {
-	case "arm64":
-		return "/opt/homebrew/"
-	}
-	return "/usr/local/"
-}
-
-func checkOnline() bool {
+func checkNetStatus() bool {
 	getTimeout := time.Duration(10000 * time.Millisecond)
 	client := http.Client{
 		Timeout: getTimeout,
@@ -78,21 +58,82 @@ func checkOnline() bool {
 	return true
 }
 
-func openZSHRC(zshrcAppend string) {
-	zshrcFile, err := os.OpenFile(zshrcPath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
+func checkBrewPath() string {
+	switch runtime.GOARCH {
+	case "amd64":
+		return amd64Path + "bin/brew"
+	}
+	return arm64Path + "bin/brew"
+}
+
+func checkASDFPath() string {
+	asdfPath := "opt/asdf/libexec/bin/asdf"
+	switch runtime.GOARCH {
+	case "amd64":
+		return amd64Path + asdfPath
+	}
+	return arm64Path + asdfPath
+}
+
+func checkBrewExists() bool {
+	//if _, err := os.Stat("/opt/homebrew/bin/brew"); !os.IsNotExist(err) {
+	if _, err := os.Stat(cmdPMS); !os.IsNotExist(err) {
+		return true
+		//} else if _, err := os.Stat("/usr/local/bin/brew"); !os.IsNotExist(err) {
+		//	return true
+	} else {
+		return false
+	}
+}
+
+func homeDir() string {
+	homeDirPath, err := os.UserHomeDir()
+	checkError(err)
+	return homeDirPath + "/"
+}
+
+func workingDir() string {
+	workingDirPath, err := os.Getwd()
+	checkError(err)
+	return workingDirPath + "/"
+}
+
+func brewPrefix() string {
+	switch runtime.GOARCH {
+	case "amd64":
+		return amd64Path
+	}
+	return arm64Path
+}
+
+func newZSHRC() {
+	zshrcFile, err := os.OpenFile(shrcPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	checkError(err)
+	defer zshrcFile.Close()
+	zshrcInitial := "#   _________  _   _ ____   ____    __  __    _    ___ _   _\n" +
+		"#  |__  / ___|| | | |  _ \\ / ___|  |  \\/  |  / \\  |_ _| \\ | |\n" +
+		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
+		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
+		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n"
+	_, err = zshrcFile.Write([]byte(zshrcInitial))
+	checkError(err)
+}
+
+func addZSHRC(zshrcAppend string) {
+	zshrcFile, err := os.OpenFile(shrcPath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
 	checkError(err)
 	defer zshrcFile.Close()
 	_, err = zshrcFile.Write([]byte(zshrcAppend))
 	checkError(err)
 }
 
-func confAlias4sh() {
+func confA4s() {
 	err := os.MkdirAll(homeDir()+".config/alias4sh", 0755)
 	checkError(err)
 	alias4shFile, err := os.OpenFile(homeDir()+".config/alias4sh/aliasrc", os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
 	checkError(err)
 	defer alias4shFile.Close()
-	aliasrcContents := "#             _ _           _  _       _ \n#       /\\   | (_)         | || |     | | \n#      /  \\  | |_  __ _ ___| || |_ ___| |__ \n#     / /\\ \\ | | |/ _` / __|__   _/ __| '_ \\ \n#    / ____ \\| | | (_| \\__ \\  | | \\__ \\ | | | \n#   /_/    \\_\\_|_|\\__,_|___/  |_| |___/_| |_| \n#\n\nalias shrl=\"exec $SHELL\"\nalias zshrl=\"source ~/.zshrc\"\nalias his=\"history\"\nalias hisp=\"history -p\"\nalias hisc=\"echo -n > ~/.zsh_history && history -p  && exec $SHELL -l\"\nalias hiscl=\"rm -f ~/.bash_history && rm -f ~/.node_repl_history && rm -f ~/.python_history\"\nalias grep=\"grep --color=auto\"\nalias egrep=\"egrep --color=auto\"\nalias fgrep=\"fgrep --color=auto\"\nalias diff=\"diff --color=auto\"\nalias ls=\"ls --color=auto\"\nalias l=\"ls -CF\"\nalias ll=\"ls -l\"\nalias la=\"ls -A\"\nalias lla=\"ls -al\"\nalias lld=\"ls -al --group-directories-first\"\nalias lst=\"ls -al | grep -v '^[d|b|c|l|p|s|-]'\"\nalias lr=\"ls -lR\"\nalias tree=\"tree -Csu\"\nalias dir=\"dir --color=auto\"\nalias dird=\"dir -al --group-directories-first\"\nalias vdir=\"vdir --color=auto\"\nalias cls=\"clear\"\nalias ip=\"ipconfig\"\nalias dfh=\"df -h\"\nalias duh=\"du -h\"\nalias cdh=\"cd ~\"\nalias p=\"cd ..\"\nalias f=\"finger\"\nalias j=\"jobs -l\"\nalias d=\"date\"\nalias c=\"cal\"\n#alias curl=\"curl -w '\\n'\"\n#alias rm=\"rm -i\"\n#alias cp=\"cp -i\"\n#alias mv=\"mv -i\"\n#alias mkdir=\"mkdir -p\"\n#alias rmdir=\"rmdir -p\"\n"
+	aliasrcContents := "#             _ _           _  _       _ \n#       /\\   | (_)         | || |     | | \n#      /  \\  | |_  __ _ ___| || |_ ___| |__ \n#     / /\\ \\ | | |/ _` / __|__   _/ __| '_ \\ \n#    / ____ \\| | | (_| \\__ \\  | | \\__ \\ | | | \n#   /_/    \\_\\_|_|\\__,_|___/  |_| |___/_| |_| \n#\n\nalias shrl=\"exec $SHELL\"\nalias zshrl=\"source ~/.zprofile ~/.zshrc\"\nalias his=\"history\"\nalias hisp=\"history -p\"\nalias hisc=\"echo -n > ~/.zsh_history && history -p  && exec $SHELL -l\"\nalias hiscl=\"rm -f ~/.bash_history && rm -f ~/.node_repl_history && rm -f ~/.python_history\"\nalias grep=\"grep --color=auto\"\nalias egrep=\"egrep --color=auto\"\nalias fgrep=\"fgrep --color=auto\"\nalias diff=\"diff --color=auto\"\nalias ls=\"ls --color=auto\"\nalias l=\"ls -CF\"\nalias ll=\"ls -l\"\nalias la=\"ls -A\"\nalias lla=\"ls -al\"\nalias lld=\"ls -al --group-directories-first\"\nalias lst=\"ls -al | grep -v '^[d|b|c|l|p|s|-]'\"\nalias lr=\"ls -lR\"\nalias tree=\"tree -Csu\"\nalias dir=\"dir --color=auto\"\nalias dird=\"dir -al --group-directories-first\"\nalias vdir=\"vdir --color=auto\"\nalias cls=\"clear\"\nalias ip=\"ipconfig\"\nalias dfh=\"df -h\"\nalias duh=\"du -h\"\nalias cdh=\"cd ~\"\nalias p=\"cd ..\"\nalias f=\"finger\"\nalias j=\"jobs -l\"\nalias d=\"date\"\nalias c=\"cal\"\n#alias curl=\"curl -w '\\n'\"\n#alias rm=\"rm -i\"\n#alias cp=\"cp -i\"\n#alias mv=\"mv -i\"\n#alias mkdir=\"mkdir -p\"\n#alias rmdir=\"rmdir -p\""
 	_, err = alias4shFile.Write([]byte(aliasrcContents))
 	checkError(err)
 }
@@ -148,7 +189,7 @@ func confG4s() {
 	unsetExcludesFile.Run()
 	setExcludesFile.Run()
 
-	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + homeDir() + ".config/git")
+	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDir)
 }
 
 func confZshTheme() {
@@ -168,7 +209,15 @@ func confZshTheme() {
 	checkError(err)
 }
 
-func installBrew(whichBrew string) {
+func updateBrew() {
+	updateHomebrew := exec.Command(cmdPMS, "update")
+	updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
+
+	updateHomebrew.Run()
+	updateBrewCask.Run()
+}
+
+func installBrew() {
 	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
 	resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
 	if err != nil {
@@ -195,10 +244,21 @@ func installBrew(whichBrew string) {
 		checkError(err)
 	}
 
-	if checkBrew() == true {
-		envBrewPrefix := exec.Command("eval", whichBrew)
-		envBrewPrefix.Env = append(os.Environ())
-		envBrewPrefix.Run()
+	if checkBrewExists() == true {
+		confA4s()
+
+		profileFile, err := os.OpenFile(profilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+		checkError(err)
+		defer profileFile.Close()
+		profileInitial := "# ZSH\n" +
+			"export SHELL=zsh\n\n" +
+			"# Alias4sh\n" +
+			"source ~/.config/alias4sh/aliasrc\n\n" +
+			"# HOMEBREW\n" +
+			"eval \"$(" + cmdPMS + " shellenv)\"\n\n"
+		_, err = profileFile.Write([]byte(profileInitial))
+		checkError(err)
+
 		updateBrew()
 	} else {
 		fmt.Println(lstDot + "Brew install failed, please check your system\n")
@@ -206,26 +266,8 @@ func installBrew(whichBrew string) {
 	}
 }
 
-func checkBrew() bool {
-	if _, err := os.Stat("/opt/homebrew/bin/brew"); !os.IsNotExist(err) {
-		return true
-	} else if _, err := os.Stat("/usr/local/bin/brew"); !os.IsNotExist(err) {
-		return true
-	} else {
-		return false
-	}
-}
-
-func updateBrew() {
-	updateHomebrew := exec.Command(cmdPMS, "update")
-	updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
-
-	updateHomebrew.Run()
-	updateBrewCask.Run()
-}
-
 func macBrew() {
-	if checkBrew() == true {
+	if checkBrewExists() == true {
 		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 		ldBar.Suffix = " Updating homebrew..."
 		ldBar.FinalMSG = " - Updated brew!\n"
@@ -249,17 +291,7 @@ func macBrew() {
 			ldBar.FinalMSG = " - Installed brew!\n"
 			ldBar.Start()
 
-			switch runtime.GOARCH {
-			case "arm64":
-				whichBrew := "\"$(/opt/homebrew/bin/brew shellenv)\""
-				installBrew(whichBrew)
-			case "amd64":
-				whichBrew := "\"$(/usr/local/bin/brew shellenv)\""
-				installBrew(whichBrew)
-			default:
-				fmt.Println(lstDot + "Sorry, your architecture is not supported\n")
-				os.Exit(0)
-			}
+			installBrew()
 			ldBar.Stop()
 		} else {
 			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
@@ -278,12 +310,8 @@ func macGit() {
 
 	brewGit := exec.Command(cmdPMS, cmdIn, "git")
 	brewGitLfs := exec.Command(cmdPMS, cmdIn, "git-lfs")
-	gitLfsInstall := exec.Command("git", "lfs", "install")
-	gitBranchMain := exec.Command("git", "config", "--global", "init.defaultBranch", "main")
 	brewGit.Run()
 	brewGitLfs.Run()
-	gitLfsInstall.Run()
-	gitBranchMain.Run()
 	ldBar.Stop()
 }
 
@@ -309,42 +337,28 @@ func macTerminal() {
 	brewZshComp.Run()
 	brewTree.Run()
 	brewZshTheme.Run()
-	confAlias4sh()
 
-	zshrcFile, err := os.OpenFile(zshrcPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
-	checkError(err)
-	defer zshrcFile.Close()
-
-	zshrcInitial := "# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.\n" +
-		"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
-		"# POWERLEVEL10K\n" +
-		"source " + prefixPath + "/opt/powerlevel10k/powerlevel10k.zsh-theme\n\n" +
-		"#   _________  _   _ ____   ____    __  __    _    ___ _   _\n" +
-		"#  |__  / ___|| | | |  _ \\ / ___|  |  \\/  |  / \\  |_ _| \\ | |\n" +
-		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
-		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
-		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n" +
-		"# ZSH\n" +
-		"export SHELL=zsh\n\n" +
-		"# Alias4sh\n" +
-		"source ~/.config/alias4sh/aliasrc\n\n" +
+	newZSHRC()
+	zshrcAppend :=
 		"# ZSH SYNTAX HIGHTLIGHTING\n" +
-		"source " + prefixPath + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
-		"# ZSH AUTOSUGGESTIONS\n" +
-		"source " + prefixPath + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-		"# NCURSES\n" +
-		"export PATH=\"" + prefixPath + "opt/ncurses/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/ncurses/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/ncurses/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/ncurses/lib/pkgconfig\"\n\n" +
-		"" +
-		"# OPENSSL\n" +
-		"export PATH=\"" + prefixPath + "opt/openssl@3/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/openssl@3/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/openssl@3/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/openssl@3/lib/pkgconfig\"\n\n"
-	_, err = zshrcFile.Write([]byte(zshrcInitial))
-	checkError(err)
+			"source " + prefixPath + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
+			"# ZSH AUTOSUGGESTIONS\n" +
+			"source " + prefixPath + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+			"# POWERLEVEL10K" +
+			"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
+			"source " + prefixPath + "/opt/powerlevel10k/powerlevel10k.zsh-theme\n\n" +
+			"# NCURSES\n" +
+			"export PATH=\"" + prefixPath + "opt/ncurses/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + prefixPath + "opt/ncurses/lib\"\n" +
+			"export CPPFLAGS=\"" + prefixPath + "opt/ncurses/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/ncurses/lib/pkgconfig\"\n\n" +
+			"" +
+			"# OPENSSL\n" +
+			"export PATH=\"" + prefixPath + "opt/openssl@3/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + prefixPath + "opt/openssl@3/lib\"\n" +
+			"export CPPFLAGS=\"" + prefixPath + "opt/openssl@3/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/openssl@3/lib/pkgconfig\"\n\n"
+	addZSHRC(zshrcAppend)
 	ldBar.Stop()
 }
 
@@ -448,7 +462,7 @@ func macDependency() {
 		"export LDFLAGS=\"" + prefixPath + "opt/icu4c/lib\"\n" +
 		"export CPPFLAGS=\"" + prefixPath + "opt/icu4c/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/icu4c/lib/pkgconfig\"\n\n"
-	openZSHRC(zshrcAppend)
+	addZSHRC(zshrcAppend)
 	ldBar.Stop()
 }
 
@@ -485,7 +499,7 @@ func macDevToolCLI() {
 
 	zshrcAppend := "# DIRENV\n" +
 		"eval \"$(direnv hook zsh)\"\n\n"
-	openZSHRC(zshrcAppend)
+	addZSHRC(zshrcAppend)
 	ldBar.Stop()
 }
 
@@ -495,72 +509,74 @@ func macASDF() {
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
 	ldBar.Start()
 
-	brewASDF := exec.Command(cmdPMS, cmdIn, cmdASDF)
+	fmt.Println(cmdPMS)
+	brewASDF := exec.Command(cmdPMS, cmdIn, "asdf")
 	brewASDF.Run()
 
 	zshrcAppend := "# ASDF VM\n" +
-		"source " + prefixPath + "opt/asdf/libexec/asdf.sh\n\n"
-	openZSHRC(zshrcAppend)
+		"source " + prefixPath + "/opt/asdf/libexec/asdf.sh\n\n"
+	addZSHRC(zshrcAppend)
 
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/perl"); errors.Is(err, os.ErrNotExist) {
+	pluginPath := homeDir() + ".asdf/plugins/"
+	if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
 		addASDFPerl := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "perl")
 		addASDFPerl.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/ruby"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "ruby"); errors.Is(err, os.ErrNotExist) {
 		addASDFRuby := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "ruby")
 		addASDFRuby.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/python"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "python"); errors.Is(err, os.ErrNotExist) {
 		addASDFPython := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "python")
 		addASDFPython.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/lua"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "lua"); errors.Is(err, os.ErrNotExist) {
 		addASDFLua := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "lua")
 		addASDFLua.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/golang"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "golang"); errors.Is(err, os.ErrNotExist) {
 		addASDFGo := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "golang")
 		addingASDFGo, err := addASDFGo.Output()
 		checkError(err)
 		fmt.Sprintf(string(addingASDFGo))
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/rust"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
 		addASDFRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
 		addASDFRust.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/nodejs"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "nodejs"); errors.Is(err, os.ErrNotExist) {
 		addASDFNode := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "nodejs")
 		addASDFNode.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/php"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "php"); errors.Is(err, os.ErrNotExist) {
 		addASDFPHP := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "php")
 		addASDFPHP.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/java"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "java"); errors.Is(err, os.ErrNotExist) {
 		addASDFJava := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "java")
 		addASDFJava.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/groovy"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "groovy"); errors.Is(err, os.ErrNotExist) {
 		addASDFGroovy := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "groovy")
 		addASDFGroovy.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/kotlin"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "kotlin"); errors.Is(err, os.ErrNotExist) {
 		addASDFKotlin := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "kotlin")
 		addASDFKotlin.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/scala"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "scala"); errors.Is(err, os.ErrNotExist) {
 		addASDFScala := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "scala")
 		addASDFScala.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/clojure"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "clojure"); errors.Is(err, os.ErrNotExist) {
 		addASDFClojure := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "clojure")
 		addASDFClojure.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/erlang"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "erlang"); errors.Is(err, os.ErrNotExist) {
 		addASDFErlang := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "erlang")
 		addASDFErlang.Run()
 	}
-	if _, err := os.Stat(homeDir() + ".asdf/plugins/elixir"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(pluginPath + "elixir"); errors.Is(err, os.ErrNotExist) {
 		addASDFElixir := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "elixir")
 		addASDFElixir.Run()
 	}
@@ -591,7 +607,7 @@ func macServer() {
 		"export LDFLAGS=\"" + prefixPath + "opt/sqlite/lib\"\n" +
 		"export CPPFLAGS=\"" + prefixPath + "opt/sqlite/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/sqlite/lib/pkgconfig\"\n\n"
-	openZSHRC(zshrcAppend)
+	addZSHRC(zshrcAppend)
 	ldBar.Stop()
 }
 
@@ -656,7 +672,7 @@ func macLanguage() {
 		"export PATH=$PATH:$ANDROID_HOME/tools\n" +
 		"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
 		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
-	openZSHRC(zshrcAppend)
+	addZSHRC(zshrcAppend)
 	ldBar.Stop()
 }
 
@@ -681,16 +697,16 @@ func macUtility() {
 
 func macEnd() {
 	zshrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
-	openZSHRC(zshrcAppend)
+	addZSHRC(zshrcAppend)
 	fmt.Println("\n----------Finished!----------\n" +
 		"Please RESTART your terminal!\n" +
-		lstDot + "Enter this on terminal: source ~/.zshrc\n" +
+		lstDot + "Enter this on terminal: source ~/.zprofile ~/.zshrc\n" +
 		lstDot + "Or restart the Terminal.app by yourself.\n")
 }
 
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
-	if checkOnline() == true {
+	if checkNetStatus() == true {
 		macBrew()
 		macGit()
 		macTerminal()
