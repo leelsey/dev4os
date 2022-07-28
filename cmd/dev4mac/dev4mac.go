@@ -10,20 +10,19 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"time"
 )
 
 var (
 	appVer      = "0.1"
-	Git4setV    = "Git4set-0.1"
 	lstDot      = " • "
 	shrcPath    = homeDir() + ".zshrc"
 	profilePath = homeDir() + ".zprofile"
-	prefixPath  = brewPrefix()
-	dlDir       = homeDir() + "Downloads/"
 	arm64Path   = "/opt/homebrew/"
 	amd64Path   = "/usr/local/"
+	brewPrefix  = cehckBrewPrefix()
 	cmdPMS      = checkBrewPath()
 	cmdIn       = "install"
 	cmdReIn     = "reinstall"
@@ -31,16 +30,13 @@ var (
 	cmdASDF     = checkASDFPath()
 	asdfPlugin  = "plugin"
 	asdfAdd     = "add"
-	asdfReshim  = "reshim"
+	asdfShim    = "reshim"
 	cmdOpt      string
-	userName    string
-	userEmail   string
 )
 
 func checkError(err error) bool {
 	if err != nil {
 		fmt.Println(err.Error())
-		log.Fatal(err)
 		os.Exit(0)
 	}
 	return err != nil
@@ -64,6 +60,14 @@ func checkBrewPath() string {
 		return amd64Path + "bin/brew"
 	}
 	return arm64Path + "bin/brew"
+}
+
+func cehckBrewPrefix() string {
+	switch runtime.GOARCH {
+	case "amd64":
+		return amd64Path
+	}
+	return arm64Path
 }
 
 func checkASDFPath() string {
@@ -98,33 +102,59 @@ func workingDir() string {
 	return workingDirPath + "/"
 }
 
-func brewPrefix() string {
-	switch runtime.GOARCH {
-	case "amd64":
-		return amd64Path
-	}
-	return arm64Path
+func currentUser() string {
+	user, err := user.Current()
+	checkError(err)
+	return user.Username
 }
 
-func newZSHRC() {
-	zshrcFile, err := os.OpenFile(shrcPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+func generateFile(filePath, fileContents string) {
+	profileFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	checkError(err)
+	defer profileFile.Close()
+	_, err = profileFile.Write([]byte(fileContents))
+	checkError(err)
+}
+
+func appendFile(filePath, fileContents string) {
+	zshrcFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
 	checkError(err)
 	defer zshrcFile.Close()
+	_, err = zshrcFile.Write([]byte(fileContents))
+	checkError(err)
+}
+
+func newZProfile() {
+	//profileFile, err := os.OpenFile(profilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	//checkError(err)
+	//defer profileFile.Close()
+	profileInitial := "# " + currentUser() + "’s profile\n\n" +
+		"# ZSH\n" +
+		"export SHELL=zsh\n"
+	generateFile(profilePath, profileInitial)
+	//_, err = profileFile.Write([]byte(profileInitial))
+	//checkError(err)
+}
+
+func newZshRC() {
+	//zshrcFile, err := os.OpenFile(shrcPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	//checkError(err)
+	//defer zshrcFile.Close()
 	zshrcInitial := "#   _________  _   _ ____   ____    __  __    _    ___ _   _\n" +
 		"#  |__  / ___|| | | |  _ \\ / ___|  |  \\/  |  / \\  |_ _| \\ | |\n" +
 		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
 		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
 		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n"
-	_, err = zshrcFile.Write([]byte(zshrcInitial))
-	checkError(err)
+	generateFile(shrcPath, zshrcInitial)
+	//_, err = zshrcFile.Write([]byte(zshrcInitial))
+	//checkError(err)
 }
 
-func addZSHRC(zshrcAppend string) {
-	zshrcFile, err := os.OpenFile(shrcPath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
-	checkError(err)
-	defer zshrcFile.Close()
-	_, err = zshrcFile.Write([]byte(zshrcAppend))
-	checkError(err)
+func rmFile(filePath string) {
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		err := os.Remove(filePath)
+		checkError(err)
+	}
 }
 
 func confA4s() {
@@ -154,13 +184,10 @@ func confA4s() {
 
 	installA4s := exec.Command("sh", dlA4sPath)
 	if err := installA4s.Run(); err != nil {
+		rmFile(dlA4sPath)
 		checkError(err)
 	}
-
-	if _, err := os.Stat(dlA4sPath); !os.IsNotExist(err) {
-		err := os.Remove(dlA4sPath)
-		checkError(err)
-	}
+	rmFile(dlA4sPath)
 }
 
 func confG4s() {
@@ -261,38 +288,20 @@ func installBrew() {
 	installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
 	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
 	if err := installHomebrew.Run(); err != nil {
+		rmFile(dlBrewPath)
 		checkError(err)
 	}
+	rmFile(dlBrewPath)
 
-	if _, err := os.Stat(dlBrewPath); !os.IsNotExist(err) {
-		err := os.Remove(dlBrewPath)
-		checkError(err)
-	}
-
-	if checkBrewExists() == true {
-		confA4s()
-
-		profileFile, err := os.OpenFile(profilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
-		checkError(err)
-		defer profileFile.Close()
-		profileInitial := "# ZSH\n" +
-			"export SHELL=zsh\n\n" +
-			"# Alias4sh\n" +
-			"source ~/.config/alias4sh/aliasrc\n\n" +
-			"# HOMEBREW\n" +
-			"eval \"$(" + cmdPMS + " shellenv)\"\n\n"
-		_, err = profileFile.Write([]byte(profileInitial))
-		checkError(err)
-
-		updateBrew()
-	} else {
-		fmt.Println(lstDot + "Brew install failed, please check your system\n")
+	if checkBrewExists() == false {
+		fmt.Println("Brew install failed, please check your system\n")
 		os.Exit(0)
 	}
 }
 
-func macBrew() {
-	if checkBrewExists() == true {
+func macBegin() {
+	switch {
+	case checkBrewExists() == true:
 		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 		ldBar.Suffix = " Updating homebrew..."
 		ldBar.FinalMSG = " - Updated brew!\n"
@@ -300,7 +309,8 @@ func macBrew() {
 
 		updateBrew()
 		ldBar.Stop()
-	} else {
+	case checkBrewExists() == false:
+		fmt.Println(" - Check root permission (sudo) for install the Homebrew")
 		sudoPW := exec.Command("sudo", "whoami")
 		sudoPW.Env = os.Environ()
 		sudoPW.Stdin = os.Stdin
@@ -313,10 +323,11 @@ func macBrew() {
 		} else if string(whoAmI) == "root\n" {
 			ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 			ldBar.Suffix = " Installing homebrew..."
-			ldBar.FinalMSG = " - Installed brew!\n"
+			ldBar.FinalMSG = " - Installed and updated brew!\n"
 			ldBar.Start()
 
 			installBrew()
+			updateBrew()
 			ldBar.Stop()
 		} else {
 			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
@@ -325,6 +336,24 @@ func macBrew() {
 			os.Exit(0)
 		}
 	}
+}
+
+func macEnv() {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Setting basic environment..."
+	ldBar.FinalMSG = " - Completed environment!\n"
+	ldBar.Start()
+
+	confA4s()
+	newZProfile()
+	newZshRC()
+
+	profileAppend := "# Alias4sh\n" +
+		"source ~/.config/alias4sh/aliasrc\n" +
+		"# HOMEBREW\n" +
+		"eval \"$(" + cmdPMS + " shellenv)\"\n"
+	appendFile(profilePath, profileAppend)
+	ldBar.Stop()
 }
 
 func macGit() {
@@ -363,27 +392,26 @@ func macTerminal() {
 	brewTree.Run()
 	brewZshTheme.Run()
 
-	newZSHRC()
-	zshrcAppend :=
+	shrcAppend :=
 		"# ZSH SYNTAX HIGHTLIGHTING\n" +
-			"source " + prefixPath + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
+			"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
 			"# ZSH AUTOSUGGESTIONS\n" +
-			"source " + prefixPath + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-			"# POWERLEVEL10K" +
-			"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
-			"source " + prefixPath + "/opt/powerlevel10k/powerlevel10k.zsh-theme\n\n" +
+			"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+			"# POWERLEVEL10K\n" +
+			"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n" +
+			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n\n" +
 			"# NCURSES\n" +
-			"export PATH=\"" + prefixPath + "opt/ncurses/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + prefixPath + "opt/ncurses/lib\"\n" +
-			"export CPPFLAGS=\"" + prefixPath + "opt/ncurses/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/ncurses/lib/pkgconfig\"\n\n" +
+			"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n" +
 			"" +
 			"# OPENSSL\n" +
-			"export PATH=\"" + prefixPath + "opt/openssl@3/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + prefixPath + "opt/openssl@3/lib\"\n" +
-			"export CPPFLAGS=\"" + prefixPath + "opt/openssl@3/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/openssl@3/lib/pkgconfig\"\n\n"
-	addZSHRC(zshrcAppend)
+			"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/openssl@3/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/openssl@3/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@3/lib/pkgconfig\"\n\n"
+	appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
 
@@ -451,43 +479,43 @@ func macDependency() {
 	brewGhostscript.Run()
 	ldBar.Stop()
 
-	zshrcAppend := "# KRB5\n" +
-		"export PATH=\"" + prefixPath + "opt/krb5/bin:$PATH\"\n" +
-		"export PATH=\"" + prefixPath + "opt/krb5/sbin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/krb5/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/krb5/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/krb5/lib/pkgconfig\"\n\n" +
+	shrcAppend := "# KRB5\n" +
+		"export PATH=\"" + brewPrefix + "opt/krb5/bin:$PATH\"\n" +
+		"export PATH=\"" + brewPrefix + "opt/krb5/sbin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/krb5/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/krb5/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/krb5/lib/pkgconfig\"\n\n" +
 		"# CURL\n" +
-		"export PATH=\"" + prefixPath + "opt/curl/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/curl/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/curl/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/curl/lib/pkgconfig\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n" +
 		"# BZIP2\n" +
-		"export PATH=\"" + prefixPath + "opt/bzip2/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/bzip2/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/bzip2/include\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/bzip2/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/bzip2/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/bzip2/include\"\n\n" +
 		"# ZLIB\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/zlib/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/zlib/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/zlib/lib/pkgconfig\"\n\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n" +
 		"# GNU GETOPT\n" +
-		"export PATH=\"" + prefixPath + "opt/gnu-getopt/bin:$PATH\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/gnu-getopt/bin:$PATH\"\n\n" +
 		"# COREUTILS\n" +
-		"export PATH=\"" + prefixPath + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
 		"# BISON\n" +
-		"export PATH=\"" + prefixPath + "opt/bison/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/bison/lib\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/bison/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/bison/lib\"\n\n" +
 		"# LIBICONV\n" +
-		"export PATH=\"" + prefixPath + "opt/libiconv/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/libiconv/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/libiconv/include\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/libiconv/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/libiconv/include\"\n\n" +
 		"# ICU4C\n" +
-		"export PATH=\"" + prefixPath + "opt/icu4c/bin:$PATH\"\n" +
-		"export PATH=\"" + prefixPath + "opt/icu4c/sbin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/icu4c/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/icu4c/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/icu4c/lib/pkgconfig\"\n\n"
-	addZSHRC(zshrcAppend)
+		"export PATH=\"" + brewPrefix + "opt/icu4c/bin:$PATH\"\n" +
+		"export PATH=\"" + brewPrefix + "opt/icu4c/sbin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/icu4c/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n"
+	appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
 
@@ -522,9 +550,9 @@ func macDevToolCLI() {
 	brewBat.Run()
 	brewGH.Run()
 
-	zshrcAppend := "# DIRENV\n" +
+	shrcAppend := "# DIRENV\n" +
 		"eval \"$(direnv hook zsh)\"\n\n"
-	addZSHRC(zshrcAppend)
+	appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
 
@@ -534,13 +562,12 @@ func macASDF() {
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
 	ldBar.Start()
 
-	fmt.Println(cmdPMS)
 	brewASDF := exec.Command(cmdPMS, cmdIn, "asdf")
 	brewASDF.Run()
 
-	zshrcAppend := "# ASDF VM\n" +
-		"source " + prefixPath + "/opt/asdf/libexec/asdf.sh\n\n"
-	addZSHRC(zshrcAppend)
+	shrcAppend := "# ASDF VM\n" +
+		"source " + brewPrefix + "/opt/asdf/libexec/asdf.sh\n\n"
+	appendFile(shrcPath, shrcAppend)
 
 	pluginPath := homeDir() + ".asdf/plugins/"
 	if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
@@ -561,9 +588,7 @@ func macASDF() {
 	}
 	if _, err := os.Stat(pluginPath + "golang"); errors.Is(err, os.ErrNotExist) {
 		addASDFGo := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "golang")
-		addingASDFGo, err := addASDFGo.Output()
-		checkError(err)
-		fmt.Sprintf(string(addingASDFGo))
+		addASDFGo.Run()
 	}
 	if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
 		addASDFRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
@@ -605,6 +630,8 @@ func macASDF() {
 		addASDFElixir := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "elixir")
 		addASDFElixir.Run()
 	}
+	asdfReshim := exec.Command(cmdASDF, asdfShim)
+	asdfReshim.Run()
 	ldBar.Stop()
 }
 
@@ -627,12 +654,12 @@ func macServer() {
 	brewMySQL.Run()
 	brewRedis.Run()
 
-	zshrcAppend := "# SQLITE3\n" +
-		"export PATH=\"" + prefixPath + "opt/sqlite/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/sqlite/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/sqlite/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/sqlite/lib/pkgconfig\"\n\n"
-	addZSHRC(zshrcAppend)
+	shrcAppend := "# SQLITE3\n" +
+		"export PATH=\"" + brewPrefix + "opt/sqlite/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/sqlite/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/sqlite/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/sqlite/lib/pkgconfig\"\n\n"
+	appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
 
@@ -681,14 +708,14 @@ func macLanguage() {
 	brewErlang.Run()
 	brewElixir.Run()
 
-	zshrcAppend := "# JAVA\n" +
-		"export PATH=\"" + prefixPath + "opt/openjdk/bin:$PATH\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/openjdk/include\"\n\n" +
+	shrcAppend := "# JAVA\n" +
+		"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n" +
 		"# RUBY\n" +
-		"export PATH=\"" + prefixPath + "opt/ruby/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + prefixPath + "opt/ruby/lib\"\n" +
-		"export CPPFLAGS=\"" + prefixPath + "opt/ruby/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + prefixPath + "opt/ruby/lib/pkgconfig\"\n\n" +
+		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n" +
 		"# PYTHON\n" +
 		"# brew link --overwrite python@[version]\n\n" +
 		"# ANDROID STUDIO\n" +
@@ -697,7 +724,7 @@ func macLanguage() {
 		"export PATH=$PATH:$ANDROID_HOME/tools\n" +
 		"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
 		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
-	addZSHRC(zshrcAppend)
+	appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
 
@@ -721,18 +748,15 @@ func macUtility() {
 }
 
 func macEnd() {
-	zshrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
-	addZSHRC(zshrcAppend)
-	fmt.Println("\n----------Finished!----------\n" +
-		"Please RESTART your terminal!\n" +
-		lstDot + "Enter this on terminal: source ~/.zprofile ~/.zshrc\n" +
-		lstDot + "Or restart the Terminal.app by yourself.\n")
+	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
+	appendFile(shrcPath, shrcAppend)
 }
 
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
 	if checkNetStatus() == true {
-		macBrew()
+		macBegin()
+		macEnv()
 		macGit()
 		macTerminal()
 		macDependency()
@@ -741,6 +765,7 @@ func main() {
 		macServer()
 		macLanguage()
 		macUtility()
+		macEnd()
 		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
 			"\t1. Setup zsh theme & Configure git global\n" +
 			"\t2. Only setup zsh theme that minimal type\n" +
@@ -762,9 +787,12 @@ func main() {
 				fmt.Println("Wrong answer. Please choose number 0-3")
 				goto endOpt
 			}
-			macEnd()
 			break
 		}
+		fmt.Println("\n----------Finished!----------\n" +
+			"Please RESTART your terminal!\n" +
+			lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
+			lstDot + "Or restart the Terminal.app by yourself.\n")
 	} else {
 		fmt.Println(lstDot + "Please check your internet connection and try again.\n")
 	}
