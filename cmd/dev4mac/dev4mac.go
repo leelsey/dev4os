@@ -21,7 +21,7 @@ var (
 	profilePath = homeDir() + ".zprofile"
 	arm64Path   = "/opt/homebrew/"
 	amd64Path   = "/usr/local/"
-	brewPrefix  = cehckBrewPrefix()
+	brewPrefix  = checkBrewPrefix()
 	cmdPMS      = checkBrewPath()
 	cmdIn       = "install"
 	//cmdReIn     = "reinstall"
@@ -61,7 +61,7 @@ func checkBrewPath() string {
 	return arm64Path + "bin/brew"
 }
 
-func cehckBrewPrefix() string {
+func checkBrewPrefix() string {
 	switch runtime.GOARCH {
 	case "amd64":
 		return amd64Path
