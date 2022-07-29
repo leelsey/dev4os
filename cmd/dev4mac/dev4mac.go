@@ -42,7 +42,6 @@ func checkError(err error) bool {
 }
 
 func checkNetStatus() bool {
-	//getTimeout := time.Duration(10000 * time.Millisecond)
 	getTimeout := 10000 * time.Millisecond
 	client := http.Client{
 		Timeout: getTimeout,
@@ -80,11 +79,8 @@ func checkASDFPath() string {
 }
 
 func checkBrewExists() bool {
-	//if _, err := os.Stat("/opt/homebrew/bin/brew"); !os.IsNotExist(err) {
 	if _, err := os.Stat(cmdPMS); !os.IsNotExist(err) {
 		return true
-		//} else if _, err := os.Stat("/usr/local/bin/brew"); !os.IsNotExist(err) {
-		//	return true
 	} else {
 		return false
 	}
@@ -111,7 +107,6 @@ func currentUser() string {
 func generateFile(filePath, fileContents string) {
 	aimFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
 	checkError(err)
-	//defer aimFile.Close()
 	defer func() {
 		err := aimFile.Close()
 		checkError(err)
@@ -161,7 +156,6 @@ func confA4s() {
 		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/leelsey/Alias4sh\n")
 		os.Exit(0)
 	}
-	//defer resp.Body.Close()
 	defer func() {
 		err := resp.Body.Close()
 		checkError(err)
@@ -170,12 +164,10 @@ func confA4s() {
 
 	a4sInstaller, err := os.OpenFile(dlA4sPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
 	checkError(err)
-	//defer a4sInstaller.Close()
 	defer func() {
 		err := a4sInstaller.Close()
 		checkError(err)
 	}()
-	//_, err = a4sInstaller.Write([]byte(rawFile))
 	_, err = a4sInstaller.Write(rawFile)
 	checkError(err)
 
@@ -205,16 +197,16 @@ func confG4s() {
 	consoleReader.Scan()
 	userEmail := consoleReader.Text()
 
-	unsetUserName := exec.Command("git", "config", "--unset", "--global", "user.name")
-	unsetUserEmail := exec.Command("git", "config", "--unset", "--global", "user.email")
+	//unsetUserName := exec.Command("git", "config", "--unset", "--global", "user.name")
+	//unsetUserEmail := exec.Command("git", "config", "--unset", "--global", "user.email")
 	setUserName := exec.Command("git", "config", "--global", "user.name", userName)
 	setUserEmail := exec.Command("git", "config", "--global", "user.email", userEmail)
-	if err := unsetUserName.Run(); err != nil {
-		checkError(err)
-	}
-	if err := unsetUserEmail.Run(); err != nil {
-		checkError(err)
-	}
+	//if err := unsetUserName.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := unsetUserEmail.Run(); err != nil {
+	//	checkError(err)
+	//}
 	if err := setUserName.Run(); err != nil {
 		checkError(err)
 	}
@@ -234,7 +226,6 @@ func confG4s() {
 		fmt.Println(lstDot + "Git Ignore sample URL is maybe changed, please check https://github.com/leelsey/Git4set\n")
 		os.Exit(0)
 	}
-	//defer resp.Body.Close()
 	defer func() {
 		err := resp.Body.Close()
 		checkError(err)
@@ -243,21 +234,20 @@ func confG4s() {
 
 	gitIgnore, err := os.OpenFile(ignorePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
 	checkError(err)
-	//defer gitIgnore.Close()
 	defer func() {
 		err := gitIgnore.Close()
 		checkError(err)
 	}()
-	//_, err = gitIgnore.Write([]byte(rawFile))
 	_, err = gitIgnore.Write(rawFile)
 	checkError(err)
 
-	unsetExcludesFile := exec.Command("git", "config", "--unset", "--global", "core.excludesfile")
-	setExcludesFile := exec.Command("git", "config", "--unset", "core.excludesfile", ignorePath)
-	if err := unsetExcludesFile.Run(); err != nil {
-		checkError(err)
-	}
+	//unsetExcludesFile := exec.Command("git", "config", "--unset", "--global", "core.excludesfile")
+	setExcludesFile := exec.Command("git", "config", "--global", "core.excludesfile", ignorePath)
+	//if err := unsetExcludesFile.Run(); err != nil {
+	//	checkError(err)
+	//}
 	if err := setExcludesFile.Run(); err != nil {
+		fmt.Println("error2")
 		checkError(err)
 	}
 
@@ -271,7 +261,6 @@ func confZshTheme() {
 		fmt.Println(lstDot + "Dev4os's p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
 		os.Exit(0)
 	}
-	//defer resp.Body.Close()
 	defer func() {
 		err := resp.Body.Close()
 		checkError(err)
@@ -280,12 +269,10 @@ func confZshTheme() {
 
 	p10kConf, err := os.OpenFile(dlP10kPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
-	//defer p10kConf.Close()
 	defer func() {
 		err := p10kConf.Close()
 		checkError(err)
 	}()
-	//_, err = p10kConf.Write([]byte(rawFile))
 	_, err = p10kConf.Write(rawFile)
 	checkError(err)
 }
@@ -309,7 +296,6 @@ func installBrew() {
 		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/Homebrew/install\n")
 		os.Exit(0)
 	}
-	//defer resp.Body.Close()
 	defer func() {
 		err := resp.Body.Close()
 		checkError(err)
@@ -318,12 +304,10 @@ func installBrew() {
 
 	brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
 	checkError(err)
-	//defer brewInstaller.Close()
 	defer func() {
 		err := brewInstaller.Close()
 		checkError(err)
 	}()
-	//_, err = brewInstaller.Write([]byte(rawFile))
 	_, err = brewInstaller.Write(rawFile)
 	checkError(err)
 
@@ -1009,7 +993,6 @@ func main() {
 	endOpt:
 		for {
 			fmt.Printf("Select command: ")
-			//fmt.Scanln(&cmdOpt)
 			_, err := fmt.Scanln(&cmdOpt)
 			checkError(err)
 			if cmdOpt == "1" {
