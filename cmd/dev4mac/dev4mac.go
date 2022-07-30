@@ -104,33 +104,40 @@ func currentUser() string {
 	return userName.Username
 }
 
-func generateFile(filePath, fileContents string) {
-	aimFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+func makeFile(filePath, fileContents string) {
+	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
 	checkError(err)
 	defer func() {
-		err := aimFile.Close()
+		err := targetFile.Close()
 		checkError(err)
 	}()
-	_, err = aimFile.Write([]byte(fileContents))
+	_, err = targetFile.Write([]byte(fileContents))
 	checkError(err)
 }
 
 func appendFile(filePath, fileContents string) {
-	aimFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
+	targetFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
 	checkError(err)
 	defer func() {
-		err := aimFile.Close()
+		err := targetFile.Close()
 		checkError(err)
 	}()
-	_, err = aimFile.Write([]byte(fileContents))
+	_, err = targetFile.Write([]byte(fileContents))
 	checkError(err)
+}
+
+func rmFile(filePath string) {
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		err := os.Remove(filePath)
+		checkError(err)
+	}
 }
 
 func newZProfile() {
 	fileContents := "# " + currentUser() + "’s profile\n\n" +
 		"# ZSH\n" +
 		"export SHELL=zsh\n"
-	generateFile(profilePath, fileContents)
+	makeFile(profilePath, fileContents)
 }
 
 func newZshRC() {
@@ -139,14 +146,7 @@ func newZshRC() {
 		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
 		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
 		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n"
-	generateFile(shrcPath, fileContents)
-}
-
-func rmFile(filePath string) {
-	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
-		err := os.Remove(filePath)
-		checkError(err)
-	}
+	makeFile(shrcPath, fileContents)
 }
 
 func confA4s() {
