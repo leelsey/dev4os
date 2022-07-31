@@ -197,16 +197,8 @@ func confG4s() {
 	consoleReader.Scan()
 	userEmail := consoleReader.Text()
 
-	//unsetUserName := exec.Command("git", "config", "--unset", "--global", "user.name")
-	//unsetUserEmail := exec.Command("git", "config", "--unset", "--global", "user.email")
 	setUserName := exec.Command("git", "config", "--global", "user.name", userName)
 	setUserEmail := exec.Command("git", "config", "--global", "user.email", userEmail)
-	//if err := unsetUserName.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := unsetUserEmail.Run(); err != nil {
-	//	checkError(err)
-	//}
 	if err := setUserName.Run(); err != nil {
 		checkError(err)
 	}
@@ -241,11 +233,7 @@ func confG4s() {
 	_, err = gitIgnore.Write(rawFile)
 	checkError(err)
 
-	//unsetExcludesFile := exec.Command("git", "config", "--unset", "--global", "core.excludesfile")
 	setExcludesFile := exec.Command("git", "config", "--global", "core.excludesfile", ignorePath)
-	//if err := unsetExcludesFile.Run(); err != nil {
-	//	checkError(err)
-	//}
 	if err := setExcludesFile.Run(); err != nil {
 		fmt.Println("error2")
 		checkError(err)
