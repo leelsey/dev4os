@@ -26,6 +26,7 @@ var (
 	cmdIn       = "install"
 	//cmdReIn     = "reinstall"
 	//cmdRm       = "remove"
+	cmdGit     = "git"
 	cmdASDF    = checkASDFPath()
 	asdfPlugin = "plugin"
 	asdfAdd    = "add"
@@ -183,7 +184,7 @@ func confG4s() {
 	fmt.Println("\nGit global configuration")
 
 	fmt.Println(" 1) Main branch default name changed master -> main")
-	setBranchMain := exec.Command("git", "config", "--global", "init.defaultBranch", "main")
+	setBranchMain := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
 	if err := setBranchMain.Run(); err != nil {
 		checkError(err)
 	}
@@ -197,8 +198,8 @@ func confG4s() {
 	consoleReader.Scan()
 	userEmail := consoleReader.Text()
 
-	setUserName := exec.Command("git", "config", "--global", "user.name", userName)
-	setUserEmail := exec.Command("git", "config", "--global", "user.email", userEmail)
+	setUserName := exec.Command(cmdGit, "config", "--global", "user.name", userName)
+	setUserEmail := exec.Command(cmdGit, "config", "--global", "user.email", userEmail)
 	if err := setUserName.Run(); err != nil {
 		checkError(err)
 	}
@@ -233,7 +234,7 @@ func confG4s() {
 	_, err = gitIgnore.Write(rawFile)
 	checkError(err)
 
-	setExcludesFile := exec.Command("git", "config", "--global", "core.excludesfile", ignorePath)
+	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
 	if err := setExcludesFile.Run(); err != nil {
 		fmt.Println("error2")
 		checkError(err)
@@ -376,7 +377,7 @@ func macGit() {
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	brewGit := exec.Command(cmdPMS, cmdIn, "git")
+	brewGit := exec.Command(cmdPMS, cmdIn, cmdGit)
 	brewGitLfs := exec.Command(cmdPMS, cmdIn, "git-lfs")
 	if err := brewGit.Run(); err != nil {
 		checkError(err)
