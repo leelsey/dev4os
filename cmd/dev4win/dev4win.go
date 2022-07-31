@@ -23,7 +23,7 @@ var (
 	cmdIn  = "install"
 	//cmdRein  = "reinstall"
 	//cmdRm    = "uninstall"
-	cmdY   = "-y"
+	cmdYes = "-y"
 	cmdGit = "C:\\'Program Files'\\git\\bin\\git.exe"
 	cmdOpt string
 )
@@ -149,7 +149,7 @@ func confG4s() {
 }
 
 func updateChoco() {
-	updateChocolatey := exec.Command(cmdPMS, "upgrade", cmdY, "all")
+	updateChocolatey := exec.Command(cmdPMS, "upgrade", cmdYes, "all")
 	if err := updateChocolatey.Run(); err != nil {
 		checkError(err)
 	}
@@ -189,8 +189,8 @@ func winGit() {
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	installGit := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "git")
-	installGitLfs := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "git-lfs")
+	installGit := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "git")
+	installGitLfs := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "git-lfs")
 
 	if err := installGit.Run(); err != nil {
 		checkError(err)
@@ -207,15 +207,15 @@ func winDependency() {
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
-	installSSL := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "openssl")
-	installGnuPG := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "gnupg")
-	installcURL := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "curl")
-	installWget := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "wget")
-	installGzip := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "gzip")
-	installBzip2 := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "bzip2")
-	installCoreUtils := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "gnuwin32-coreutils.install")
-	installRe2C := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "re2c")
-	installGhostscript := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "ghostscript")
+	installSSL := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "openssl")
+	installGnuPG := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "gnupg")
+	installcURL := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "curl")
+	installWget := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "wget")
+	installGzip := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "gzip")
+	installBzip2 := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "bzip2")
+	installCoreUtils := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "gnuwin32-coreutils.install")
+	installRe2C := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "re2c")
+	installGhostscript := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "ghostscript")
 
 	if err := installSSL.Run(); err != nil {
 		checkError(err)
@@ -253,18 +253,18 @@ func winDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	installGawk := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "gawk")
-	installJQ := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "jq")
-	installWatchman := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "watchman")
-	installQEMU := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "qemu")
-	installCcache := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "ccache")
-	installMake := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "make")
-	installVim := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "vim")
-	installBat := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "bat")
-	installGH := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "gh")
-	installPS := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "powershell")
-	installCygwin := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "cygwin")
-	installVS := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "visualstudio2022community")
+	installGawk := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "gawk")
+	installJQ := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "jq")
+	installWatchman := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "watchman")
+	installQEMU := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "qemu")
+	installCcache := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "ccache")
+	installMake := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "make")
+	installVim := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "vim")
+	installBat := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "bat")
+	installGH := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "gh")
+	installPS := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "powershell")
+	installCygwin := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "cygwin")
+	installVS := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "visualstudio2022community")
 
 	if err := installGawk.Run(); err != nil {
 		checkError(err)
@@ -311,11 +311,11 @@ func winServer() {
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
-	installHTTPD := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "apache-httpd")
-	installTomcat := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "tomcat")
-	installSQLite := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "sqlite")
-	installPostgreSQL := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "postgresql")
-	installMySQL := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "mysql")
+	installHTTPD := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "apache-httpd")
+	installTomcat := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "tomcat")
+	installSQLite := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "sqlite")
+	installPostgreSQL := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "postgresql")
+	installMySQL := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "mysql")
 
 	if err := installHTTPD.Run(); err != nil {
 		checkError(err)
@@ -341,23 +341,23 @@ func winLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
-	installGCC := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "mingw")
-	installLLVM := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "llvm")
-	installNuGet := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "nuget.commandline")
-	installPerl := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "strawberryperl")
-	installRuby := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "ruby")
-	installPython := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "python")
-	installLua := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "lua")
-	installGo := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "go")
-	installRust := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "rust")
-	installNode := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "nodejs")
-	installPHP := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "php")
-	installJDK := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "openjdk")
-	installGroovy := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "groovy")
-	installScala := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "scala")
-	installClojure := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "clojure")
-	installErlang := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "erlang")
-	installElixir := exec.Command(pSh, cmdPMS, cmdIn, cmdY, "elixir")
+	installGCC := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "mingw")
+	installLLVM := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "llvm")
+	installNuGet := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "nuget.commandline")
+	installPerl := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "strawberryperl")
+	installRuby := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "ruby")
+	installPython := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "python")
+	installLua := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "lua")
+	installGo := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "go")
+	installRust := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "rust")
+	installNode := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "nodejs")
+	installPHP := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "php")
+	installJDK := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "openjdk")
+	installGroovy := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "groovy")
+	installScala := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "scala")
+	installClojure := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "clojure")
+	installErlang := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "erlang")
+	installElixir := exec.Command(pSh, cmdPMS, cmdIn, cmdYes, "elixir")
 
 	if err := installGCC.Run(); err != nil {
 		checkError(err)
