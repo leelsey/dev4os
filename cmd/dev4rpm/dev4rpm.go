@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"runtime"
 	"time"
 )
 
@@ -19,12 +18,10 @@ var (
 	lstDot      = " • "
 	shrcPath    = homeDir() + ".zshrc"
 	profilePath = homeDir() + ".zprofile"
-	arm64Path   = "/opt/homebrew/"
-	amd64Path   = "/usr/local/"
 	superUser   = "sudo"
 	cmdPMS      = "dnf"
-	cmdIn       = "install"
-	//cmdReIn     = "reinstall"
+	cmdIns      = "install"
+	//cmdReIns    = "reinstall"
 	//cmdRm       = "remove"
 	cmdYes    = "-y"
 	cmdSys    = "systemctl"
@@ -32,7 +29,8 @@ var (
 	//cmdDisable = "disable"
 	cmdStart   = "start"
 	cmdGit     = "git"
-	cmdASDF    = checkASDFPath()
+	gitClone   = "clone"
+	cmdASDF    = homeDir() + ".asdf/"
 	asdfPlugin = "plugin"
 	asdfAdd    = "add"
 	asdfShim   = "reshim"
@@ -58,15 +56,6 @@ func checkNetStatus() bool {
 		return false
 	}
 	return true
-}
-
-func checkASDFPath() string {
-	asdfPath := "opt/asdf/libexec/bin/asdf"
-	switch runtime.GOARCH {
-	case "amd64":
-		return amd64Path + asdfPath
-	}
-	return arm64Path + asdfPath
 }
 
 func homeDir() string {
@@ -136,7 +125,7 @@ func confA4s() {
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
 	if err != nil {
-		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/leelsey/Alias4sh\n")
+		fmt.Println(lstDot + "Alias4sh‘s URL is maybe changed, please check https://github.com/leelsey/Alias4sh\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -198,7 +187,7 @@ func confG4s() {
 	ignorePath := ignoreDir + "gitignore_global"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
 	if err != nil {
-		fmt.Println(lstDot + "Git Ignore sample URL is maybe changed, please check https://github.com/leelsey/Git4set\n")
+		fmt.Println(lstDot + "Git Ignore sample‘s URL is maybe changed, please check https://github.com/leelsey/Git4set\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -229,7 +218,7 @@ func confZshTheme() {
 	dlP10kPath := homeDir() + ".p10k.zsh"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Dev4os/main/cmd/dev4os/dev4p10k")
 	if err != nil {
-		fmt.Println(lstDot + "Dev4os's p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
+		fmt.Println(lstDot + "Dev4os‘s p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -249,19 +238,28 @@ func confZshTheme() {
 }
 
 func updateDNF() {
+	updatePMS := exec.Command(cmdPMS, "makecache", "--refresh")
+	installEpel := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "epel-release")
+	installPlugins := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "dnf-plugins-core")
 	updateLinux := exec.Command(superUser, cmdPMS, "update", cmdYes)
-	updatePlugin := exec.Command(superUser, cmdPMS, cmdIn, cmdYes, "dnf-plugins-core")
 
+	if err := updatePMS.Run(); err != nil {
+		checkError(err)
+	}
+	if err := installEpel.Run(); err != nil {
+		checkError(err)
+	}
+	if err := installPlugins.Run(); err != nil {
+		checkError(err)
+	}
 	if err := updateLinux.Run(); err != nil {
 		checkError(err)
 	}
-	if err := updatePlugin.Run(); err != nil {
-		checkError(err)
-	}
+
 }
 
 func secureConf() {
-	installFirewall := exec.Command(superUser, cmdPMS, cmdIn, cmdYes, "firewalld")
+	installFirewall := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "firewalld")
 	firewallOn := exec.Command(superUser, cmdSys, cmdEnable, "firewalld")
 	firewallStart := exec.Command(superUser, cmdSys, cmdStart, "firewalld")
 	if err := installFirewall.Run(); err != nil {
@@ -292,6 +290,22 @@ func linuxBegin() {
 	ldBar.Stop()
 }
 
+func linuxBasic() {
+	dnfNCurses := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ncurses")
+	dnfSSL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssl")
+	dnfSSH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssh")
+
+	if err := dnfNCurses.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfSSL.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfSSH.Run(); err != nil {
+		checkError(err)
+	}
+}
+
 func linuxEnv() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Setting basic environment..."
@@ -304,7 +318,7 @@ func linuxEnv() {
 
 	profileAppend := "# Alias4sh\n" +
 		"source ~/.config/alias4sh/aliasrc\n" +
-		"# HOMEBREW\n" +
+		"# HOMEdnf\n" +
 		"eval \"$(" + cmdPMS + " shellenv)\"\n"
 	appendFile(profilePath, profileAppend)
 	ldBar.Stop()
@@ -312,16 +326,16 @@ func linuxEnv() {
 
 func linuxGit() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing git..."
+	ldBar.Suffix = " s git..."
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	brewGit := exec.Command(cmdPMS, cmdIn, cmdGit)
-	brewGitLfs := exec.Command(cmdPMS, cmdIn, "git-lfs")
-	if err := brewGit.Run(); err != nil {
+	dnfGit := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, cmdGit)
+	dnfGitLfs := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "git-lfs")
+	if err := dnfGit.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGitLfs.Run(); err != nil {
+	if err := dnfGitLfs.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -333,36 +347,28 @@ func linuxTerminal() {
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
 
-	brewNCurses := exec.Command(cmdPMS, cmdIn, "ncurses")
-	brewSSL := exec.Command(cmdPMS, cmdIn, "openssl")
-	brewZsh := exec.Command(cmdPMS, cmdIn, "zsh")
-	brewZshSyntax := exec.Command(cmdPMS, cmdIn, "zsh-syntax-highlighting")
-	brewZshAuto := exec.Command(cmdPMS, cmdIn, "zsh-autosuggestions")
-	brewZshComp := exec.Command(cmdPMS, cmdIn, "zsh-completions")
-	brewTree := exec.Command(cmdPMS, cmdIn, "tree")
-	brewZshTheme := exec.Command(cmdPMS, cmdIn, "romkatv/powerlevel10k/powerlevel10k")
-	if err := brewNCurses.Run(); err != nil {
+	dnfZsh := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zsh")
+	dnfTree := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tree")
+	dnfZshSyntax := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-syntax-highlighting.git", "~/.zsh/zsh-syntax-highlighting")
+	dnfZshAuto := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-autosuggestions.git", "~/.zsh/zsh-autosuggestions")
+	dnfZshComp := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-completions.git", "~/.zsh/zsh-completions")
+	dnfZshTheme := exec.Command(cmdGit, gitClone, "https://github.com/romkatv/powerlevel10k.git", "~/.zsh/powerlevel10k")
+	if err := dnfZsh.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewSSL.Run(); err != nil {
+	if err := dnfTree.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZsh.Run(); err != nil {
+	if err := dnfZshSyntax.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZshSyntax.Run(); err != nil {
+	if err := dnfZshAuto.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZshAuto.Run(); err != nil {
+	if err := dnfZshComp.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZshComp.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTree.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewZshTheme.Run(); err != nil {
+	if err := dnfZshTheme.Run(); err != nil {
 		checkError(err)
 	}
 
@@ -375,116 +381,104 @@ func linuxDependency() {
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
-	brewKRB5 := exec.Command(cmdPMS, cmdIn, "krb5")
-	brewGnuPG := exec.Command(cmdPMS, cmdIn, "gnupg")
-	brewcURL := exec.Command(cmdPMS, cmdIn, "curl")
-	brewWget := exec.Command(cmdPMS, cmdIn, "wget")
-	brewXZ := exec.Command(cmdPMS, cmdIn, "xz")
-	brewGzip := exec.Command(cmdPMS, cmdIn, "gzip")
-	brewLibzip := exec.Command(cmdPMS, cmdIn, "libzip")
-	brewBzip2 := exec.Command(cmdPMS, cmdIn, "bzip2")
-	brewZLib := exec.Command(cmdPMS, cmdIn, "zlib")
-	brewPkgConfig := exec.Command(cmdPMS, cmdIn, "pkg-config")
-	brewReadLine := exec.Command(cmdPMS, cmdIn, "readline")
-	brewLibffi := exec.Command(cmdPMS, cmdIn, "libffi")
-	brewGuile := exec.Command(cmdPMS, cmdIn, "guile")
-	brewGnuGetOpt := exec.Command(cmdPMS, cmdIn, "gnu-getopt")
-	brewCoreUtils := exec.Command(cmdPMS, cmdIn, "coreutils")
-	brewBison := exec.Command(cmdPMS, cmdIn, "bison")
-	brewLibIconv := exec.Command(cmdPMS, cmdIn, "libiconv")
-	brewICU4C := exec.Command(cmdPMS, cmdIn, "icu4c")
-	brewRe2C := exec.Command(cmdPMS, cmdIn, "re2c")
-	brewGD := exec.Command(cmdPMS, cmdIn, "gd")
-	brewCaCert := exec.Command(cmdPMS, cmdIn, "ca-certificates")
-	brewLDNS := exec.Command(cmdPMS, cmdIn, "ldns")
-	brewHTMLXMLUtils := exec.Command(cmdPMS, cmdIn, "html-xml-utils")
-	brewXMLto := exec.Command(cmdPMS, cmdIn, "xmlto")
-	brewGMP := exec.Command(cmdPMS, cmdIn, "gmp")
-	brewLibSodium := exec.Command(cmdPMS, cmdIn, "libsodium")
-	brewImageMagick := exec.Command(cmdPMS, cmdIn, "imagemagick")
-	brewGhostscript := exec.Command(cmdPMS, cmdIn, "ghostscript")
-	if err := brewKRB5.Run(); err != nil {
+	dnfKRB5 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "krb5-workstation")
+	dnfGnuPG := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gnupg")
+	dnfcURL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "curl")
+	dnfWget := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "wget")
+	dnfXZ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xz")
+	dnfGzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "unzip")
+	dnfUnzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gzidp")
+	dnfLibzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libzip")
+	dnfBzip2 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bzip2")
+	dnfZLib := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zlib")
+	dnfPkgConfig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "pkg-config")
+	dnfReadLine := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline")
+	dnfLibffi := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi")
+	dnfUtilLinux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "util-linux")
+	dnfCoreUtils := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "coreutils")
+	dnfBison := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bison")
+	dnfRe2C := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "re2c")
+	dnfGD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gd")
+	dnfCaCert := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ca-certificates")
+	dnfLDNS := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ldns")
+	dnfXMLto := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xmlto")
+	dnfGMP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gmp")
+	dnfLibSodium := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libsodium")
+	dnfImageMagick := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ImageMagick")
+	dnfGhostscript := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ghostscript")
+	if err := dnfKRB5.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGnuPG.Run(); err != nil {
+	if err := dnfGnuPG.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewcURL.Run(); err != nil {
+	if err := dnfcURL.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewWget.Run(); err != nil {
+	if err := dnfWget.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewXZ.Run(); err != nil {
+	if err := dnfXZ.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGzip.Run(); err != nil {
+	if err := dnfUnzip.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewLibzip.Run(); err != nil {
+	if err := dnfGzip.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewBzip2.Run(); err != nil {
+	if err := dnfLibzip.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZLib.Run(); err != nil {
+	if err := dnfBzip2.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewPkgConfig.Run(); err != nil {
+	if err := dnfZLib.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewReadLine.Run(); err != nil {
+	if err := dnfPkgConfig.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewLibffi.Run(); err != nil {
+	if err := dnfReadLine.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGuile.Run(); err != nil {
+	if err := dnfLibffi.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGnuGetOpt.Run(); err != nil {
+	if err := dnfUtilLinux.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewCoreUtils.Run(); err != nil {
+	if err := dnfCoreUtils.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewBison.Run(); err != nil {
+	if err := dnfBison.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewLibIconv.Run(); err != nil {
+	if err := dnfRe2C.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewICU4C.Run(); err != nil {
+	if err := dnfGD.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewRe2C.Run(); err != nil {
+	if err := dnfCaCert.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGD.Run(); err != nil {
+	if err := dnfLDNS.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewCaCert.Run(); err != nil {
+	if err := dnfXMLto.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewLDNS.Run(); err != nil {
+	if err := dnfGMP.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewHTMLXMLUtils.Run(); err != nil {
+	if err := dnfLibSodium.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewXMLto.Run(); err != nil {
+	if err := dnfImageMagick.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGMP.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewLibSodium.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewImageMagick.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGhostscript.Run(); err != nil {
+	if err := dnfGhostscript.Run(); err != nil {
 		checkError(err)
 	}
 
@@ -497,52 +491,44 @@ func linuxDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	brewSSH := exec.Command(cmdPMS, cmdIn, "openssh")
-	brewGawk := exec.Command(cmdPMS, cmdIn, "gawk")
-	brewTig := exec.Command(cmdPMS, cmdIn, "tig")
-	brewJQ := exec.Command(cmdPMS, cmdIn, "jq")
-	brewDirEnv := exec.Command(cmdPMS, cmdIn, "direnv")
-	brewWatchman := exec.Command(cmdPMS, cmdIn, "watchman")
-	brewQEMU := exec.Command(cmdPMS, cmdIn, "qemu")
-	brewCCache := exec.Command(cmdPMS, cmdIn, "ccache")
-	brewMake := exec.Command(cmdPMS, cmdIn, "make")
-	brewVim := exec.Command(cmdPMS, cmdIn, "vim")
-	brewBat := exec.Command(cmdPMS, cmdIn, "bat")
-	brewGH := exec.Command(cmdPMS, cmdIn, "gh")
-	if err := brewSSH.Run(); err != nil {
+	dnfGawk := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gawk")
+	dnfTig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tig")
+	dnfJQ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "jq")
+	//dnfDirEnv := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "direnv")
+	//dnfWatchman := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "watchman")
+	dnfQEMU := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "qemu-kvm")
+	dnfCCache := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ccache")
+	dnfMake := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "make")
+	dnfVim := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "vim")
+	dnfGH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gh")
+	if err := dnfGawk.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGawk.Run(); err != nil {
+	if err := dnfTig.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewTig.Run(); err != nil {
+	if err := dnfJQ.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewJQ.Run(); err != nil {
+	//if err := dnfDirEnv.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := dnfWatchman.Run(); err != nil {
+	//	checkError(err)
+	//}
+	if err := dnfQEMU.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewDirEnv.Run(); err != nil {
+	if err := dnfCCache.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewWatchman.Run(); err != nil {
+	if err := dnfMake.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewQEMU.Run(); err != nil {
+	if err := dnfVim.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewCCache.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewMake.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewVim.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewBat.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGH.Run(); err != nil {
+	if err := dnfGH.Run(); err != nil {
 		checkError(err)
 	}
 
@@ -558,10 +544,15 @@ func linuxASDF() {
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
 	ldBar.Start()
 
-	brewASDF := exec.Command(cmdPMS, cmdIn, "asdf")
-	if err := brewASDF.Run(); err != nil {
+	dnfASDF := exec.Command(cmdGit, gitClone, "https://github.com/asdf-vm/asdf.git", homeDir()+".asdf", "--branch", "v0.10.2")
+	if err := dnfASDF.Run(); err != nil {
 		checkError(err)
 	}
+
+	shrcAppend := "# DIRENV\n" +
+		"source" + homeDir() + "/.asdf/asdf.sh\n" +
+		"source " + homeDir() + "/.asdf/completions/asdf.bash\n\n"
+	appendFile(shrcPath, shrcAppend)
 
 	pluginPath := homeDir() + ".asdf/plugins/"
 	if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
@@ -667,28 +658,24 @@ func linuxServer() {
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
-	brewHTTPD := exec.Command(cmdPMS, cmdIn, "httpd")
-	brewTomcat := exec.Command(cmdPMS, cmdIn, "tomcat")
-	brewSQLite := exec.Command(cmdPMS, cmdIn, "sqlite")
-	brewPostgreSQL := exec.Command(cmdPMS, cmdIn, "postgresql")
-	brewMySQL := exec.Command(cmdPMS, cmdIn, "mysql")
-	brewRedis := exec.Command(cmdPMS, cmdIn, "redis")
-	if err := brewHTTPD.Run(); err != nil {
+	dnfHTTPD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "httpd")
+	dnfSQLite := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "sqlite")
+	dnfPostgreSQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "postgresql")
+	dnfMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "mysql-server")
+	dnfRedis := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "redis")
+	if err := dnfHTTPD.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewTomcat.Run(); err != nil {
+	if err := dnfSQLite.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewSQLite.Run(); err != nil {
+	if err := dnfPostgreSQL.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewPostgreSQL.Run(); err != nil {
+	if err := dnfMySQL.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewMySQL.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewRedis.Run(); err != nil {
+	if err := dnfRedis.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -700,80 +687,60 @@ func linuxLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
-	brewPerl := exec.Command(cmdPMS, cmdIn, "perl")
-	brewRuby := exec.Command(cmdPMS, cmdIn, "ruby")
-	brewPython := exec.Command(cmdPMS, cmdIn, "python@3.10")
-	fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
-	brewLua := exec.Command(cmdPMS, cmdIn, "lua")
-	brewGo := exec.Command(cmdPMS, cmdIn, "go")
-	brewRust := exec.Command(cmdPMS, cmdIn, "rust")
-	brewNode := exec.Command(cmdPMS, cmdIn, "node")
-	brewTS := exec.Command(cmdPMS, cmdIn, "typescript")
-	brewPHP := exec.Command(cmdPMS, cmdIn, "php")
-	brewJDK := exec.Command(cmdPMS, cmdIn, "openjdk")
-	brewGroovy := exec.Command(cmdPMS, cmdIn, "groovy")
-	brewKotlin := exec.Command(cmdPMS, cmdIn, "kotlin")
-	brewScala := exec.Command(cmdPMS, cmdIn, "scala")
-	brewMaven := exec.Command(cmdPMS, cmdIn, "maven")
-	brewGradle := exec.Command(cmdPMS, cmdIn, "gradle")
-	brewClojure := exec.Command(cmdPMS, cmdIn, "clojure")
-	brewErlang := exec.Command(cmdPMS, cmdIn, "erlang")
-	brewElixir := exec.Command(cmdPMS, cmdIn, "elixir")
-	if err := brewPerl.Run(); err != nil {
+	dnfPerl := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "perl")
+	dnfRuby := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ruby")
+	dnfPython := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "python")
+	dnfLua := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "lua")
+	dnfGo := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "golang")
+	dnfRust := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "rust")
+	dnfNode := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "nodejs")
+	dnfPHP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "php")
+	dnfJDK := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "java")
+	dnfScala := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "scala") // Fedora
+	dnfMaven := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "maven")
+	dnfClojure := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "clojure") // Fedora
+	dnfErlang := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "erlang")   // Fedora
+	dnfElixir := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "elixir")   // Fedora
+	if err := dnfPerl.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewRuby.Run(); err != nil {
+	if err := dnfRuby.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewPython.Run(); err != nil {
+	if err := dnfPython.Run(); err != nil {
 		checkError(err)
 	}
-	if err := fixPython.Run(); err != nil {
+	if err := dnfLua.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewLua.Run(); err != nil {
+	if err := dnfGo.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGo.Run(); err != nil {
+	if err := dnfRust.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewRust.Run(); err != nil {
+	if err := dnfNode.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewNode.Run(); err != nil {
+	if err := dnfPHP.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewTS.Run(); err != nil {
+	if err := dnfJDK.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewPHP.Run(); err != nil {
+	if err := dnfScala.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewJDK.Run(); err != nil {
+	if err := dnfMaven.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGroovy.Run(); err != nil {
+	if err := dnfClojure.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewKotlin.Run(); err != nil {
+	if err := dnfErlang.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewScala.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewMaven.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGradle.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewClojure.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewErlang.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewElixir.Run(); err != nil {
+	if err := dnfElixir.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -785,24 +752,24 @@ func linuxUtility() {
 	ldBar.FinalMSG = " - Installed advanced utilities!\n"
 	ldBar.Start()
 
-	brewTmux := exec.Command(cmdPMS, cmdIn, "tmux")
-	brewTmuxinator := exec.Command(cmdPMS, cmdIn, "tmuxinator")
-	brewFzf := exec.Command(cmdPMS, cmdIn, "fzf")
-	brewNeofetch := exec.Command(cmdPMS, cmdIn, "neofetch")
-	brewAsciinema := exec.Command(cmdPMS, cmdIn, "asciinema")
-	if err := brewTmux.Run(); err != nil {
+	dnfTmux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tmux")
+	dnfNeofetch := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "neofetch")
+	dnfAsciinema := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "asciinema")
+	getFzf := exec.Command(cmdGit, gitClone, "https://github.com/junegunn/fzf.git", "--depth", "1", homeDir()+".fzf")
+	installFzf := exec.Command(homeDir() + ".fzf/install")
+	if err := dnfTmux.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewTmuxinator.Run(); err != nil {
+	if err := dnfNeofetch.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewFzf.Run(); err != nil {
+	if err := dnfAsciinema.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewNeofetch.Run(); err != nil {
+	if err := getFzf.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewAsciinema.Run(); err != nil {
+	if err := installFzf.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -828,6 +795,7 @@ func main() {
 			checkError(err)
 			if cmdOpt == "1" {
 				linuxBegin()
+				linuxBasic()
 				linuxEnv()
 				linuxGit()
 				linuxTerminal()
@@ -839,26 +807,16 @@ func main() {
 				linuxUtility()
 			} else if cmdOpt == "2" {
 				linuxBegin()
+				linuxBasic()
 				linuxEnv()
 				linuxGit()
-				linuxTerminal()
-				linuxDependency()
 				linuxDevToolCLI()
-				linuxASDF()
 				linuxServer()
 				linuxLanguage()
-				linuxUtility()
 			} else if cmdOpt == "3" {
 				linuxBegin()
-				linuxEnv()
+				linuxBasic()
 				linuxGit()
-				linuxTerminal()
-				linuxDependency()
-				linuxDevToolCLI()
-				linuxASDF()
-				linuxServer()
-				linuxLanguage()
-				linuxUtility()
 			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
 			} else {
 				fmt.Println("Wrong answer. Please choose number 0-3")
