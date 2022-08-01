@@ -154,7 +154,7 @@ func confA4s() {
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
 	if err != nil {
-		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/leelsey/Alias4sh\n")
+		fmt.Println(lstDot + "Alias4sh‘s URL is maybe changed, please check https://github.com/leelsey/Alias4sh\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -247,7 +247,7 @@ func confZshTheme() {
 	dlP10kPath := homeDir() + ".p10k.zsh"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Dev4os/main/cmd/dev4os/dev4p10k")
 	if err != nil {
-		fmt.Println(lstDot + "Dev4os's p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
+		fmt.Println(lstDot + "Dev4os‘s p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -282,7 +282,7 @@ func installBrew() {
 	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
 	resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
 	if err != nil {
-		fmt.Println(lstDot + "Brew install URL is maybe changed, please check https://github.com/Homebrew/install\n")
+		fmt.Println(lstDot + "Brew install‘s URL is maybe changed, please check https://github.com/Homebrew/install\n")
 		os.Exit(0)
 	}
 	defer func() {
