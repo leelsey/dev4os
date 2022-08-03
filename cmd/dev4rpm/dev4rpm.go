@@ -58,6 +58,23 @@ func checkNetStatus() bool {
 	return true
 }
 
+func checkLinuxVer() string {
+	fedora := "/etc/fedora-release/"
+	centos := "/etc/centos-release/"
+	redhat := "/etc/redhat-release/"
+	if _, err := os.Stat(fedora); errors.Is(err, os.ErrNotExist) {
+		return fedora
+	} else if _, err := os.Stat(centos); errors.Is(err, os.ErrNotExist) {
+		return centos
+	} else if _, err := os.Stat(redhat); errors.Is(err, os.ErrNotExist) {
+		return redhat
+	} else {
+		fmt.Println(lstDot + "Not support linux version")
+		os.Exit(0)
+		return ""
+	}
+}
+
 func homeDir() string {
 	homeDirPath, err := os.UserHomeDir()
 	checkError(err)
@@ -292,13 +309,21 @@ func linuxBegin() {
 
 func linuxBasic() {
 	dnfNCurses := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ncurses")
+	dnfNCursesDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ncurses-devel")
 	dnfSSL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssl")
+	dnfSSLDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssl-devel")
 	dnfSSH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssh")
 
 	if err := dnfNCurses.Run(); err != nil {
 		checkError(err)
 	}
+	if err := dnfNCursesDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := dnfSSL.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfSSLDev.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfSSH.Run(); err != nil {
@@ -386,14 +411,20 @@ func linuxDependency() {
 	dnfcURL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "curl")
 	dnfWget := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "wget")
 	dnfXZ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xz")
+	dnfXZDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xz-devel")
 	dnfGzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "unzip")
 	dnfUnzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gzidp")
 	dnfLibzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libzip")
 	dnfBzip2 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bzip2")
+	dnfBzip2Dev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bzip2-devel")
 	dnfZLib := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zlib")
+	dnfZLibDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zlib-devel")
+	dnfLibYaml := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libyaml")
 	dnfPkgConfig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "pkg-config")
 	dnfReadLine := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline")
+	dnfReadLineDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline-devel")
 	dnfLibffi := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi")
+	dnfLibffiDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi-devel")
 	dnfUtilLinux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "util-linux")
 	dnfCoreUtils := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "coreutils")
 	dnfBison := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bison")
@@ -406,6 +437,7 @@ func linuxDependency() {
 	dnfLibSodium := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libsodium")
 	dnfImageMagick := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ImageMagick")
 	dnfGhostscript := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ghostscript")
+
 	if err := dnfKRB5.Run(); err != nil {
 		checkError(err)
 	}
@@ -421,6 +453,9 @@ func linuxDependency() {
 	if err := dnfXZ.Run(); err != nil {
 		checkError(err)
 	}
+	if err := dnfXZDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := dnfUnzip.Run(); err != nil {
 		checkError(err)
 	}
@@ -433,7 +468,16 @@ func linuxDependency() {
 	if err := dnfBzip2.Run(); err != nil {
 		checkError(err)
 	}
+	if err := dnfBzip2Dev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := dnfZLib.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfZLibDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibYaml.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfPkgConfig.Run(); err != nil {
@@ -442,7 +486,13 @@ func linuxDependency() {
 	if err := dnfReadLine.Run(); err != nil {
 		checkError(err)
 	}
+	if err := dnfReadLineDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := dnfLibffi.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibffiDev.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfUtilLinux.Run(); err != nil {
@@ -482,6 +532,22 @@ func linuxDependency() {
 		checkError(err)
 	}
 
+	if checkLinuxVer() == "fedora" {
+		dnfLibYamlDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libyaml-devel")
+		dnfGDBM := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gdbm")
+		dnfGDBMDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gdbm-devel")
+
+		if err := dnfLibYamlDev.Run(); err != nil {
+			checkError(err)
+		}
+		if err := dnfGDBM.Run(); err != nil {
+			checkError(err)
+		}
+		if err := dnfGDBMDev.Run(); err != nil {
+			checkError(err)
+		}
+	}
+
 	ldBar.Stop()
 }
 
@@ -494,13 +560,19 @@ func linuxDevToolCLI() {
 	dnfGawk := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gawk")
 	dnfTig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tig")
 	dnfJQ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "jq")
-	//dnfDirEnv := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "direnv")
-	//dnfWatchman := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "watchman")
 	dnfQEMU := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "qemu-kvm")
 	dnfCCache := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ccache")
 	dnfMake := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "make")
+	dnfCMake := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "cmake")
+	dnfGCC := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gcc")
+	dnfGCCCpp := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gcc-c++")
+	dnfAnt := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ant")
+	dnfMaven := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "maven")
+	dnfTk := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tk")
+	dnfTkDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tk-devel")
 	dnfVim := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "vim")
 	dnfGH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gh")
+
 	if err := dnfGawk.Run(); err != nil {
 		checkError(err)
 	}
@@ -510,12 +582,6 @@ func linuxDevToolCLI() {
 	if err := dnfJQ.Run(); err != nil {
 		checkError(err)
 	}
-	//if err := dnfDirEnv.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := dnfWatchman.Run(); err != nil {
-	//	checkError(err)
-	//}
 	if err := dnfQEMU.Run(); err != nil {
 		checkError(err)
 	}
@@ -525,6 +591,27 @@ func linuxDevToolCLI() {
 	if err := dnfMake.Run(); err != nil {
 		checkError(err)
 	}
+	if err := dnfCMake.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfGCC.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfGCCCpp.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfAnt.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfMaven.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfTk.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfTkDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := dnfVim.Run(); err != nil {
 		checkError(err)
 	}
@@ -532,9 +619,21 @@ func linuxDevToolCLI() {
 		checkError(err)
 	}
 
-	shrcAppend := "# DIRENV\n" +
-		"eval \"$(direnv hook zsh)\"\n\n"
-	appendFile(shrcPath, shrcAppend)
+	if checkLinuxVer() == "fedora" {
+		dnfDirEnv := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "direnv")
+		dnfWatchman := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "watchman")
+
+		if err := dnfDirEnv.Run(); err != nil {
+			checkError(err)
+		}
+		if err := dnfWatchman.Run(); err != nil {
+			checkError(err)
+		}
+	}
+
+	//shrcAppend := "# DIRENV\n" +
+	//	"eval \"$(direnv hook zsh)\"\n\n"
+	//appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
 
@@ -660,23 +759,38 @@ func linuxServer() {
 
 	dnfHTTPD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "httpd")
 	dnfSQLite := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "sqlite")
+	dnfSQLiteDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "sqlite-devel")
 	dnfPostgreSQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "postgresql")
-	dnfMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "mysql-server")
 	dnfRedis := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "redis")
+
 	if err := dnfHTTPD.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfSQLite.Run(); err != nil {
 		checkError(err)
 	}
-	if err := dnfPostgreSQL.Run(); err != nil {
+	if err := dnfSQLiteDev.Run(); err != nil {
 		checkError(err)
 	}
-	if err := dnfMySQL.Run(); err != nil {
+	if err := dnfPostgreSQL.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfRedis.Run(); err != nil {
 		checkError(err)
+	}
+
+	if checkLinuxVer() == "fedora" {
+		dnfMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "community-mysql-server")
+
+		if err := dnfMySQL.Run(); err != nil {
+			checkError(err)
+		}
+	} else if checkLinuxVer() == "centos" || checkLinuxVer() == "redhat" {
+		dnfMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "mysql-server")
+
+		if err := dnfMySQL.Run(); err != nil {
+			checkError(err)
+		}
 	}
 	ldBar.Stop()
 }
@@ -696,11 +810,7 @@ func linuxLanguage() {
 	dnfNode := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "nodejs")
 	dnfPHP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "php")
 	dnfJDK := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "java")
-	dnfScala := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "scala") // Fedora
-	dnfMaven := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "maven")
-	dnfClojure := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "clojure") // Fedora
-	dnfErlang := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "erlang")   // Fedora
-	dnfElixir := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "elixir")   // Fedora
+
 	if err := dnfPerl.Run(); err != nil {
 		checkError(err)
 	}
@@ -728,20 +838,25 @@ func linuxLanguage() {
 	if err := dnfJDK.Run(); err != nil {
 		checkError(err)
 	}
-	if err := dnfScala.Run(); err != nil {
-		checkError(err)
-	}
-	if err := dnfMaven.Run(); err != nil {
-		checkError(err)
-	}
-	if err := dnfClojure.Run(); err != nil {
-		checkError(err)
-	}
-	if err := dnfErlang.Run(); err != nil {
-		checkError(err)
-	}
-	if err := dnfElixir.Run(); err != nil {
-		checkError(err)
+
+	if checkLinuxVer() == "fedora" {
+		dnfScala := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "scala")
+		dnfClojure := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "clojure")
+		dnfErlang := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "erlang")
+		dnfElixir := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "elixir")
+
+		if err := dnfScala.Run(); err != nil {
+			checkError(err)
+		}
+		if err := dnfClojure.Run(); err != nil {
+			checkError(err)
+		}
+		if err := dnfErlang.Run(); err != nil {
+			checkError(err)
+		}
+		if err := dnfElixir.Run(); err != nil {
+			checkError(err)
+		}
 	}
 	ldBar.Stop()
 }
@@ -783,48 +898,17 @@ func linuxEnd() {
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
 	if checkNetStatus() == true {
-		fmt.Println("\nChoose setup type\n" +
-			"\t1. Desktop setup\n" +
-			"\t2. Server setup\n" +
-			"\t3. Minimal setup\n" +
-			"\t0. Quit\n")
-	beginOpt:
-		for {
-			fmt.Printf(chooseCmd)
-			_, err := fmt.Scanln(&cmdOpt)
-			checkError(err)
-			if cmdOpt == "1" {
-				linuxBegin()
-				linuxBasic()
-				linuxEnv()
-				linuxGit()
-				linuxTerminal()
-				linuxDependency()
-				linuxDevToolCLI()
-				linuxASDF()
-				linuxServer()
-				linuxLanguage()
-				linuxUtility()
-			} else if cmdOpt == "2" {
-				linuxBegin()
-				linuxBasic()
-				linuxEnv()
-				linuxGit()
-				linuxDevToolCLI()
-				linuxServer()
-				linuxLanguage()
-			} else if cmdOpt == "3" {
-				linuxBegin()
-				linuxBasic()
-				linuxGit()
-			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
-			} else {
-				fmt.Println("Wrong answer. Please choose number 0-3")
-				goto beginOpt
-			}
-			break
-		}
-
+		linuxBegin()
+		linuxBasic()
+		linuxEnv()
+		linuxGit()
+		linuxTerminal()
+		linuxDependency()
+		linuxDevToolCLI()
+		linuxASDF()
+		linuxServer()
+		linuxLanguage()
+		linuxUtility()
 		linuxEnd()
 		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
 			"\t1. Setup zsh theme & Configure git global\n" +
