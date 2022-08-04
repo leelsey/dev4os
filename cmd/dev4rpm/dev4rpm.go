@@ -20,12 +20,14 @@ var (
 	profilePath = homeDir() + ".zprofile"
 	superUser   = "sudo"
 	cmdPMS      = "dnf"
-	cmdIns      = "install"
+	pmsIns      = "install"
 	//cmdReIns    = "reinstall"
-	//cmdRm       = "remove"
-	cmdYes    = "-y"
-	cmdSys    = "systemctl"
-	cmdEnable = "enable"
+	pmsRm      = "remove"
+	pmsYes     = "-y"
+	pmsConf    = "config-manager"
+	pmsAddRepo = "--add-repo"
+	cmdSys     = "systemctl"
+	cmdEnable  = "enable"
 	//cmdDisable = "disable"
 	cmdStart   = "start"
 	cmdGit     = "git"
@@ -256,9 +258,9 @@ func confZshTheme() {
 
 func updateDNF() {
 	updatePMS := exec.Command(cmdPMS, "makecache", "--refresh")
-	installEpel := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "epel-release")
-	installPlugins := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "dnf-plugins-core")
-	updateLinux := exec.Command(superUser, cmdPMS, "update", cmdYes)
+	installEpel := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "epel-release")
+	installPlugins := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "dnf-plugins-core")
+	updateLinux := exec.Command(superUser, cmdPMS, "update", pmsYes)
 
 	if err := updatePMS.Run(); err != nil {
 		checkError(err)
@@ -276,7 +278,7 @@ func updateDNF() {
 }
 
 func secureConf() {
-	installFirewall := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "firewalld")
+	installFirewall := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "firewalld")
 	firewallOn := exec.Command(superUser, cmdSys, cmdEnable, "firewalld")
 	firewallStart := exec.Command(superUser, cmdSys, cmdStart, "firewalld")
 	if err := installFirewall.Run(); err != nil {
@@ -308,11 +310,11 @@ func linuxBegin() {
 }
 
 func linuxBasic() {
-	dnfNCurses := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ncurses")
-	dnfNCursesDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ncurses-devel")
-	dnfSSL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssl")
-	dnfSSLDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssl-devel")
-	dnfSSH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssh")
+	dnfNCurses := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ncurses")
+	dnfNCursesDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ncurses-devel")
+	dnfSSL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "openssl")
+	dnfSSLDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "openssl-devel")
+	dnfSSH := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "openssh")
 
 	if err := dnfNCurses.Run(); err != nil {
 		checkError(err)
@@ -355,8 +357,8 @@ func linuxGit() {
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	dnfGit := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, cmdGit)
-	dnfGitLfs := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "git-lfs")
+	dnfGit := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, cmdGit)
+	dnfGitLfs := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "git-lfs")
 	if err := dnfGit.Run(); err != nil {
 		checkError(err)
 	}
@@ -372,8 +374,8 @@ func linuxTerminal() {
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
 
-	dnfZsh := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zsh")
-	dnfTree := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tree")
+	dnfZsh := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zsh")
+	dnfTree := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tree")
 	dnfZshSyntax := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-syntax-highlighting.git", "~/.zsh/zsh-syntax-highlighting")
 	dnfZshAuto := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-autosuggestions.git", "~/.zsh/zsh-autosuggestions")
 	dnfZshComp := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-completions.git", "~/.zsh/zsh-completions")
@@ -406,47 +408,47 @@ func linuxDependency() {
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
-	dnfKRB5 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "krb5-workstation")
-	dnfGnuPG := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gnupg")
-	dnfcURL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "curl")
-	dnfWget := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "wget")
-	dnfXZ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xz")
-	dnfXZDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xz-devel")
-	dnfGzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "unzip")
-	dnfUnzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gzidp")
-	dnfLibzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libzip")
-	dnfBzip2 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bzip2")
-	dnfBzip2Dev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bzip2-devel")
-	dnfZLib := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zlib")
-	dnfZLibDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zlib-devel")
-	dnfLibYaml := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libyaml")
-	dnfPkgConfig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "pkg-config")
-	dnfReadLine := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline")
-	dnfReadLineDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline-devel")
-	dnfLibffi := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi")
-	dnfLibffiDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi-devel")
-	dnfLibcURL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libcurl")
-	dnfLibcURLDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libcurl-devel")
-	dnfLibAvif := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libavif")
-	dnfLibWebP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libwebp")
-	dnfLibJpeg := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libjpeg")
-	dnfLibXpm := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libXpm")
-	dnfUtilLinux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "util-linux")
-	dnfCoreUtils := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "coreutils")
-	dnfOniguruma := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "oniguruma")
-	dnfOnigurumaDev := exec.Command(superUser, cmdPMS, "--enablerepo=crb", cmdIns, cmdYes, "oniguruma-devel")
-	dnfBison := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bison")
-	dnfRe2C := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "re2c")
-	dnfGD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gd")
-	dnfGDDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gd-devel")
-	dnfPerlGD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "perl-GD")
-	dnfCaCert := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ca-certificates")
-	dnfLDNS := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ldns")
-	dnfXMLto := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xmlto")
-	dnfGMP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gmp")
-	dnfLibSodium := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libsodium")
-	dnfImageMagick := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ImageMagick")
-	dnfGhostscript := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ghostscript")
+	dnfKRB5 := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "krb5-workstation")
+	dnfGnuPG := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gnupg")
+	dnfcURL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "curl")
+	dnfWget := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "wget")
+	dnfXZ := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "xz")
+	dnfXZDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "xz-devel")
+	dnfGzip := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "unzip")
+	dnfUnzip := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gzidp")
+	dnfLibzip := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libzip")
+	dnfBzip2 := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "bzip2")
+	dnfBzip2Dev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "bzip2-devel")
+	dnfZLib := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zlib")
+	dnfZLibDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zlib-devel")
+	dnfLibYaml := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libyaml")
+	dnfPkgConfig := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "pkg-config")
+	dnfReadLine := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "readline")
+	dnfReadLineDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "readline-devel")
+	dnfLibffi := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libffi")
+	dnfLibffiDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libffi-devel")
+	dnfLibcURL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libcurl")
+	dnfLibcURLDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libcurl-devel")
+	dnfLibAvif := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libavif")
+	dnfLibWebP := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libwebp")
+	dnfLibJpeg := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libjpeg")
+	dnfLibXpm := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libXpm")
+	dnfUtilLinux := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "util-linux")
+	dnfCoreUtils := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "coreutils")
+	dnfOniguruma := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "oniguruma")
+	dnfOnigurumaDev := exec.Command(superUser, cmdPMS, "--enablerepo=crb", pmsIns, pmsYes, "oniguruma-devel")
+	dnfBison := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "bison")
+	dnfRe2C := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "re2c")
+	dnfGD := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gd")
+	dnfGDDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gd-devel")
+	dnfPerlGD := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "perl-GD")
+	dnfCaCert := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ca-certificates")
+	dnfLDNS := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ldns")
+	dnfXMLto := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "xmlto")
+	dnfGMP := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gmp")
+	dnfLibSodium := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libsodium")
+	dnfImageMagick := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ImageMagick")
+	dnfGhostscript := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ghostscript")
 
 	if err := dnfKRB5.Run(); err != nil {
 		checkError(err)
@@ -573,9 +575,9 @@ func linuxDependency() {
 	}
 
 	if checkLinuxVer() == "fedora" {
-		dnfLibYamlDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libyaml-devel")
-		dnfGDBM := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gdbm")
-		dnfGDBMDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gdbm-devel")
+		dnfLibYamlDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libyaml-devel")
+		dnfGDBM := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gdbm")
+		dnfGDBMDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gdbm-devel")
 
 		if err := dnfLibYamlDev.Run(); err != nil {
 			checkError(err)
@@ -597,21 +599,21 @@ func linuxDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	dnfGawk := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gawk")
-	dnfTig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tig")
-	dnfJQ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "jq")
-	dnfQEMU := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "qemu-kvm")
-	dnfCCache := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ccache")
-	dnfMake := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "make")
-	dnfCMake := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "cmake")
-	dnfGCC := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gcc")
-	dnfGCCCpp := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gcc-c++")
-	dnfAnt := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ant")
-	dnfMaven := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "maven")
-	dnfTk := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tk")
-	dnfTkDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tk-devel")
-	dnfVim := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "vim")
-	dnfGH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gh")
+	dnfGawk := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gawk")
+	dnfTig := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tig")
+	dnfJQ := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "jq")
+	dnfQEMU := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "qemu-kvm")
+	dnfCCache := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ccache")
+	dnfMake := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "make")
+	dnfCMake := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "cmake")
+	dnfGCC := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gcc")
+	dnfGCCCpp := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gcc-c++")
+	dnfAnt := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ant")
+	dnfMaven := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "maven")
+	dnfTk := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tk")
+	dnfTkDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tk-devel")
+	dnfVim := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "vim")
+	dnfGH := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gh")
 
 	if err := dnfGawk.Run(); err != nil {
 		checkError(err)
@@ -659,9 +661,15 @@ func linuxDevToolCLI() {
 		checkError(err)
 	}
 
+	RMOldDocker := exec.Command(superUser, cmdPMS, pmsRm, pmsYes, "docker", "docker-client", "docker-client-latest", "docker-common", "docker-latest", "docker-latest-logrotate", "docker-logrotate", "docker-engine-selinux", "docker-engine-selinux", "docker-engine")
+
+	if err := RMOldDocker.Run(); err != nil {
+		checkError(err)
+	}
+
 	if checkLinuxVer() == "fedora" {
-		dnfDirEnv := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "direnv")
-		dnfWatchman := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "watchman")
+		dnfDirEnv := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "direnv")
+		dnfWatchman := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "watchman")
 
 		if err := dnfDirEnv.Run(); err != nil {
 			checkError(err)
@@ -669,6 +677,23 @@ func linuxDevToolCLI() {
 		if err := dnfWatchman.Run(); err != nil {
 			checkError(err)
 		}
+
+		dnfRepoDocker := exec.Command(superUser, cmdPMS, pmsConf, pmsAddRepo, "https://download.docker.com/linux/fedora/docker-ce.repo")
+		if err := dnfRepoDocker.Run(); err != nil {
+			checkError(err)
+		}
+	} else if checkLinuxVer() == "centos" || checkLinuxVer() == "redhat" {
+		dnfRepoDocker := exec.Command(superUser, cmdPMS, pmsConf, pmsAddRepo, "https://download.docker.com/linux/centos/docker-ce.repo")
+
+		if err := dnfRepoDocker.Run(); err != nil {
+			checkError(err)
+		}
+	}
+
+	dnfDocker := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin")
+
+	if err := dnfDocker.Run(); err != nil {
+		checkError(err)
 	}
 
 	//shrcAppend := "# DIRENV\n" +
@@ -797,11 +822,11 @@ func linuxServer() {
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
-	dnfHTTPD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "httpd")
-	dnfSQLite := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "sqlite")
-	dnfSQLiteDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "sqlite-devel")
-	dnfPostgreSQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "postgresql")
-	dnfRedis := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "redis")
+	dnfHTTPD := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "httpd")
+	dnfSQLite := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "sqlite")
+	dnfSQLiteDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "sqlite-devel")
+	dnfPostgreSQL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "postgresql")
+	dnfRedis := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "redis")
 
 	if err := dnfHTTPD.Run(); err != nil {
 		checkError(err)
@@ -820,13 +845,13 @@ func linuxServer() {
 	}
 
 	if checkLinuxVer() == "fedora" {
-		dnfMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "community-mysql-server")
+		dnfMySQL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "community-mysql-server")
 
 		if err := dnfMySQL.Run(); err != nil {
 			checkError(err)
 		}
 	} else if checkLinuxVer() == "centos" || checkLinuxVer() == "redhat" {
-		dnfMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "mysql-server")
+		dnfMySQL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "mysql-server")
 
 		if err := dnfMySQL.Run(); err != nil {
 			checkError(err)
@@ -841,15 +866,15 @@ func linuxLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
-	dnfPerl := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "perl")
-	dnfRuby := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ruby")
-	dnfPython := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "python")
-	dnfLua := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "lua")
-	dnfGo := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "golang")
-	dnfRust := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "rust")
-	dnfNode := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "nodejs")
-	dnfPHP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "php")
-	dnfJDK := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "java")
+	dnfPerl := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "perl")
+	dnfRuby := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ruby")
+	dnfPython := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "python")
+	dnfLua := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "lua")
+	dnfGo := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "golang")
+	dnfRust := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "rust")
+	dnfNode := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "nodejs")
+	dnfPHP := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "php")
+	dnfJDK := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "java")
 
 	if err := dnfPerl.Run(); err != nil {
 		checkError(err)
@@ -880,10 +905,10 @@ func linuxLanguage() {
 	}
 
 	if checkLinuxVer() == "fedora" {
-		dnfScala := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "scala")
-		dnfClojure := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "clojure")
-		dnfErlang := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "erlang")
-		dnfElixir := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "elixir")
+		dnfScala := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "scala")
+		dnfClojure := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "clojure")
+		dnfErlang := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "erlang")
+		dnfElixir := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "elixir")
 
 		if err := dnfScala.Run(); err != nil {
 			checkError(err)
@@ -907,9 +932,9 @@ func linuxUtility() {
 	ldBar.FinalMSG = " - Installed advanced utilities!\n"
 	ldBar.Start()
 
-	dnfTmux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tmux")
-	dnfNeofetch := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "neofetch")
-	dnfAsciinema := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "asciinema")
+	dnfTmux := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tmux")
+	dnfNeofetch := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "neofetch")
+	dnfAsciinema := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "asciinema")
 	getFzf := exec.Command(cmdGit, gitClone, "https://github.com/junegunn/fzf.git", "--depth", "1", homeDir()+".fzf")
 	installFzf := exec.Command(homeDir() + ".fzf/install")
 	if err := dnfTmux.Run(); err != nil {
