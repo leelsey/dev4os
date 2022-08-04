@@ -20,12 +20,14 @@ var (
 	profilePath = homeDir() + ".zprofile"
 	superUser   = "sudo"
 	cmdPMS      = "apt"
-	cmdIns      = "install"
+	pmsIns      = "install"
 	//cmdReIns    = "reinstall"
-	//cmdRm       = "remove"
-	cmdYes    = "-y"
-	cmdSys    = "systemctl"
-	cmdEnable = "enable"
+	pmsRm      = "remove"
+	pmsYes     = "-y"
+	pmsConf    = "config-manager"
+	pmsAddRepo = "--add-repo"
+	cmdSys     = "systemctl"
+	cmdEnable  = "enable"
 	//cmdDisable = "disable"
 	cmdStart   = "start"
 	cmdGit     = "git"
@@ -56,6 +58,14 @@ func checkNetStatus() bool {
 		return false
 	}
 	return true
+}
+
+func checkLinuxVer() string {
+	checkDebFamily := exec.Command("cat", "/etc/lsb-release")
+	if err := checkDebFamily.Run(); err != nil {
+		checkError(err)
+	}
+	return ""
 }
 
 func homeDir() string {
@@ -239,9 +249,9 @@ func confZshTheme() {
 
 func updateapt() {
 	updatePMS := exec.Command(cmdPMS, "makecache", "--refresh")
-	installEpel := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "epel-release")
-	installPlugins := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "apt-plugins-core")
-	updateLinux := exec.Command(superUser, cmdPMS, "update", cmdYes)
+	installEpel := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "epel-release")
+	installPlugins := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "apt-plugins-core")
+	updateLinux := exec.Command(superUser, cmdPMS, "update", pmsYes)
 
 	if err := updatePMS.Run(); err != nil {
 		checkError(err)
@@ -259,7 +269,7 @@ func updateapt() {
 }
 
 func secureConf() {
-	installFirewall := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "firewalld")
+	installFirewall := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "firewalld")
 	firewallOn := exec.Command(superUser, cmdSys, cmdEnable, "firewalld")
 	firewallStart := exec.Command(superUser, cmdSys, cmdStart, "firewalld")
 	if err := installFirewall.Run(); err != nil {
@@ -291,14 +301,22 @@ func linuxBegin() {
 }
 
 func linuxBasic() {
-	aptNCurses := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ncurses")
-	aptSSL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssl")
-	aptSSH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "openssh")
+	aptNCurses := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ncurses")
+	aptNCursesDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ncurses-devel")
+	aptSSL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "openssl")
+	aptSSLDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "openssl-devel")
+	aptSSH := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "openssh")
 
 	if err := aptNCurses.Run(); err != nil {
 		checkError(err)
 	}
+	if err := aptNCursesDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := aptSSL.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptSSLDev.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptSSH.Run(); err != nil {
@@ -330,8 +348,8 @@ func linuxGit() {
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	aptGit := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, cmdGit)
-	aptGitLfs := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "git-lfs")
+	aptGit := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, cmdGit)
+	aptGitLfs := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "git-lfs")
 	if err := aptGit.Run(); err != nil {
 		checkError(err)
 	}
@@ -347,8 +365,8 @@ func linuxTerminal() {
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
 
-	aptZsh := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zsh")
-	aptTree := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tree")
+	aptZsh := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zsh")
+	aptTree := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tree")
 	aptZshSyntax := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-syntax-highlighting.git", "~/.zsh/zsh-syntax-highlighting")
 	aptZshAuto := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-autosuggestions.git", "~/.zsh/zsh-autosuggestions")
 	aptZshComp := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-completions.git", "~/.zsh/zsh-completions")
@@ -381,31 +399,48 @@ func linuxDependency() {
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
-	aptKRB5 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "krb5-workstation")
-	aptGnuPG := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gnupg")
-	aptcURL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "curl")
-	aptWget := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "wget")
-	aptXZ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xz")
-	aptGzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "unzip")
-	aptUnzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gzidp")
-	aptLibzip := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libzip")
-	aptBzip2 := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bzip2")
-	aptZLib := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "zlib")
-	aptPkgConfig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "pkg-config")
-	aptReadLine := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline")
-	aptLibffi := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi")
-	aptUtilLinux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "util-linux")
-	aptCoreUtils := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "coreutils")
-	aptBison := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bison")
-	aptRe2C := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "re2c")
-	aptGD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gd")
-	aptCaCert := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ca-certificates")
-	aptLDNS := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ldns")
-	aptXMLto := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xmlto")
-	aptGMP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gmp")
-	aptLibSodium := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libsodium")
-	aptImageMagick := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ImageMagick")
-	aptGhostscript := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ghostscript")
+	aptKRB5 := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "krb5-workstation")
+	aptGnuPG := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gnupg")
+	aptcURL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "curl")
+	aptWget := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "wget")
+	aptXZ := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "xz")
+	aptXZDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "xz-devel")
+	aptGzip := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "unzip")
+	aptUnzip := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gzidp")
+	aptLibzip := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libzip")
+	aptBzip2 := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "bzip2")
+	aptBzip2Dev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "bzip2-devel")
+	aptZLib := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zlib")
+	aptZLibDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zlib-devel")
+	aptLibYaml := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libyaml")
+	aptPkgConfig := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "pkg-config")
+	aptReadLine := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "readline")
+	aptReadLineDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "readline-devel")
+	aptLibffi := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libffi")
+	aptLibffiDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libffi-devel")
+	aptLibcURL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libcurl")
+	aptLibcURLDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libcurl-devel")
+	aptLibAvif := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libavif")
+	aptLibWebP := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libwebp")
+	aptLibJpeg := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libjpeg")
+	aptLibXpm := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libXpm")
+	aptUtilLinux := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "util-linux")
+	aptCoreUtils := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "coreutils")
+	aptOniguruma := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "oniguruma")
+	aptOnigurumaDev := exec.Command(superUser, cmdPMS, "--enablerepo=crb", pmsIns, pmsYes, "oniguruma-devel")
+	aptBison := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "bison")
+	aptRe2C := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "re2c")
+	aptGD := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gd")
+	aptGDDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gd-devel")
+	aptPerlGD := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "perl-GD")
+	aptCaCert := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ca-certificates")
+	aptLDNS := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ldns")
+	aptXMLto := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "xmlto")
+	aptGMP := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gmp")
+	aptLibSodium := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libsodium")
+	aptImageMagick := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ImageMagick")
+	aptGhostscript := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ghostscript")
+
 	if err := aptKRB5.Run(); err != nil {
 		checkError(err)
 	}
@@ -421,6 +456,9 @@ func linuxDependency() {
 	if err := aptXZ.Run(); err != nil {
 		checkError(err)
 	}
+	if err := aptXZDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := aptUnzip.Run(); err != nil {
 		checkError(err)
 	}
@@ -433,7 +471,16 @@ func linuxDependency() {
 	if err := aptBzip2.Run(); err != nil {
 		checkError(err)
 	}
+	if err := aptBzip2Dev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := aptZLib.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptZLibDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibYaml.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptPkgConfig.Run(); err != nil {
@@ -442,13 +489,43 @@ func linuxDependency() {
 	if err := aptReadLine.Run(); err != nil {
 		checkError(err)
 	}
+	if err := aptReadLineDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := aptLibffi.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibffiDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibcURL.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibcURLDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibAvif.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibWebP.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibJpeg.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptLibXpm.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptUtilLinux.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptCoreUtils.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptOniguruma.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptOnigurumaDev.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptBison.Run(); err != nil {
@@ -458,6 +535,12 @@ func linuxDependency() {
 		checkError(err)
 	}
 	if err := aptGD.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptGDDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptPerlGD.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptCaCert.Run(); err != nil {
@@ -482,6 +565,22 @@ func linuxDependency() {
 		checkError(err)
 	}
 
+	if checkLinuxVer() == "ubuntu" {
+		aptLibYamlDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "libyaml-devel")
+		aptGDBM := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gdbm")
+		aptGDBMDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gdbm-devel")
+
+		if err := aptLibYamlDev.Run(); err != nil {
+			checkError(err)
+		}
+		if err := aptGDBM.Run(); err != nil {
+			checkError(err)
+		}
+		if err := aptGDBMDev.Run(); err != nil {
+			checkError(err)
+		}
+	}
+
 	ldBar.Stop()
 }
 
@@ -491,16 +590,22 @@ func linuxDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	aptGawk := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gawk")
-	aptTig := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tig")
-	aptJQ := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "jq")
-	//aptDirEnv := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "direnv")
-	//aptWatchman := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "watchman")
-	aptQEMU := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "qemu-kvm")
-	aptCCache := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ccache")
-	aptMake := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "make")
-	aptVim := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "vim")
-	aptGH := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gh")
+	aptGawk := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gawk")
+	aptTig := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tig")
+	aptJQ := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "jq")
+	aptQEMU := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "qemu-kvm")
+	aptCCache := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ccache")
+	aptMake := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "make")
+	aptCMake := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "cmake")
+	aptGCC := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gcc")
+	aptGCCCpp := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gcc-c++")
+	aptAnt := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ant")
+	aptMaven := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "maven")
+	aptTk := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tk")
+	aptTkDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tk-devel")
+	aptVim := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "vim")
+	aptGH := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "gh")
+
 	if err := aptGawk.Run(); err != nil {
 		checkError(err)
 	}
@@ -510,12 +615,6 @@ func linuxDevToolCLI() {
 	if err := aptJQ.Run(); err != nil {
 		checkError(err)
 	}
-	//if err := aptDirEnv.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := aptWatchman.Run(); err != nil {
-	//	checkError(err)
-	//}
 	if err := aptQEMU.Run(); err != nil {
 		checkError(err)
 	}
@@ -525,10 +624,66 @@ func linuxDevToolCLI() {
 	if err := aptMake.Run(); err != nil {
 		checkError(err)
 	}
+	if err := aptCMake.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptGCC.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptGCCCpp.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptAnt.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptMaven.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptTk.Run(); err != nil {
+		checkError(err)
+	}
+	if err := aptTkDev.Run(); err != nil {
+		checkError(err)
+	}
 	if err := aptVim.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptGH.Run(); err != nil {
+		checkError(err)
+	}
+
+	RMOldDocker := exec.Command(superUser, cmdPMS, pmsRm, pmsYes, "docker", "docker-client", "docker-client-latest", "docker-common", "docker-latest", "docker-latest-logrotate", "docker-logrotate", "docker-engine-selinux", "docker-engine-selinux", "docker-engine")
+
+	if err := RMOldDocker.Run(); err != nil {
+		checkError(err)
+	}
+
+	if checkLinuxVer() == "ubuntu" {
+		aptDirEnv := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "direnv")
+		aptWatchman := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "watchman")
+
+		if err := aptDirEnv.Run(); err != nil {
+			checkError(err)
+		}
+		if err := aptWatchman.Run(); err != nil {
+			checkError(err)
+		}
+
+		aptRepoDocker := exec.Command(superUser, cmdPMS, pmsConf, pmsAddRepo, "https://download.docker.com/linux/ubuntu/docker-ce.repo")
+		if err := aptRepoDocker.Run(); err != nil {
+			checkError(err)
+		}
+	} else if checkLinuxVer() == "debian" {
+		aptRepoDocker := exec.Command(superUser, cmdPMS, pmsConf, pmsAddRepo, "https://download.docker.com/linux/debian/docker-ce.repo")
+
+		if err := aptRepoDocker.Run(); err != nil {
+			checkError(err)
+		}
+	}
+
+	aptDocker := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin")
+
+	if err := aptDocker.Run(); err != nil {
 		checkError(err)
 	}
 
@@ -658,25 +813,40 @@ func linuxServer() {
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
-	aptHTTPD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "httpd")
-	aptSQLite := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "sqlite")
-	aptPostgreSQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "postgresql")
-	aptMySQL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "mysql-server")
-	aptRedis := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "redis")
+	aptHTTPD := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "httpd")
+	aptSQLite := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "sqlite")
+	aptSQLiteDev := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "sqlite-devel")
+	aptPostgreSQL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "postgresql")
+	aptRedis := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "redis")
+
 	if err := aptHTTPD.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptSQLite.Run(); err != nil {
 		checkError(err)
 	}
-	if err := aptPostgreSQL.Run(); err != nil {
+	if err := aptSQLiteDev.Run(); err != nil {
 		checkError(err)
 	}
-	if err := aptMySQL.Run(); err != nil {
+	if err := aptPostgreSQL.Run(); err != nil {
 		checkError(err)
 	}
 	if err := aptRedis.Run(); err != nil {
 		checkError(err)
+	}
+
+	if checkLinuxVer() == "ubuntu" {
+		aptMySQL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "community-mysql-server")
+
+		if err := aptMySQL.Run(); err != nil {
+			checkError(err)
+		}
+	} else if checkLinuxVer() == "debian" {
+		aptMySQL := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "mysql-server")
+
+		if err := aptMySQL.Run(); err != nil {
+			checkError(err)
+		}
 	}
 	ldBar.Stop()
 }
@@ -687,20 +857,16 @@ func linuxLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
-	aptPerl := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "perl")
-	aptRuby := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ruby")
-	aptPython := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "python")
-	aptLua := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "lua")
-	aptGo := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "golang")
-	aptRust := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "rust")
-	aptNode := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "nodejs")
-	aptPHP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "php")
-	aptJDK := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "java")
-	aptScala := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "scala") // Fedora
-	aptMaven := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "maven")
-	aptClojure := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "clojure") // Fedora
-	aptErlang := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "erlang")   // Fedora
-	aptElixir := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "elixir")   // Fedora
+	aptPerl := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "perl")
+	aptRuby := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "ruby")
+	aptPython := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "python")
+	aptLua := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "lua")
+	aptGo := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "golang")
+	aptRust := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "rust")
+	aptNode := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "nodejs")
+	aptPHP := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "php")
+	aptJDK := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "java")
+
 	if err := aptPerl.Run(); err != nil {
 		checkError(err)
 	}
@@ -728,20 +894,25 @@ func linuxLanguage() {
 	if err := aptJDK.Run(); err != nil {
 		checkError(err)
 	}
-	if err := aptScala.Run(); err != nil {
-		checkError(err)
-	}
-	if err := aptMaven.Run(); err != nil {
-		checkError(err)
-	}
-	if err := aptClojure.Run(); err != nil {
-		checkError(err)
-	}
-	if err := aptErlang.Run(); err != nil {
-		checkError(err)
-	}
-	if err := aptElixir.Run(); err != nil {
-		checkError(err)
+
+	if checkLinuxVer() == "ubuntu" {
+		aptScala := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "scala")
+		aptClojure := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "clojure")
+		aptErlang := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "erlang")
+		aptElixir := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "elixir")
+
+		if err := aptScala.Run(); err != nil {
+			checkError(err)
+		}
+		if err := aptClojure.Run(); err != nil {
+			checkError(err)
+		}
+		if err := aptErlang.Run(); err != nil {
+			checkError(err)
+		}
+		if err := aptElixir.Run(); err != nil {
+			checkError(err)
+		}
 	}
 	ldBar.Stop()
 }
@@ -752,9 +923,9 @@ func linuxUtility() {
 	ldBar.FinalMSG = " - Installed advanced utilities!\n"
 	ldBar.Start()
 
-	aptTmux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "tmux")
-	aptNeofetch := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "neofetch")
-	aptAsciinema := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "asciinema")
+	aptTmux := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tmux")
+	aptNeofetch := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "neofetch")
+	aptAsciinema := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "asciinema")
 	getFzf := exec.Command(cmdGit, gitClone, "https://github.com/junegunn/fzf.git", "--depth", "1", homeDir()+".fzf")
 	installFzf := exec.Command(homeDir() + ".fzf/install")
 	if err := aptTmux.Run(); err != nil {
@@ -783,48 +954,17 @@ func linuxEnd() {
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
 	if checkNetStatus() == true {
-		fmt.Println("\nChoose setup type\n" +
-			"\t1. Desktop setup\n" +
-			"\t2. Server setup\n" +
-			"\t3. Minimal setup\n" +
-			"\t0. Quit\n")
-	beginOpt:
-		for {
-			fmt.Printf(chooseCmd)
-			_, err := fmt.Scanln(&cmdOpt)
-			checkError(err)
-			if cmdOpt == "1" {
-				linuxBegin()
-				linuxBasic()
-				linuxEnv()
-				linuxGit()
-				linuxTerminal()
-				linuxDependency()
-				linuxDevToolCLI()
-				linuxASDF()
-				linuxServer()
-				linuxLanguage()
-				linuxUtility()
-			} else if cmdOpt == "2" {
-				linuxBegin()
-				linuxBasic()
-				linuxEnv()
-				linuxGit()
-				linuxDevToolCLI()
-				linuxServer()
-				linuxLanguage()
-			} else if cmdOpt == "3" {
-				linuxBegin()
-				linuxBasic()
-				linuxGit()
-			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
-			} else {
-				fmt.Println("Wrong answer. Please choose number 0-3")
-				goto beginOpt
-			}
-			break
-		}
-
+		linuxBegin()
+		linuxBasic()
+		linuxEnv()
+		linuxGit()
+		linuxTerminal()
+		linuxDependency()
+		linuxDevToolCLI()
+		linuxASDF()
+		linuxServer()
+		linuxLanguage()
+		linuxUtility()
 		linuxEnd()
 		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
 			"\t1. Setup zsh theme & Configure git global\n" +
