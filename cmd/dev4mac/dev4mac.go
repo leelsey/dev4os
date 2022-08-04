@@ -23,9 +23,9 @@ var (
 	amd64Path   = "/usr/local/"
 	brewPrefix  = checkBrewPrefix()
 	cmdPMS      = checkBrewPath()
-	cmdIn       = "install"
-	//cmdReIn     = "reinstall"
-	//cmdRm       = "remove"
+	pmsIns      = "install"
+	//pmsReIn     = "reinstall"
+	//pmsRm       = "remove"
 	cmdGit     = "git"
 	cmdASDF    = checkASDFPath()
 	asdfPlugin = "plugin"
@@ -377,8 +377,8 @@ func macGit() {
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	brewGit := exec.Command(cmdPMS, cmdIn, cmdGit)
-	brewGitLfs := exec.Command(cmdPMS, cmdIn, "git-lfs")
+	brewGit := exec.Command(cmdPMS, pmsIns, cmdGit)
+	brewGitLfs := exec.Command(cmdPMS, pmsIns, "git-lfs")
 	if err := brewGit.Run(); err != nil {
 		checkError(err)
 	}
@@ -394,14 +394,14 @@ func macTerminal() {
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
 
-	brewNCurses := exec.Command(cmdPMS, cmdIn, "ncurses")
-	brewSSL := exec.Command(cmdPMS, cmdIn, "openssl")
-	brewZsh := exec.Command(cmdPMS, cmdIn, "zsh")
-	brewZshSyntax := exec.Command(cmdPMS, cmdIn, "zsh-syntax-highlighting")
-	brewZshAuto := exec.Command(cmdPMS, cmdIn, "zsh-autosuggestions")
-	brewZshComp := exec.Command(cmdPMS, cmdIn, "zsh-completions")
-	brewTree := exec.Command(cmdPMS, cmdIn, "tree")
-	brewZshTheme := exec.Command(cmdPMS, cmdIn, "romkatv/powerlevel10k/powerlevel10k")
+	brewNCurses := exec.Command(cmdPMS, pmsIns, "ncurses")
+	brewSSL := exec.Command(cmdPMS, pmsIns, "openssl")
+	brewZsh := exec.Command(cmdPMS, pmsIns, "zsh")
+	brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
+	brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
+	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
+	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
+	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
 	if err := brewNCurses.Run(); err != nil {
 		checkError(err)
 	}
@@ -456,34 +456,34 @@ func macDependency() {
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
-	brewKRB5 := exec.Command(cmdPMS, cmdIn, "krb5")
-	brewGnuPG := exec.Command(cmdPMS, cmdIn, "gnupg")
-	brewcURL := exec.Command(cmdPMS, cmdIn, "curl")
-	brewWget := exec.Command(cmdPMS, cmdIn, "wget")
-	brewXZ := exec.Command(cmdPMS, cmdIn, "xz")
-	brewGzip := exec.Command(cmdPMS, cmdIn, "gzip")
-	brewLibzip := exec.Command(cmdPMS, cmdIn, "libzip")
-	brewBzip2 := exec.Command(cmdPMS, cmdIn, "bzip2")
-	brewZLib := exec.Command(cmdPMS, cmdIn, "zlib")
-	brewPkgConfig := exec.Command(cmdPMS, cmdIn, "pkg-config")
-	brewReadLine := exec.Command(cmdPMS, cmdIn, "readline")
-	brewLibffi := exec.Command(cmdPMS, cmdIn, "libffi")
-	brewGuile := exec.Command(cmdPMS, cmdIn, "guile")
-	brewGnuGetOpt := exec.Command(cmdPMS, cmdIn, "gnu-getopt")
-	brewCoreUtils := exec.Command(cmdPMS, cmdIn, "coreutils")
-	brewBison := exec.Command(cmdPMS, cmdIn, "bison")
-	brewLibIconv := exec.Command(cmdPMS, cmdIn, "libiconv")
-	brewICU4C := exec.Command(cmdPMS, cmdIn, "icu4c")
-	brewRe2C := exec.Command(cmdPMS, cmdIn, "re2c")
-	brewGD := exec.Command(cmdPMS, cmdIn, "gd")
-	brewCaCert := exec.Command(cmdPMS, cmdIn, "ca-certificates")
-	brewLDNS := exec.Command(cmdPMS, cmdIn, "ldns")
-	brewHTMLXMLUtils := exec.Command(cmdPMS, cmdIn, "html-xml-utils")
-	brewXMLto := exec.Command(cmdPMS, cmdIn, "xmlto")
-	brewGMP := exec.Command(cmdPMS, cmdIn, "gmp")
-	brewLibSodium := exec.Command(cmdPMS, cmdIn, "libsodium")
-	brewImageMagick := exec.Command(cmdPMS, cmdIn, "imagemagick")
-	brewGhostscript := exec.Command(cmdPMS, cmdIn, "ghostscript")
+	brewKRB5 := exec.Command(cmdPMS, pmsIns, "krb5")
+	brewGnuPG := exec.Command(cmdPMS, pmsIns, "gnupg")
+	brewcURL := exec.Command(cmdPMS, pmsIns, "curl")
+	brewWget := exec.Command(cmdPMS, pmsIns, "wget")
+	brewXZ := exec.Command(cmdPMS, pmsIns, "xz")
+	brewGzip := exec.Command(cmdPMS, pmsIns, "gzip")
+	brewLibzip := exec.Command(cmdPMS, pmsIns, "libzip")
+	brewBzip2 := exec.Command(cmdPMS, pmsIns, "bzip2")
+	brewZLib := exec.Command(cmdPMS, pmsIns, "zlib")
+	brewPkgConfig := exec.Command(cmdPMS, pmsIns, "pkg-config")
+	brewReadLine := exec.Command(cmdPMS, pmsIns, "readline")
+	brewLibffi := exec.Command(cmdPMS, pmsIns, "libffi")
+	brewGuile := exec.Command(cmdPMS, pmsIns, "guile")
+	brewGnuGetOpt := exec.Command(cmdPMS, pmsIns, "gnu-getopt")
+	brewCoreUtils := exec.Command(cmdPMS, pmsIns, "coreutils")
+	brewBison := exec.Command(cmdPMS, pmsIns, "bison")
+	brewLibIconv := exec.Command(cmdPMS, pmsIns, "libiconv")
+	brewICU4C := exec.Command(cmdPMS, pmsIns, "icu4c")
+	brewRe2C := exec.Command(cmdPMS, pmsIns, "re2c")
+	brewGD := exec.Command(cmdPMS, pmsIns, "gd")
+	brewCaCert := exec.Command(cmdPMS, pmsIns, "ca-certificates")
+	brewLDNS := exec.Command(cmdPMS, pmsIns, "ldns")
+	brewHTMLXMLUtils := exec.Command(cmdPMS, pmsIns, "html-xml-utils")
+	brewXMLto := exec.Command(cmdPMS, pmsIns, "xmlto")
+	brewGMP := exec.Command(cmdPMS, pmsIns, "gmp")
+	brewLibSodium := exec.Command(cmdPMS, pmsIns, "libsodium")
+	brewImageMagick := exec.Command(cmdPMS, pmsIns, "imagemagick")
+	brewGhostscript := exec.Command(cmdPMS, pmsIns, "ghostscript")
 	if err := brewKRB5.Run(); err != nil {
 		checkError(err)
 	}
@@ -615,18 +615,18 @@ func macDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	brewSSH := exec.Command(cmdPMS, cmdIn, "openssh")
-	brewGawk := exec.Command(cmdPMS, cmdIn, "gawk")
-	brewTig := exec.Command(cmdPMS, cmdIn, "tig")
-	brewJQ := exec.Command(cmdPMS, cmdIn, "jq")
-	brewDirEnv := exec.Command(cmdPMS, cmdIn, "direnv")
-	brewWatchman := exec.Command(cmdPMS, cmdIn, "watchman")
-	brewQEMU := exec.Command(cmdPMS, cmdIn, "qemu")
-	brewCCache := exec.Command(cmdPMS, cmdIn, "ccache")
-	brewMake := exec.Command(cmdPMS, cmdIn, "make")
-	brewVim := exec.Command(cmdPMS, cmdIn, "vim")
-	brewBat := exec.Command(cmdPMS, cmdIn, "bat")
-	brewGH := exec.Command(cmdPMS, cmdIn, "gh")
+	brewSSH := exec.Command(cmdPMS, pmsIns, "openssh")
+	brewGawk := exec.Command(cmdPMS, pmsIns, "gawk")
+	brewTig := exec.Command(cmdPMS, pmsIns, "tig")
+	brewJQ := exec.Command(cmdPMS, pmsIns, "jq")
+	brewDirEnv := exec.Command(cmdPMS, pmsIns, "direnv")
+	brewWatchman := exec.Command(cmdPMS, pmsIns, "watchman")
+	brewQEMU := exec.Command(cmdPMS, pmsIns, "qemu")
+	brewCCache := exec.Command(cmdPMS, pmsIns, "ccache")
+	brewMake := exec.Command(cmdPMS, pmsIns, "make")
+	brewVim := exec.Command(cmdPMS, pmsIns, "vim")
+	brewBat := exec.Command(cmdPMS, pmsIns, "bat")
+	brewGH := exec.Command(cmdPMS, pmsIns, "gh")
 	if err := brewSSH.Run(); err != nil {
 		checkError(err)
 	}
@@ -676,7 +676,7 @@ func macASDF() {
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
 	ldBar.Start()
 
-	brewASDF := exec.Command(cmdPMS, cmdIn, "asdf")
+	brewASDF := exec.Command(cmdPMS, pmsIns, "asdf")
 	if err := brewASDF.Run(); err != nil {
 		checkError(err)
 	}
@@ -789,12 +789,12 @@ func macServer() {
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
-	brewHTTPD := exec.Command(cmdPMS, cmdIn, "httpd")
-	brewTomcat := exec.Command(cmdPMS, cmdIn, "tomcat")
-	brewSQLite := exec.Command(cmdPMS, cmdIn, "sqlite")
-	brewPostgreSQL := exec.Command(cmdPMS, cmdIn, "postgresql")
-	brewMySQL := exec.Command(cmdPMS, cmdIn, "mysql")
-	brewRedis := exec.Command(cmdPMS, cmdIn, "redis")
+	brewHTTPD := exec.Command(cmdPMS, pmsIns, "httpd")
+	brewTomcat := exec.Command(cmdPMS, pmsIns, "tomcat")
+	brewSQLite := exec.Command(cmdPMS, pmsIns, "sqlite")
+	brewPostgreSQL := exec.Command(cmdPMS, pmsIns, "postgresql")
+	brewMySQL := exec.Command(cmdPMS, pmsIns, "mysql")
+	brewRedis := exec.Command(cmdPMS, pmsIns, "redis")
 	if err := brewHTTPD.Run(); err != nil {
 		checkError(err)
 	}
@@ -829,25 +829,25 @@ func macLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
-	brewPerl := exec.Command(cmdPMS, cmdIn, "perl")
-	brewRuby := exec.Command(cmdPMS, cmdIn, "ruby")
-	brewPython := exec.Command(cmdPMS, cmdIn, "python@3.10")
+	brewPerl := exec.Command(cmdPMS, pmsIns, "perl")
+	brewRuby := exec.Command(cmdPMS, pmsIns, "ruby")
+	brewPython := exec.Command(cmdPMS, pmsIns, "python@3.10")
 	fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
-	brewLua := exec.Command(cmdPMS, cmdIn, "lua")
-	brewGo := exec.Command(cmdPMS, cmdIn, "go")
-	brewRust := exec.Command(cmdPMS, cmdIn, "rust")
-	brewNode := exec.Command(cmdPMS, cmdIn, "node")
-	brewTS := exec.Command(cmdPMS, cmdIn, "typescript")
-	brewPHP := exec.Command(cmdPMS, cmdIn, "php")
-	brewJDK := exec.Command(cmdPMS, cmdIn, "openjdk")
-	brewGroovy := exec.Command(cmdPMS, cmdIn, "groovy")
-	brewKotlin := exec.Command(cmdPMS, cmdIn, "kotlin")
-	brewScala := exec.Command(cmdPMS, cmdIn, "scala")
-	brewMaven := exec.Command(cmdPMS, cmdIn, "maven")
-	brewGradle := exec.Command(cmdPMS, cmdIn, "gradle")
-	brewClojure := exec.Command(cmdPMS, cmdIn, "clojure")
-	brewErlang := exec.Command(cmdPMS, cmdIn, "erlang")
-	brewElixir := exec.Command(cmdPMS, cmdIn, "elixir")
+	brewLua := exec.Command(cmdPMS, pmsIns, "lua")
+	brewGo := exec.Command(cmdPMS, pmsIns, "go")
+	brewRust := exec.Command(cmdPMS, pmsIns, "rust")
+	brewNode := exec.Command(cmdPMS, pmsIns, "node")
+	brewTS := exec.Command(cmdPMS, pmsIns, "typescript")
+	brewPHP := exec.Command(cmdPMS, pmsIns, "php")
+	brewJDK := exec.Command(cmdPMS, pmsIns, "openjdk")
+	brewGroovy := exec.Command(cmdPMS, pmsIns, "groovy")
+	brewKotlin := exec.Command(cmdPMS, pmsIns, "kotlin")
+	brewScala := exec.Command(cmdPMS, pmsIns, "scala")
+	brewMaven := exec.Command(cmdPMS, pmsIns, "maven")
+	brewGradle := exec.Command(cmdPMS, pmsIns, "gradle")
+	brewClojure := exec.Command(cmdPMS, pmsIns, "clojure")
+	brewErlang := exec.Command(cmdPMS, pmsIns, "erlang")
+	brewElixir := exec.Command(cmdPMS, pmsIns, "elixir")
 	if err := brewPerl.Run(); err != nil {
 		checkError(err)
 	}
@@ -932,11 +932,11 @@ func macUtility() {
 	ldBar.FinalMSG = " - Installed advanced utilities!\n"
 	ldBar.Start()
 
-	brewTmux := exec.Command(cmdPMS, cmdIn, "tmux")
-	brewTmuxinator := exec.Command(cmdPMS, cmdIn, "tmuxinator")
-	brewFzf := exec.Command(cmdPMS, cmdIn, "fzf")
-	brewNeofetch := exec.Command(cmdPMS, cmdIn, "neofetch")
-	brewAsciinema := exec.Command(cmdPMS, cmdIn, "asciinema")
+	brewTmux := exec.Command(cmdPMS, pmsIns, "tmux")
+	brewTmuxinator := exec.Command(cmdPMS, pmsIns, "tmuxinator")
+	brewFzf := exec.Command(cmdPMS, pmsIns, "fzf")
+	brewNeofetch := exec.Command(cmdPMS, pmsIns, "neofetch")
+	brewAsciinema := exec.Command(cmdPMS, pmsIns, "asciinema")
 	if err := brewTmux.Run(); err != nil {
 		checkError(err)
 	}
