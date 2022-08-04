@@ -425,11 +425,21 @@ func linuxDependency() {
 	dnfReadLineDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "readline-devel")
 	dnfLibffi := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi")
 	dnfLibffiDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libffi-devel")
+	dnfLibcURL := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libcurl")
+	dnfLibcURLDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libcurl-devel")
+	dnfLibAvif := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libavif")
+	dnfLibWebP := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libwebp")
+	dnfLibJpeg := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libjpeg")
+	dnfLibXpm := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "libXpm")
 	dnfUtilLinux := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "util-linux")
 	dnfCoreUtils := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "coreutils")
+	dnfOniguruma := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "oniguruma")
+	dnfOnigurumaDev := exec.Command(superUser, cmdPMS, "--enablerepo=crb", cmdIns, cmdYes, "oniguruma-devel")
 	dnfBison := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "bison")
 	dnfRe2C := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "re2c")
 	dnfGD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gd")
+	dnfGDDev := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "gd-devel")
+	dnfPerlGD := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "perl-GD")
 	dnfCaCert := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ca-certificates")
 	dnfLDNS := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "ldns")
 	dnfXMLto := exec.Command(superUser, cmdPMS, cmdIns, cmdYes, "xmlto")
@@ -495,10 +505,34 @@ func linuxDependency() {
 	if err := dnfLibffiDev.Run(); err != nil {
 		checkError(err)
 	}
+	if err := dnfLibcURL.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibcURLDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibAvif.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibWebP.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibJpeg.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfLibXpm.Run(); err != nil {
+		checkError(err)
+	}
 	if err := dnfUtilLinux.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfCoreUtils.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfOniguruma.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfOnigurumaDev.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfBison.Run(); err != nil {
@@ -508,6 +542,12 @@ func linuxDependency() {
 		checkError(err)
 	}
 	if err := dnfGD.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfGDDev.Run(); err != nil {
+		checkError(err)
+	}
+	if err := dnfPerlGD.Run(); err != nil {
 		checkError(err)
 	}
 	if err := dnfCaCert.Run(); err != nil {
