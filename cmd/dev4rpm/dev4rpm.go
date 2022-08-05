@@ -14,13 +14,11 @@ import (
 )
 
 var (
-	appVer      = "0.1"
-	lstDot      = " • "
-	shrcPath    = homeDir() + ".zshrc"
-	profilePath = homeDir() + ".zprofile"
-	superUser   = "sudo"
-	cmdPMS      = "dnf"
-	pmsIns      = "install"
+	appVer    = "0.1"
+	lstDot    = " • "
+	superUser = "sudo"
+	cmdPMS    = "dnf"
+	pmsIns    = "install"
 	//cmdReIns    = "reinstall"
 	pmsRm      = "remove"
 	pmsYes     = "-y"
@@ -77,6 +75,23 @@ func checkLinuxVer() string {
 	}
 }
 
+func checkShell() string {
+	checkShell := exec.Command("echo", "$SHELL")
+
+	checkedShell, err := checkShell.Output()
+	checkError(err)
+
+	if string(checkedShell) == "/bin/bash" || string(checkedShell) == "/usr/bin/bash" {
+		return "bash"
+	} else if string(checkedShell) == "/bin/zsh" || string(checkedShell) == "/usr/bin/zsh" {
+		return "zsh"
+	} else {
+		fmt.Println(lstDot + "Your shell is not supported, please use bash or zsh\n")
+		os.Exit(0)
+		return ""
+	}
+}
+
 func homeDir() string {
 	homeDirPath, err := os.UserHomeDir()
 	checkError(err)
@@ -124,19 +139,55 @@ func rmFile(filePath string) {
 	}
 }
 
-func newZProfile() {
+func newBashProfile(profilePath string) {
+	if _, err := os.Stat(profilePath); errors.Is(err, os.ErrNotExist) {
+		err := os.Rename(profilePath, homeDir()+".bash_profile.old")
+		checkError(err)
+	}
+
+	fileContents := "# " + currentUser() + "’s profile\n\n" +
+		"# BASH\n" +
+		"export SHELL=bash\n"
+	makeFile(profilePath, fileContents)
+}
+
+func newZProfile(profilePath string) {
+	if _, err := os.Stat(profilePath); errors.Is(err, os.ErrNotExist) {
+		err := os.Rename(profilePath, homeDir()+".zprofile.old")
+		checkError(err)
+	}
+
 	fileContents := "# " + currentUser() + "’s profile\n\n" +
 		"# ZSH\n" +
 		"export SHELL=zsh\n"
 	makeFile(profilePath, fileContents)
 }
 
-func newZshRC() {
-	fileContents := "#   _________  _   _ ____   ____    __  __    _    ___ _   _\n" +
-		"#  |__  / ___|| | | |  _ \\ / ___|  |  \\/  |  / \\  |_ _| \\ | |\n" +
-		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
-		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
-		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n"
+func newBashRC(shrcPath string) {
+	if _, err := os.Stat(shrcPath); errors.Is(err, os.ErrNotExist) {
+		err := os.Rename(shrcPath, homeDir()+".bashrc.old")
+		checkError(err)
+	}
+
+	fileContents := "#    ____    _    ____  _   _ ____   ____\n" +
+		"#  | __ )  / \\  / ___|| | | |  _ \\ / ___|\n" +
+		"#  |  _ \\ / _ \\ \\___ \\| |_| | |_) | |\n" +
+		"#  | |_) / ___ \\ ___) |  _  |  _ <| |___\n" +
+		"#  |____/_/   \\_\\____/|_| |_|_| \\_\\\\____|\n#\n\n"
+	makeFile(shrcPath, fileContents)
+}
+
+func newZshRC(shrcPath string) {
+	if _, err := os.Stat(shrcPath); errors.Is(err, os.ErrNotExist) {
+		err := os.Rename(shrcPath, homeDir()+".zshrc.old")
+		checkError(err)
+	}
+
+	fileContents := "#    _________  _   _ ____   ____" +
+		"#  |__  / ___|| | | |  _ \\ / ___|" +
+		"#  / /\\___ \\| |_| | |_) | |" +
+		"#  / /_ ___) |  _  |  _ <| |___" +
+		"#  /____|____/|_| |_|_| \\_\\\\____|"
 	makeFile(shrcPath, fileContents)
 }
 
@@ -339,15 +390,33 @@ func linuxEnv() {
 	ldBar.FinalMSG = " - Completed environment!\n"
 	ldBar.Start()
 
-	confA4s()
-	newZProfile()
-	newZshRC()
+	if checkShell() == "bash" {
+		profilePath := homeDir() + ".bash_profile"
+		shrcPath := homeDir() + ".bashrc"
+		confA4s()
+		newZProfile(profilePath)
+		newZshRC(shrcPath)
 
-	profileAppend := "# Alias4sh\n" +
-		"source ~/.config/alias4sh/aliasrc\n" +
-		"# HOMEdnf\n" +
-		"eval \"$(" + cmdPMS + " shellenv)\"\n"
-	appendFile(profilePath, profileAppend)
+		profileAppend := "# Alias4sh\n" +
+			"source ~/.config/alias4sh/aliasrc\n"
+		appendFile(profilePath, profileAppend)
+	} else if checkShell() == "zsh" {
+		dnfShell := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zsh")
+
+		if err := dnfShell.Run(); err != nil {
+			checkError(err)
+		}
+
+		profilePath := homeDir() + ".zprofile"
+		shrcPath := homeDir() + ".zshrc"
+		confA4s()
+		newZProfile(profilePath)
+		newZshRC(shrcPath)
+
+		profileAppend := "# Alias4sh\n" +
+			"source ~/.config/alias4sh/aliasrc\n"
+		appendFile(profilePath, profileAppend)
+	}
 	ldBar.Stop()
 }
 
@@ -374,15 +443,11 @@ func linuxTerminal() {
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
 
-	dnfZsh := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "zsh")
 	dnfTree := exec.Command(superUser, cmdPMS, pmsIns, pmsYes, "tree")
 	dnfZshSyntax := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-syntax-highlighting.git", "~/.zsh/zsh-syntax-highlighting")
 	dnfZshAuto := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-autosuggestions.git", "~/.zsh/zsh-autosuggestions")
 	dnfZshComp := exec.Command(cmdGit, gitClone, "https://github.com/zsh-users/zsh-completions.git", "~/.zsh/zsh-completions")
 	dnfZshTheme := exec.Command(cmdGit, gitClone, "https://github.com/romkatv/powerlevel10k.git", "~/.zsh/powerlevel10k")
-	if err := dnfZsh.Run(); err != nil {
-		checkError(err)
-	}
 	if err := dnfTree.Run(); err != nil {
 		checkError(err)
 	}
@@ -696,9 +761,17 @@ func linuxDevToolCLI() {
 		checkError(err)
 	}
 
-	//shrcAppend := "# DIRENV\n" +
-	//	"eval \"$(direnv hook zsh)\"\n\n"
-	//appendFile(shrcPath, shrcAppend)
+	if checkShell() == "bash" {
+		shrcPath := homeDir() + "/.bashrc"
+		shrcAppend := "# DIRENV\n" +
+			"eval \"$(direnv hook bash)\"\n\n"
+		appendFile(shrcPath, shrcAppend)
+	} else if checkShell() == "zsh" {
+		shrcPath := homeDir() + "/.zshrc"
+		shrcAppend := "# DIRENV\n" +
+			"eval \"$(direnv hook zsh)\"\n\n"
+		appendFile(shrcPath, shrcAppend)
+	}
 	ldBar.Stop()
 }
 
@@ -716,7 +789,13 @@ func linuxASDF() {
 	shrcAppend := "# DIRENV\n" +
 		"source" + homeDir() + "/.asdf/asdf.sh\n" +
 		"source " + homeDir() + "/.asdf/completions/asdf.bash\n\n"
-	appendFile(shrcPath, shrcAppend)
+	if checkShell() == "bash" {
+		shrcPath := homeDir() + "/.bashrc"
+		appendFile(shrcPath, shrcAppend)
+	} else if checkShell() == "zsh" {
+		shrcPath := homeDir() + "/.zshrc"
+		appendFile(shrcPath, shrcAppend)
+	}
 
 	pluginPath := homeDir() + ".asdf/plugins/"
 	if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
@@ -957,7 +1036,13 @@ func linuxUtility() {
 
 func linuxEnd() {
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
-	appendFile(shrcPath, shrcAppend)
+	if checkShell() == "bash" {
+		shrcPath := homeDir() + "/.bashrc"
+		appendFile(shrcPath, shrcAppend)
+	} else if checkShell() == "zsh" {
+		shrcPath := homeDir() + "/.zshrc"
+		appendFile(shrcPath, shrcAppend)
+	}
 }
 
 func main() {
