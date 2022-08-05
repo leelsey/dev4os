@@ -394,8 +394,8 @@ func linuxEnv() {
 		profilePath := homeDir() + ".bash_profile"
 		shrcPath := homeDir() + ".bashrc"
 		confA4s()
-		newZProfile(profilePath)
-		newZshRC(shrcPath)
+		newBashProfile(profilePath)
+		newBashRC(shrcPath)
 
 		profileAppend := "# Alias4sh\n" +
 			"source ~/.config/alias4sh/aliasrc\n"
