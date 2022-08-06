@@ -1045,6 +1045,10 @@ func macUtility() {
 	ldBar.Stop()
 }
 
+func macApps() {
+	// Add cask
+}
+
 func macEnd() {
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
 	appendFile(shrcPath, shrcAppend)
@@ -1053,17 +1057,52 @@ func macEnd() {
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
 	if checkNetStatus() == true {
-		macBegin()
-		macEnv()
-		macGit()
-		macTerminal()
-		macDependency()
-		macDevToolCLI()
-		macASDF()
-		macServer()
-		macLanguage()
-		macUtility()
+		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
+			"\t1. Setup minimal\n" +
+			"\t2. Setup basic\n" +
+			"\t3. Setup advanced\n" +
+			"\t0. Exit\n")
+	startOpt:
+		for {
+			fmt.Printf("Select command: ")
+			_, err := fmt.Scanln(&cmdOpt)
+			checkError(err)
+			if cmdOpt == "1" {
+				macBegin()
+				macEnv()
+				macGit()
+			} else if cmdOpt == "2" {
+				macBegin()
+				macEnv()
+				macGit()
+				macTerminal()
+				macDependency()
+				macDevToolCLI()
+				macASDF()
+				macServer()
+				macLanguage()
+				macUtility()
+			} else if cmdOpt == "3" {
+				macBegin()
+				macEnv()
+				macGit()
+				macTerminal()
+				macDependency()
+				macDevToolCLI()
+				macASDF()
+				macServer()
+				macLanguage()
+				macUtility()
+				macApps()
+			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
+			} else {
+				fmt.Println("Wrong answer. Please choose number 0-3")
+				goto startOpt
+			}
+			break
+		}
 		macEnd()
+
 		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
 			"\t1. Easily configure git global setting\n" +
 			"\t0. Nothing, finish to run Dev4mac\n")
