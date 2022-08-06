@@ -31,6 +31,7 @@ var (
 	asdfPlugin = "plugin"
 	asdfAdd    = "add"
 	asdfShim   = "reshim"
+	p10kPath   = homeDir() + ".config/p10k/"
 	cmdOpt     string
 )
 
@@ -99,10 +100,16 @@ func workingDir() string {
 	return workingDirPath + "/"
 }
 
-func currentUser() string {
-	userName, err := user.Current()
+func userName() string {
+	workingUser, err := user.Current()
 	checkError(err)
-	return userName.Username
+	return workingUser.Username
+}
+
+func makeDir(dirPath string) {
+	if err := os.MkdirAll(dirPath, 0700); err != nil {
+		checkError(err)
+	}
 }
 
 func makeFile(filePath, fileContents string) {
@@ -135,18 +142,26 @@ func rmFile(filePath string) {
 }
 
 func newZProfile() {
-	fileContents := "# " + currentUser() + "’s profile\n\n" +
+	fileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
+		"#   |___  /  __ \\|  __ \\ / __ \\|  ____|_   _| |    |  ____|\n" +
+		"#      / /| |__) | |__) | |  | | |__    | | | |    | |__   \n" +
+		"#     / / |  ___/|  _  /| |  | |  __|   | | | |    |  __|  \n" +
+		"#    / /__| |    | | \\ \\| |__| | |     _| |_| |____| |____ \n" +
+		"#   /_____|_|    |_|  \\_\\\\____/|_|    |_____|______|______|\n#\n" +
+		"#  " + userName() + "’s zsh profile\n\n" +
 		"# ZSH\n" +
 		"export SHELL=zsh\n"
 	makeFile(profilePath, fileContents)
 }
 
 func newZshRC() {
-	fileContents := "#   _________  _   _ ____   ____    __  __    _    ___ _   _\n" +
-		"#  |__  / ___|| | | |  _ \\ / ___|  |  \\/  |  / \\  |_ _| \\ | |\n" +
-		"#    / /\\___ \\| |_| | |_) | |      | |\\/| | / _ \\  | ||  \\| |\n" +
-		"#   / /_ ___) |  _  |  _ <| |___   | |  | |/ ___ \\ | || |\\  |\n" +
-		"#  /____|____/|_| |_|_| \\_\\\\____|  |_|  |_/_/   \\_\\___|_| \\_|\n#\n\n"
+	fileContents := "#   ______ _____ _    _ _____   _____\n" +
+		"#  |___  // ____| |  | |  __ \\ / ____|\n" +
+		"#     / /| (___ | |__| | |__) | |\n" +
+		"#    / /  \\___ \\|  __  |  _  /| |\n" +
+		"#   / /__ ____) | |  | | | \\ \\| |____\n" +
+		"#  /_____|_____/|_|  |_|_|  \\_\\\\_____|\n#\n" +
+		"#  " + userName() + "’s zsh run commands\n\n"
 	makeFile(shrcPath, fileContents)
 }
 
@@ -208,12 +223,10 @@ func confG4s() {
 	}
 
 	fmt.Println(" 3) Setup git global ignore file with directories")
-	ignoreDir := homeDir() + ".config/git/"
-	if err := os.MkdirAll(ignoreDir, 0755); err != nil {
-		checkError(err)
-	}
+	ignoreDirPath := homeDir() + ".config/git/"
+	makeDir(ignoreDirPath)
 
-	ignorePath := ignoreDir + "gitignore_global"
+	ignorePath := ignoreDirPath + "gitignore_global"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
 	if err != nil {
 		fmt.Println(lstDot + "Git Ignore sample URL is maybe changed, please check https://github.com/leelsey/Git4set\n")
@@ -225,7 +238,7 @@ func confG4s() {
 	}()
 	rawFile, _ := ioutil.ReadAll(resp.Body)
 
-	gitIgnore, err := os.OpenFile(ignorePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	gitIgnore, err := os.OpenFile(ignorePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
 		err := gitIgnore.Close()
@@ -240,29 +253,82 @@ func confG4s() {
 		checkError(err)
 	}
 
-	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDir)
+	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDirPath)
 }
 
 func confZshTheme() {
-	dlP10kPath := homeDir() + ".p10k.zsh"
-	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Dev4os/main/cmd/dev4os/dev4p10k")
+	makeDir(p10kPath)
+	p10kAll()
+	p10kApple()
+	p10kiTerm2()
+}
+
+func p10kAll() {
+	dlP10kAll := p10kPath + "p10k-all.zsh"
+	respP10kAll, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devbegin.zsh")
 	if err != nil {
-		fmt.Println(lstDot + "Dev4os‘s p10k file URL is maybe changed, please check https://github.com/leelsey/Dev4os\n")
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
 		os.Exit(0)
 	}
 	defer func() {
-		err := resp.Body.Close()
+		err := respP10kAll.Body.Close()
 		checkError(err)
 	}()
-	rawFile, _ := ioutil.ReadAll(resp.Body)
+	rawFileP10kAll, _ := ioutil.ReadAll(respP10kAll.Body)
 
-	p10kConf, err := os.OpenFile(dlP10kPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	confP10kAll, err := os.OpenFile(dlP10kAll, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
 	checkError(err)
 	defer func() {
-		err := p10kConf.Close()
+		err := confP10kAll.Close()
 		checkError(err)
 	}()
-	_, err = p10kConf.Write(rawFile)
+	_, err = confP10kAll.Write(rawFileP10kAll)
+	checkError(err)
+}
+
+func p10kApple() {
+	dlP10kApple := p10kPath + "p10k-apple.zsh"
+	respP10kApple, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devsimple.zsh")
+	if err != nil {
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		os.Exit(0)
+	}
+	defer func() {
+		err := respP10kApple.Body.Close()
+		checkError(err)
+	}()
+	rawFileP10kApple, _ := ioutil.ReadAll(respP10kApple.Body)
+
+	confP10kApple, err := os.OpenFile(dlP10kApple, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	checkError(err)
+	defer func() {
+		err := confP10kApple.Close()
+		checkError(err)
+	}()
+	_, err = confP10kApple.Write(rawFileP10kApple)
+	checkError(err)
+}
+
+func p10kiTerm2() {
+	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
+	respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devwork.zsh")
+	if err != nil {
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		os.Exit(0)
+	}
+	defer func() {
+		err := respP10kiTerm2.Body.Close()
+		checkError(err)
+	}()
+	rawFileP10kiTerm2, _ := ioutil.ReadAll(respP10kiTerm2.Body)
+
+	confP10kiTerm2, err := os.OpenFile(dlP10kiTerm2, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	checkError(err)
+	defer func() {
+		err := confP10kiTerm2.Close()
+		checkError(err)
+	}()
+	_, err = confP10kiTerm2.Write(rawFileP10kiTerm2)
 	checkError(err)
 }
 
@@ -397,9 +463,9 @@ func macTerminal() {
 	brewNCurses := exec.Command(cmdPMS, pmsIns, "ncurses")
 	brewSSL := exec.Command(cmdPMS, pmsIns, "openssl")
 	brewZsh := exec.Command(cmdPMS, pmsIns, "zsh")
+	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
 	brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
 	brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
-	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
 	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
 	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
 	if err := brewNCurses.Run(); err != nil {
@@ -411,13 +477,13 @@ func macTerminal() {
 	if err := brewZsh.Run(); err != nil {
 		checkError(err)
 	}
+	if err := brewZshComp.Run(); err != nil {
+		checkError(err)
+	}
 	if err := brewZshSyntax.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewZshAuto.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewZshComp.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewTree.Run(); err != nil {
@@ -427,25 +493,49 @@ func macTerminal() {
 		checkError(err)
 	}
 
-	shrcAppend :=
+	confZshTheme()
+
+	profileAppend := "# POWERLEVEL10K\n" +
+		"source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+		"if [[ -r \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+		"  source \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+		"fi\n" +
+		"if [[ -d /Applications/iTerm.app ]]; then\n" +
+		"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
+		"    [[ ! -f ~/.config/p10k/p10k-apple.zsh ]] || source ~/.config/p10k/p10k-apple.zsh\n" +
+		"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n    echo ''; neofetch --bold off\n" +
+		"    [[ ! -f ~/.config/p10k/p10k-iterm2.zsh ]] || source ~/.config/p10k/p10k-iterm2.zsh\n" +
+		"  else\n" +
+		"    [[ ! -f ~/.config/p10k/p10k-all.zsh ]] || source ~/.config/p10k/p10k-all.zsh\n" +
+		"  fi\n" +
+		"else\n" +
+		"  [[ ! -f ~/.config/p10k/p10k-all.zsh ]] || source ~/.config/p10k/.p10k-all.zsh\n" +
+		"fi\n\n" +
+		"# ZSH-COMPLETIONS\n" +
+		"if type brew &>/dev/null; then\n" +
+		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
+		"  autoload -Uz compinit\n" +
+		"  compinit\n" +
+		"fi\n\n" +
 		"# ZSH SYNTAX HIGHTLIGHTING\n" +
-			"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
-			"# ZSH AUTOSUGGESTIONS\n" +
-			"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-			"# POWERLEVEL10K\n" +
-			"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n" +
-			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n\n" +
-			"# NCURSES\n" +
-			"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n" +
-			"" +
-			"# OPENSSL\n" +
-			"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/openssl@3/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/openssl@3/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@3/lib/pkgconfig\"\n\n"
+		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
+		"# ZSH AUTOSUGGESTIONS\n" +
+		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+		"# POWERLEVEL10K\n" +
+		"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n" +
+		"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n\n"
+	appendFile(profilePath, profileAppend)
+
+	shrcAppend := "# NCURSES\n" +
+		"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n" +
+		"# OPENSSL\n" +
+		"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/openssl@3/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/openssl@3/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@3/lib/pkgconfig\"\n\n"
 	appendFile(shrcPath, shrcAppend)
 	ldBar.Stop()
 }
@@ -975,25 +1065,18 @@ func main() {
 		macUtility()
 		macEnd()
 		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
-			"\t1. Setup zsh theme & Configure git global\n" +
-			"\t2. Only setup zsh theme that minimal type\n" +
-			"\t3. Only configure git global easily\n" +
-			"\t0. Nothing, finish Dev4mac (manual setup)\n")
+			"\t1. Easily configure git global setting\n" +
+			"\t0. Nothing, finish to run Dev4mac\n")
 	endOpt:
 		for {
 			fmt.Printf("Select command: ")
 			_, err := fmt.Scanln(&cmdOpt)
 			checkError(err)
 			if cmdOpt == "1" {
-				confZshTheme()
-				confG4s()
-			} else if cmdOpt == "2" {
-				confZshTheme()
-			} else if cmdOpt == "3" {
 				confG4s()
 			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
 			} else {
-				fmt.Println("Wrong answer. Please choose number 0-3")
+				fmt.Println("Wrong answer. Please choose number 0-1")
 				goto endOpt
 			}
 			break
