@@ -189,13 +189,15 @@ func winGit() {
 	ldBar.FinalMSG = " - Installed git!\n"
 	ldBar.Start()
 
-	installGit := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "git")
-	installGitLfs := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "git-lfs")
+	chocoGit := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "git")
+	chocoGit.Stderr = os.Stderr
+	chocoGitLfs := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "git-lfs")
+	chocoGitLfs.Stderr = os.Stderr
 
-	if err := installGit.Run(); err != nil {
+	if err := chocoGit.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGitLfs.Run(); err != nil {
+	if err := chocoGitLfs.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -207,41 +209,50 @@ func winDependency() {
 	ldBar.FinalMSG = " - Installed dependencies!\n"
 	ldBar.Start()
 
-	installSSL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "openssl")
-	installGnuPG := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gnupg")
-	installcURL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "curl")
-	installWget := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "wget")
-	installGzip := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gzip")
-	installBzip2 := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "bzip2")
-	installCoreUtils := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gnuwin32-coreutils.install")
-	installRe2C := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "re2c")
-	installGhostscript := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "ghostscript")
+	chocoSSL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "openssl")
+	chocoSSL.Stderr = os.Stderr
+	chocoGnuPG := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gnupg")
+	chocoGnuPG.Stderr = os.Stderr
+	chococURL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "curl")
+	chococURL.Stderr = os.Stderr
+	chocoWget := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "wget")
+	chocoWget.Stderr = os.Stderr
+	chocoGzip := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gzip")
+	chocoGzip.Stderr = os.Stderr
+	chocoBzip2 := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "bzip2")
+	chocoBzip2.Stderr = os.Stderr
+	chocoCoreUtils := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gnuwin32-coreutils.install")
+	chocoCoreUtils.Stderr = os.Stderr
+	chocoRe2C := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "re2c")
+	chocoRe2C.Stderr = os.Stderr
+	chocoGhostscript := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "ghostscript")
+	chocoGhostscript.Stderr = os.Stderr
 
-	if err := installSSL.Run(); err != nil {
+	if err := chocoSSL.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGnuPG.Run(); err != nil {
+	if err := chocoGnuPG.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installcURL.Run(); err != nil {
+	if err := chococURL.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installWget.Run(); err != nil {
+	if err := chocoWget.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGzip.Run(); err != nil {
+	if err := chocoGzip.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installBzip2.Run(); err != nil {
+	if err := chocoBzip2.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installCoreUtils.Run(); err != nil {
+	if err := chocoCoreUtils.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installRe2C.Run(); err != nil {
+	if err := chocoRe2C.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGhostscript.Run(); err != nil {
+	if err := chocoGhostscript.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -253,53 +264,65 @@ func winDevToolCLI() {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	installGawk := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gawk")
-	installJQ := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "jq")
-	installWatchman := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "watchman")
-	installQEMU := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "qemu")
-	installCcache := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "ccache")
-	installMake := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "make")
-	installVim := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "vim")
-	installBat := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "bat")
-	installGH := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gh")
-	installPS := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "powershell")
-	installCygwin := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "cygwin")
-	installVS := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "visualstudio2022community")
+	chocoGawk := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gawk")
+	chocoGawk.Stderr = os.Stderr
+	chocoWatchman := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "watchman")
+	chocoWatchman.Stderr = os.Stderr
+	chocoQEMU := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "qemu")
+	chocoQEMU.Stderr = os.Stderr
+	chocoCcache := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "ccache")
+	chocoCcache.Stderr = os.Stderr
+	chocoMake := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "make")
+	chocoMake.Stderr = os.Stderr
+	chocoVim := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "vim")
+	chocoVim.Stderr = os.Stderr
+	chocoBat := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "bat")
+	chocoBat.Stderr = os.Stderr
+	chocoJQ := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "jq")
+	chocoJQ.Stderr = os.Stderr
+	chocoGH := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "gh")
+	chocoGH.Stderr = os.Stderr
+	chocoPS := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "powershell")
+	chocoPS.Stderr = os.Stderr
+	chocoCygwin := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "cygwin")
+	chocoCygwin.Stderr = os.Stderr
+	chocoVS := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "visualstudio2022community")
+	chocoVS.Stderr = os.Stderr
 
-	if err := installGawk.Run(); err != nil {
+	if err := chocoGawk.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installJQ.Run(); err != nil {
+	if err := chocoWatchman.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installWatchman.Run(); err != nil {
+	if err := chocoQEMU.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installQEMU.Run(); err != nil {
+	if err := chocoCcache.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installCcache.Run(); err != nil {
+	if err := chocoMake.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installMake.Run(); err != nil {
+	if err := chocoVim.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installVim.Run(); err != nil {
+	if err := chocoBat.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installBat.Run(); err != nil {
+	if err := chocoJQ.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGH.Run(); err != nil {
+	if err := chocoGH.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installPS.Run(); err != nil {
+	if err := chocoPS.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installCygwin.Run(); err != nil {
+	if err := chocoCygwin.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installVS.Run(); err != nil {
+	if err := chocoVS.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -311,25 +334,30 @@ func winServer() {
 	ldBar.FinalMSG = " - Installed server and database!\n"
 	ldBar.Start()
 
-	installHTTPD := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "apache-httpd")
-	installTomcat := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "tomcat")
-	installSQLite := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "sqlite")
-	installPostgreSQL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "postgresql")
-	installMySQL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "mysql")
+	chocoHTTPD := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "apache-httpd")
+	chocoHTTPD.Stderr = os.Stderr
+	chocoTomcat := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "tomcat")
+	chocoTomcat.Stderr = os.Stderr
+	chocoSQLite := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "sqlite")
+	chocoSQLite.Stderr = os.Stderr
+	chocoPostgreSQL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "postgresql")
+	chocoPostgreSQL.Stderr = os.Stderr
+	chocoMySQL := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "mysql")
+	chocoMySQL.Stderr = os.Stderr
 
-	if err := installHTTPD.Run(); err != nil {
+	if err := chocoHTTPD.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installTomcat.Run(); err != nil {
+	if err := chocoTomcat.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installSQLite.Run(); err != nil {
+	if err := chocoSQLite.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installPostgreSQL.Run(); err != nil {
+	if err := chocoPostgreSQL.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installMySQL.Run(); err != nil {
+	if err := chocoMySQL.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
@@ -341,73 +369,90 @@ func winLanguage() {
 	ldBar.FinalMSG = " - Installed basic languages!\n"
 	ldBar.Start()
 
-	installGCC := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "mingw")
-	installLLVM := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "llvm")
-	installNuGet := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "nuget.commandline")
-	installPerl := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "strawberryperl")
-	installRuby := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "ruby")
-	installPython := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "python")
-	installLua := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "lua")
-	installGo := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "go")
-	installRust := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "rust")
-	installNode := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "nodejs")
-	installPHP := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "php")
-	installJDK := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "openjdk")
-	installGroovy := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "groovy")
-	installScala := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "scala")
-	installClojure := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "clojure")
-	installErlang := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "erlang")
-	installElixir := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "elixir")
+	chocoGCC := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "mingw")
+	chocoGCC.Stderr = os.Stderr
+	chocoLLVM := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "llvm")
+	chocoLLVM.Stderr = os.Stderr
+	chocoNuGet := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "nuget.commandline")
+	chocoNuGet.Stderr = os.Stderr
+	chocoPerl := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "strawberryperl")
+	chocoPerl.Stderr = os.Stderr
+	chocoRuby := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "ruby")
+	chocoRuby.Stderr = os.Stderr
+	chocoPython := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "python")
+	chocoPython.Stderr = os.Stderr
+	chocoLua := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "lua")
+	chocoLua.Stderr = os.Stderr
+	chocoGo := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "go")
+	chocoGo.Stderr = os.Stderr
+	chocoRust := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "rust")
+	chocoRust.Stderr = os.Stderr
+	chocoNode := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "nodejs")
+	chocoNode.Stderr = os.Stderr
+	chocoPHP := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "php")
+	chocoPHP.Stderr = os.Stderr
+	chocoJDK := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "openjdk")
+	chocoJDK.Stderr = os.Stderr
+	chocoGroovy := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "groovy")
+	chocoGroovy.Stderr = os.Stderr
+	chocoScala := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "scala")
+	chocoScala.Stderr = os.Stderr
+	chocoClojure := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "clojure")
+	chocoClojure.Stderr = os.Stderr
+	chocoErlang := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "erlang")
+	chocoErlang.Stderr = os.Stderr
+	chocoElixir := exec.Command(pSh, cmdPMS, pmsIns, cmdYes, "elixir")
+	chocoElixir.Stderr = os.Stderr
 
-	if err := installGCC.Run(); err != nil {
+	if err := chocoGCC.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installLLVM.Run(); err != nil {
+	if err := chocoLLVM.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installNuGet.Run(); err != nil {
+	if err := chocoNuGet.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installPerl.Run(); err != nil {
+	if err := chocoPerl.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installRuby.Run(); err != nil {
+	if err := chocoRuby.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installPython.Run(); err != nil {
+	if err := chocoPython.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installLua.Run(); err != nil {
+	if err := chocoLua.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGo.Run(); err != nil {
+	if err := chocoGo.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installRust.Run(); err != nil {
+	if err := chocoRust.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installNode.Run(); err != nil {
+	if err := chocoNode.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installPHP.Run(); err != nil {
+	if err := chocoPHP.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installJDK.Run(); err != nil {
+	if err := chocoJDK.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installGroovy.Run(); err != nil {
+	if err := chocoGroovy.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installScala.Run(); err != nil {
+	if err := chocoScala.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installClojure.Run(); err != nil {
+	if err := chocoClojure.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installErlang.Run(); err != nil {
+	if err := chocoErlang.Run(); err != nil {
 		checkError(err)
 	}
-	if err := installElixir.Run(); err != nil {
+	if err := chocoElixir.Run(); err != nil {
 		checkError(err)
 	}
 	ldBar.Stop()
