@@ -466,6 +466,7 @@ func macTerminal() {
 	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
 	brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
 	brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
+	brewZ := exec.Command(cmdPMS, pmsIns, "z")
 	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
 	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
 	if err := brewNCurses.Run(); err != nil {
@@ -484,6 +485,9 @@ func macTerminal() {
 		checkError(err)
 	}
 	if err := brewZshAuto.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZ.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewTree.Run(); err != nil {
@@ -521,9 +525,8 @@ func macTerminal() {
 		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
 		"# ZSH AUTOSUGGESTIONS\n" +
 		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-		"# POWERLEVEL10K\n" +
-		"[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n" +
-		"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n\n"
+		"# Z\n" +
+		"source " + brewPrefix + "etc/profile.d/z.sh\n\n"
 	appendFile(profilePath, profileAppend)
 
 	shrcAppend := "# NCURSES\n" +
