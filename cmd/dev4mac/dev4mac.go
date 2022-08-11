@@ -437,23 +437,6 @@ func macEnv() {
 	ldBar.Stop()
 }
 
-func macGit() {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing git..."
-	ldBar.FinalMSG = " - Installed git!\n"
-	ldBar.Start()
-
-	brewGit := exec.Command(cmdPMS, pmsIns, cmdGit)
-	brewGitLfs := exec.Command(cmdPMS, pmsIns, "git-lfs")
-	if err := brewGit.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGitLfs.Run(); err != nil {
-		checkError(err)
-	}
-	ldBar.Stop()
-}
-
 func macTerminal() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing zsh with useful tools..."
@@ -469,6 +452,7 @@ func macTerminal() {
 	brewZ := exec.Command(cmdPMS, pmsIns, "z")
 	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
 	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
+
 	if err := brewNCurses.Run(); err != nil {
 		checkError(err)
 	}
@@ -560,6 +544,10 @@ func macDependency() {
 	brewZLib := exec.Command(cmdPMS, pmsIns, "zlib")
 	brewPkgConfig := exec.Command(cmdPMS, pmsIns, "pkg-config")
 	brewReadLine := exec.Command(cmdPMS, pmsIns, "readline")
+	brewGawk := exec.Command(cmdPMS, pmsIns, "gawk")
+	brewM4 := exec.Command(cmdPMS, pmsIns, "m4")
+	brewAutoconf := exec.Command(cmdPMS, pmsIns, "autoconf")
+	brewAutomake := exec.Command(cmdPMS, pmsIns, "automake")
 	brewLibffi := exec.Command(cmdPMS, pmsIns, "libffi")
 	brewGuile := exec.Command(cmdPMS, pmsIns, "guile")
 	brewGnuGetOpt := exec.Command(cmdPMS, pmsIns, "gnu-getopt")
@@ -577,6 +565,7 @@ func macDependency() {
 	brewLibSodium := exec.Command(cmdPMS, pmsIns, "libsodium")
 	brewImageMagick := exec.Command(cmdPMS, pmsIns, "imagemagick")
 	brewGhostscript := exec.Command(cmdPMS, pmsIns, "ghostscript")
+
 	if err := brewKRB5.Run(); err != nil {
 		checkError(err)
 	}
@@ -608,6 +597,18 @@ func macDependency() {
 		checkError(err)
 	}
 	if err := brewReadLine.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewGawk.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewM4.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewAutoconf.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewAutomake.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewLibffi.Run(); err != nil {
@@ -709,27 +710,59 @@ func macDevToolCLI() {
 	ldBar.Start()
 
 	brewSSH := exec.Command(cmdPMS, pmsIns, "openssh")
-	brewGawk := exec.Command(cmdPMS, pmsIns, "gawk")
+	brewMake := exec.Command(cmdPMS, pmsIns, "make")
+	brewCCache := exec.Command(cmdPMS, pmsIns, "ccache")
+	brewMaven := exec.Command(cmdPMS, pmsIns, "maven")
+	brewGradle := exec.Command(cmdPMS, pmsIns, "gradle")
+	brewGit := exec.Command(cmdPMS, pmsIns, cmdGit)
+	brewGitLfs := exec.Command(cmdPMS, pmsIns, "git-lfs")
+	brewGH := exec.Command(cmdPMS, pmsIns, "gh")
 	brewTig := exec.Command(cmdPMS, pmsIns, "tig")
+	brewVim := exec.Command(cmdPMS, pmsIns, "vim")
+	brewBat := exec.Command(cmdPMS, pmsIns, "bat")
 	brewJQ := exec.Command(cmdPMS, pmsIns, "jq")
+	brewDiffr := exec.Command(cmdPMS, pmsIns, "diffr")
 	brewDirEnv := exec.Command(cmdPMS, pmsIns, "direnv")
 	brewWatchman := exec.Command(cmdPMS, pmsIns, "watchman")
 	brewQEMU := exec.Command(cmdPMS, pmsIns, "qemu")
-	brewCCache := exec.Command(cmdPMS, pmsIns, "ccache")
-	brewMake := exec.Command(cmdPMS, pmsIns, "make")
-	brewVim := exec.Command(cmdPMS, pmsIns, "vim")
-	brewBat := exec.Command(cmdPMS, pmsIns, "bat")
-	brewGH := exec.Command(cmdPMS, pmsIns, "gh")
+
 	if err := brewSSH.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewGawk.Run(); err != nil {
+	if err := brewMake.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewCCache.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewMaven.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewGradle.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewGit.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewGitLfs.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewGH.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewTig.Run(); err != nil {
 		checkError(err)
 	}
+	if err := brewVim.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewBat.Run(); err != nil {
+		checkError(err)
+	}
 	if err := brewJQ.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewDiffr.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewDirEnv.Run(); err != nil {
@@ -739,21 +772,6 @@ func macDevToolCLI() {
 		checkError(err)
 	}
 	if err := brewQEMU.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewCCache.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewMake.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewVim.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewBat.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGH.Run(); err != nil {
 		checkError(err)
 	}
 
@@ -923,81 +941,75 @@ func macLanguage() {
 	ldBar.Start()
 
 	brewPerl := exec.Command(cmdPMS, pmsIns, "perl")
-	brewRuby := exec.Command(cmdPMS, pmsIns, "ruby")
-	brewPython := exec.Command(cmdPMS, pmsIns, "python@3.10")
-	fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
-	brewLua := exec.Command(cmdPMS, pmsIns, "lua")
-	brewGo := exec.Command(cmdPMS, pmsIns, "go")
-	brewRust := exec.Command(cmdPMS, pmsIns, "rust")
-	brewNode := exec.Command(cmdPMS, pmsIns, "node")
-	brewTS := exec.Command(cmdPMS, pmsIns, "typescript")
-	brewPHP := exec.Command(cmdPMS, pmsIns, "php")
-	brewJDK := exec.Command(cmdPMS, pmsIns, "openjdk")
-	brewGroovy := exec.Command(cmdPMS, pmsIns, "groovy")
-	brewKotlin := exec.Command(cmdPMS, pmsIns, "kotlin")
-	brewScala := exec.Command(cmdPMS, pmsIns, "scala")
-	brewMaven := exec.Command(cmdPMS, pmsIns, "maven")
-	brewGradle := exec.Command(cmdPMS, pmsIns, "gradle")
-	brewClojure := exec.Command(cmdPMS, pmsIns, "clojure")
-	brewErlang := exec.Command(cmdPMS, pmsIns, "erlang")
-	brewElixir := exec.Command(cmdPMS, pmsIns, "elixir")
+	//brewPerl.Stderr = os.Stderr
+	//brewRuby := exec.Command(cmdPMS, pmsIns, "ruby")
+	//brewPython := exec.Command(cmdPMS, pmsIns, "python@3.10")
+	//fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
+	//brewLua := exec.Command(cmdPMS, pmsIns, "lua")
+	//brewGo := exec.Command(cmdPMS, pmsIns, "go")
+	//brewRust := exec.Command(cmdPMS, pmsIns, "rust")
+	//brewNode := exec.Command(cmdPMS, pmsIns, "node")
+	//brewTS := exec.Command(cmdPMS, pmsIns, "typescript")
+	//brewPHP := exec.Command(cmdPMS, pmsIns, "php")
+	//brewJDK := exec.Command(cmdPMS, pmsIns, "openjdk")
+	//brewGroovy := exec.Command(cmdPMS, pmsIns, "groovy")
+	//brewKotlin := exec.Command(cmdPMS, pmsIns, "kotlin")
+	//brewScala := exec.Command(cmdPMS, pmsIns, "scala")
+	//brewClojure := exec.Command(cmdPMS, pmsIns, "clojure")
+	//brewErlang := exec.Command(cmdPMS, pmsIns, "erlang")
+	//brewElixir := exec.Command(cmdPMS, pmsIns, "elixir")
+
 	if err := brewPerl.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewRuby.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewPython.Run(); err != nil {
-		checkError(err)
-	}
-	if err := fixPython.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewLua.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGo.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewRust.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewNode.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTS.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewPHP.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewJDK.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGroovy.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewKotlin.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewScala.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewMaven.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewGradle.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewClojure.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewErlang.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewElixir.Run(); err != nil {
-		checkError(err)
-	}
+	//if err := brewRuby.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewPython.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := fixPython.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewLua.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewGo.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewRust.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewNode.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewTS.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewPHP.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewJDK.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewGroovy.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewKotlin.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewScala.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewClojure.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewErlang.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewElixir.Run(); err != nil {
+	//	checkError(err)
+	//}
 
 	shrcAppend := "# JAVA\n" +
 		"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
@@ -1027,9 +1039,11 @@ func macUtility() {
 
 	brewTmux := exec.Command(cmdPMS, pmsIns, "tmux")
 	brewTmuxinator := exec.Command(cmdPMS, pmsIns, "tmuxinator")
+	brewHtop := exec.Command(cmdPMS, pmsIns, "htop")
 	brewFzf := exec.Command(cmdPMS, pmsIns, "fzf")
 	brewNeofetch := exec.Command(cmdPMS, pmsIns, "neofetch")
 	brewAsciinema := exec.Command(cmdPMS, pmsIns, "asciinema")
+
 	if err := brewTmux.Run(); err != nil {
 		checkError(err)
 	}
@@ -1037,6 +1051,9 @@ func macUtility() {
 		checkError(err)
 	}
 	if err := brewFzf.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewHtop.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewNeofetch.Run(); err != nil {
@@ -1060,10 +1077,11 @@ func macEnd() {
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
 	if checkNetStatus() == true {
-		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
-			"\t1. Setup minimal\n" +
-			"\t2. Setup basic\n" +
-			"\t3. Setup advanced\n" +
+		fmt.Println("\nChoose an installation option. (Recommend option is 3)\n" +
+			"For a detailed explanation of each option and a list of installations, see the README: https://github.com/leelsey/Dev4os.\n" +
+			"\t1. Minimal\n" +
+			"\t2. Basic\n" +
+			"\t3. Advanced\n" +
 			"\t0. Exit\n")
 	startOpt:
 		for {
@@ -1073,11 +1091,10 @@ func main() {
 			if cmdOpt == "1" {
 				macBegin()
 				macEnv()
-				macGit()
+				macLanguage()
 			} else if cmdOpt == "2" {
 				macBegin()
 				macEnv()
-				macGit()
 				macTerminal()
 				macDependency()
 				macDevToolCLI()
@@ -1088,7 +1105,6 @@ func main() {
 			} else if cmdOpt == "3" {
 				macBegin()
 				macEnv()
-				macGit()
 				macTerminal()
 				macDependency()
 				macDevToolCLI()
