@@ -430,7 +430,7 @@ func macEnv() {
 	newZshRC()
 
 	profileAppend := "# Alias4sh\n" +
-		"source ~/.config/alias4sh/aliasrc\n" +
+		"source ~/.config/alias4sh/alias.sh\n\n" +
 		"# HOMEBREW\n" +
 		"eval \"$(" + cmdPMS + " shellenv)\"\n"
 	appendFile(profilePath, profileAppend)
@@ -501,6 +501,7 @@ func macTerminal() {
 		"fi\n\n" +
 		"# ZSH-COMPLETIONS\n" +
 		"if type brew &>/dev/null; then\n" +
+		"  mv () { command mv \"$@\" ; }" +
 		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
 		"  autoload -Uz compinit\n" +
 		"  compinit\n" +
