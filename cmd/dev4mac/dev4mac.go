@@ -32,6 +32,7 @@ var (
 	asdfAdd    = "add"
 	asdfShim   = "reshim"
 	p10kPath   = homeDir() + ".config/p10k/"
+	p10kCache  = homeDir() + ".cache/p10k-" + userName()
 	cmdOpt     string
 )
 
@@ -148,9 +149,7 @@ func newZProfile() {
 		"#     / / |  ___/|  _  /| |  | |  __|   | | | |    |  __|  \n" +
 		"#    / /__| |    | | \\ \\| |__| | |     _| |_| |____| |____ \n" +
 		"#   /_____|_|    |_|  \\_\\\\____/|_|    |_____|______|______|\n#\n" +
-		"#  " + userName() + "’s zsh profile\n\n" +
-		"# ZSH\n" +
-		"export SHELL=zsh\n"
+		"#  " + userName() + "’s zsh profile\n\n"
 	makeFile(profilePath, fileContents)
 }
 
@@ -254,13 +253,6 @@ func confG4s() {
 	}
 
 	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDirPath)
-}
-
-func confZshTheme() {
-	makeDir(p10kPath)
-	p10kAll()
-	p10kApple()
-	p10kiTerm2()
 }
 
 func p10kAll() {
@@ -425,7 +417,6 @@ func macEnv() {
 	ldBar.FinalMSG = " - Completed environment!\n"
 	ldBar.Start()
 
-	confA4s()
 	newZProfile()
 	newZshRC()
 
@@ -435,7 +426,7 @@ func macEnv() {
 	ldBar.Stop()
 }
 
-func macBasicDependency() {
+func macDependencyDefault() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing dependencies for basic environment configuration..."
 	ldBar.FinalMSG = " - Installed basic dependencies!\n"
@@ -447,7 +438,6 @@ func macBasicDependency() {
 	brewSSL1 := exec.Command(cmdPMS, pmsIns, "openssl@1.1")
 	brewNCurses := exec.Command(cmdPMS, pmsIns, "ncurses")
 	brewAutoconf := exec.Command(cmdPMS, pmsIns, "autoconf")
-	brewPCRE := exec.Command(cmdPMS, pmsIns, "pcre")
 	brewMpdecimal := exec.Command(cmdPMS, pmsIns, "mpdecimal")
 	brewLibYaml := exec.Command(cmdPMS, pmsIns, "libyaml")
 	brewReadLine := exec.Command(cmdPMS, pmsIns, "readline")
@@ -471,9 +461,6 @@ func macBasicDependency() {
 		checkError(err)
 	}
 	if err := brewAutoconf.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewPCRE.Run(); err != nil {
 		checkError(err)
 	}
 	if err := brewMpdecimal.Run(); err != nil {
@@ -514,104 +501,19 @@ func macBasicDependency() {
 	ldBar.Stop()
 }
 
-func macTerminalBasic() {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing zsh with useful tools..."
-	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
-	ldBar.Start()
+func macDependencyExtended() {
+	brewPCRE := exec.Command(cmdPMS, pmsIns, "pcre")
+	brewPCRE2 := exec.Command(cmdPMS, pmsIns, "pcre2")
 
-	brewZsh := exec.Command(cmdPMS, pmsIns, "zsh")
-	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
-	brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
-	brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
-	brewZ := exec.Command(cmdPMS, pmsIns, "z")
-	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
-	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
-
-	if err := brewZsh.Run(); err != nil {
+	if err := brewPCRE.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZshComp.Run(); err != nil {
+	if err := brewPCRE2.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewZshSyntax.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewZshAuto.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewZ.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTree.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewZshTheme.Run(); err != nil {
-		checkError(err)
-	}
-
-	confZshTheme()
-
-	profileAppend := "# POWERLEVEL10K\n" +
-		"source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
-		"if [[ -r \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
-		"  source \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
-		"fi\n" +
-		"if [[ -d /Applications/iTerm.app ]]; then\n" +
-		"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
-		"    [[ ! -f ~/.config/p10k/p10k-apple.zsh ]] || source ~/.config/p10k/p10k-apple.zsh\n" +
-		"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n    echo ''; neofetch --bold off\n" +
-		"    [[ ! -f ~/.config/p10k/p10k-iterm2.zsh ]] || source ~/.config/p10k/p10k-iterm2.zsh\n" +
-		"  else\n" +
-		"    [[ ! -f ~/.config/p10k/p10k-all.zsh ]] || source ~/.config/p10k/p10k-all.zsh\n" +
-		"  fi\n" +
-		"else\n" +
-		"  [[ ! -f ~/.config/p10k/p10k-all.zsh ]] || source ~/.config/p10k/.p10k-all.zsh\n" +
-		"fi\n\n" +
-		"# ZSH-COMPLETIONS\n" +
-		"if type brew &>/dev/null; then\n" +
-		"  mv () { command mv \"$@\" ; }" +
-		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
-		"  autoload -Uz compinit\n" +
-		"  compinit\n" +
-		"fi\n\n" +
-		"# ZSH SYNTAX HIGHTLIGHTING\n" +
-		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
-		"# ZSH AUTOSUGGESTIONS\n" +
-		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-		"# Z\n" +
-		"source " + brewPrefix + "etc/profile.d/z.sh\n\n"
-	appendFile(profilePath, profileAppend)
-	ldBar.Stop()
 }
 
-func macTerminalAdvanced() {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing zsh with useful tools..."
-	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
-	ldBar.Start()
-
-	brewFzf := exec.Command(cmdPMS, pmsIns, "fzf")
-	brewTmux := exec.Command(cmdPMS, pmsIns, "tmux")
-	brewTmuxinator := exec.Command(cmdPMS, pmsIns, "tmuxinator")
-	brewNeofetch := exec.Command(cmdPMS, pmsIns, "neofetch")
-
-	if err := brewFzf.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTmux.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTmuxinator.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewNeofetch.Run(); err != nil {
-		checkError(err)
-	}
-	ldBar.Start()
-}
-
-func macAdvancedDependency() {
+func macDependencyExpert() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing dependencies for development work..."
 	ldBar.FinalMSG = " - Installed advanced dependencies!\n"
@@ -772,6 +674,164 @@ func macAdvancedDependency() {
 		"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n"
 	appendFile(shrcPath, shrcAppend)
+	ldBar.Stop()
+}
+
+func macTerminalUse() {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Installing zsh with useful tools..."
+	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
+	ldBar.Start()
+
+	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
+	brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
+	brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
+	brewZ := exec.Command(cmdPMS, pmsIns, "z")
+	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
+	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
+
+	if err := brewZshComp.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshSyntax.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshAuto.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZ.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewTree.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshTheme.Run(); err != nil {
+		checkError(err)
+	}
+
+	makeFile(homeDir(), ".z")
+	makeDir(p10kPath)
+	makeDir(p10kCache)
+	p10kAll()
+
+	profileAppend := "# POWERLEVEL10K\n" +
+		"source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+		"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+		"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+		"fi\n" +
+		"[[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + ".p10k-all.zsh\n" +
+		"# ZSH-COMPLETIONS\n" +
+		"if type brew &>/dev/null; then\n" +
+		"  mv () { command mv \"$@\" ; }" +
+		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
+		"  autoload -Uz compinit\n" +
+		"  compinit\n" +
+		"fi\n\n" +
+		"# ZSH SYNTAX HIGHTLIGHTING\n" +
+		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
+		"# ZSH AUTOSUGGESTIONS\n" +
+		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+		"# Z\n" +
+		"source " + brewPrefix + "etc/profile.d/z.sh\n\n"
+	appendFile(profilePath, profileAppend)
+
+	confA4s()
+	ldBar.Stop()
+}
+
+func macTerminalUtilise() {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Installing zsh with useful tools..."
+	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
+	ldBar.Start()
+
+	brewZsh := exec.Command(cmdPMS, pmsIns, "zsh")
+	brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
+	brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
+	brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
+	brewZ := exec.Command(cmdPMS, pmsIns, "z")
+	brewTree := exec.Command(cmdPMS, pmsIns, "tree")
+	brewFzf := exec.Command(cmdPMS, pmsIns, "fzf")
+	brewTmux := exec.Command(cmdPMS, pmsIns, "tmux")
+	brewTmuxinator := exec.Command(cmdPMS, pmsIns, "tmuxinator")
+	brewNeoFetch := exec.Command(cmdPMS, pmsIns, "neofetch")
+	brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
+
+	if err := brewZsh.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshComp.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshSyntax.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshAuto.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZ.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewTree.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewFzf.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewTmux.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewTmuxinator.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewNeoFetch.Run(); err != nil {
+		checkError(err)
+	}
+	if err := brewZshTheme.Run(); err != nil {
+		checkError(err)
+	}
+
+	makeFile(homeDir(), ".z")
+	makeDir(p10kPath)
+	makeDir(p10kCache)
+	p10kAll()
+	p10kApple()
+	p10kiTerm2()
+
+	profileAppend := "# ZSH\n" +
+		"export SHELL=zsh\n\n" +
+		"# POWERLEVEL10K\n" +
+		"source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+		"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+		"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+		"fi\n" +
+		"if [[ -d /Applications/iTerm.app ]]; then\n" +
+		"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
+		"    [[ ! -f " + p10kPath + "p10k-apple.zsh ]] || source " + p10kPath + "p10k-apple.zsh\n" +
+		"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n    echo ''; neofetch --bold off\n" +
+		"    [[ ! -f " + p10kPath + "p10k-iterm2.zsh ]] || source " + p10kPath + "p10k-iterm2.zsh\n" +
+		"  else\n" +
+		"    [[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + "p10k-all.zsh\n" +
+		"  fi\n" +
+		"else\n" +
+		"  [[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + ".p10k-all.zsh\n" +
+		"fi\n\n" +
+		"# ZSH-COMPLETIONS\n" +
+		"if type brew &>/dev/null; then\n" +
+		"  mv () { command mv \"$@\" ; }" +
+		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
+		"  autoload -Uz compinit\n" +
+		"  compinit\n" +
+		"fi\n\n" +
+		"# ZSH SYNTAX HIGHTLIGHTING\n" +
+		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
+		"# ZSH AUTOSUGGESTIONS\n" +
+		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+		"# Z\n" +
+		"source " + brewPrefix + "etc/profile.d/z.sh\n\n"
+	appendFile(profilePath, profileAppend)
+
+	confA4s()
 	ldBar.Stop()
 }
 
@@ -956,7 +1016,7 @@ func macDatabase() {
 	ldBar.Stop()
 }
 
-func macDefaultLanguage() {
+func macLanguageDefault() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing basic computer programming language..."
 	ldBar.FinalMSG = " - Installed basic languages!\n"
@@ -1002,7 +1062,7 @@ func macDefaultLanguage() {
 	ldBar.Stop()
 }
 
-func macExtendedLanguage() {
+func macLanguageExtended() {
 	brewRust := exec.Command(cmdPMS, pmsIns, "rust")
 	brewGo := exec.Command(cmdPMS, pmsIns, "go")
 	brewNode := exec.Command(cmdPMS, pmsIns, "node")
@@ -1026,7 +1086,7 @@ func macExtendedLanguage() {
 	}
 }
 
-func macExpertLanguage() {
+func macLanguageExpert() {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing advanced computer programming language..."
 	ldBar.FinalMSG = " - Installed advanced languages!\n"
@@ -1247,12 +1307,12 @@ func macEnd() {
 func main() {
 	fmt.Println("\nDev4mac v" + appVer + "\n")
 	if checkNetStatus() == true {
-		fmt.Println("\nChoose an installation option. (Recommend option is 4)\n" +
+		fmt.Println("\nChoose an installation option. (Recommend option is 5)\n" +
 			"For a detailed explanation of each option and a list of installations, see the README: https://github.com/leelsey/Dev4os.\n" +
 			"\t1. Minimal\n" +
 			"\t2. Basic\n" +
-			"\t3. Advanced\n" +
-			"\t4. Creator\n" +
+			"\t3. Creator\n" +
+			"\t4. Beginner\n" +
 			"\t5. Developer\n" +
 			"\t6. Professional\n" +
 			"\t7. Specialist\n" +
@@ -1268,45 +1328,44 @@ func main() {
 			} else if cmdOpt == "2" {
 				macBegin()
 				macEnv()
-				macBasicDependency()
-				macDefaultLanguage()
-				macTerminalBasic()
+				macDependencyDefault()
+				macLanguageDefault()
+				macTerminalUse()
 				macCLIAppsGeneral()
 			} else if cmdOpt == "3" {
 				macBegin()
 				macEnv()
-				macBasicDependency()
-				macAdvancedDependency()
-				macDefaultLanguage()
-				macExtendedLanguage()
-				macTerminalBasic()
-				macTerminalAdvanced()
-				macCLIAppsGeneral()
-				macGUIAppsGeneral()
-			} else if cmdOpt == "4" {
-				macBegin()
-				macEnv()
-				macBasicDependency()
-				macAdvancedDependency()
-				macDefaultLanguage()
-				macExtendedLanguage()
-				macTerminalBasic()
+				macDependencyDefault()
+				macDependencyExtended()
+				macLanguageDefault()
+				macLanguageExtended()
+				macTerminalUse()
 				macCLIAppsGeneral()
 				macGUIAppsGeneral()
 				macGUIAppsCreator()
+			} else if cmdOpt == "4" {
+				macBegin()
+				macEnv()
+				macDependencyDefault()
+				macDependencyExtended()
+				macLanguageDefault()
+				macLanguageExtended()
+				macTerminalUse()
+				macCLIAppsGeneral()
+				macGUIAppsGeneral()
 			} else if cmdOpt == "5" {
 				macBegin()
 				macEnv()
-				macBasicDependency()
-				macAdvancedDependency()
+				macDependencyDefault()
+				macDependencyExtended()
+				macDependencyExpert()
+				macLanguageDefault()
+				macLanguageExtended()
+				macLanguageExpert()
 				macASDF()
-				macDefaultLanguage()
-				macExtendedLanguage()
-				macExpertLanguage()
 				macServer()
 				macDatabase()
-				macTerminalBasic()
-				macTerminalAdvanced()
+				macTerminalUtilise()
 				macCLIAppsGeneral()
 				macCLIAppsDeveloper()
 				macGUIAppsGeneral()
@@ -1315,17 +1374,17 @@ func main() {
 			} else if cmdOpt == "6" {
 				macBegin()
 				macEnv()
-				macBasicDependency()
-				macAdvancedDependency()
+				macDependencyDefault()
+				macDependencyExtended()
+				macDependencyExpert()
+				macLanguageDefault()
+				macLanguageExtended()
+				macLanguageExpert()
 				macASDF()
 				macASDFLanguage()
-				macDefaultLanguage()
-				macExtendedLanguage()
-				macExpertLanguage()
 				macServer()
 				macDatabase()
-				macTerminalBasic()
-				macTerminalAdvanced()
+				macTerminalUtilise()
 				macCLIAppsGeneral()
 				macCLIAppsGeneral()
 				macCLIAppsDeveloper()
@@ -1336,17 +1395,17 @@ func main() {
 			} else if cmdOpt == "7" {
 				macBegin()
 				macEnv()
-				macBasicDependency()
-				macAdvancedDependency()
-				macASDF()
-				macASDFLanguage()
-				macDefaultLanguage()
-				macExtendedLanguage()
-				macExpertLanguage()
+				macDependencyDefault()
+				macDependencyExtended()
+				macDependencyExpert()
+				macLanguageDefault()
+				macLanguageExtended()
+				macLanguageExpert()
 				macServer()
 				macDatabase()
-				macTerminalBasic()
-				macTerminalAdvanced()
+				macTerminalUtilise()
+				macASDF()
+				macASDFLanguage()
 				macCLIAppsGeneral()
 				macCLIAppsDeveloper()
 				macCLIAppsProfessional()
