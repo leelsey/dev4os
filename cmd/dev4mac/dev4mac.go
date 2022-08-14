@@ -1323,93 +1323,132 @@ func main() {
 			_, err := fmt.Scanln(&cmdOpt)
 			checkError(err)
 			if cmdOpt == "1" {
+				// Default installation
 				macBegin()
 				macEnv()
 			} else if cmdOpt == "2" {
+				// Default installation
 				macBegin()
 				macEnv()
+				// Dependencies installation
 				macDependencyDefault()
+				// Language installation (dependencies)
 				macLanguageDefault()
+				// Terminal setup
 				macTerminalUse()
+				// GUI App for useful
 				macCLIAppsGeneral()
 			} else if cmdOpt == "3" {
+				// Default installation
 				macBegin()
 				macEnv()
+				// Dependencies installation
 				macDependencyDefault()
 				macDependencyExtended()
+				// Language installation (dependencies)
 				macLanguageDefault()
 				macLanguageExtended()
+				// Terminal setup
 				macTerminalUse()
+				// CLI App for useful
 				macCLIAppsGeneral()
+				// GUI App for useful & creative
 				macGUIAppsGeneral()
 				macGUIAppsCreator()
 			} else if cmdOpt == "4" {
+				// Default installation
 				macBegin()
 				macEnv()
+				// Dependencies installation
 				macDependencyDefault()
 				macDependencyExtended()
+				// Language installation (dependencies)
 				macLanguageDefault()
 				macLanguageExtended()
+				// Terminal setup
 				macTerminalUse()
+				// CLI App for useful
 				macCLIAppsGeneral()
+				// GUI App for useful & developed
 				macGUIAppsGeneral()
+				macGUIAppsDeveloper()
 			} else if cmdOpt == "5" {
+				// Default installation
 				macBegin()
 				macEnv()
+				// Dependencies installation
 				macDependencyDefault()
 				macDependencyExtended()
 				macDependencyExpert()
+				// Language installation (dependencies)
 				macLanguageDefault()
 				macLanguageExtended()
 				macLanguageExpert()
-				macASDF()
+				// Terminal setup
+				macTerminalUtilise()
+				// Developer tools
 				macServer()
 				macDatabase()
-				macTerminalUtilise()
+				macASDF()
+				// CLI App for useful & developed
 				macCLIAppsGeneral()
 				macCLIAppsDeveloper()
+				// GUI App for useful & developed
 				macGUIAppsGeneral()
-				macGUIAppsCreator()
 				macGUIAppsDeveloper()
 			} else if cmdOpt == "6" {
+				// Default installation
 				macBegin()
 				macEnv()
+				// Dependencies installation
 				macDependencyDefault()
 				macDependencyExtended()
 				macDependencyExpert()
+				// Language installation (dependencies)
 				macLanguageDefault()
 				macLanguageExtended()
 				macLanguageExpert()
-				macASDF()
-				macASDFLanguage()
+				// Terminal setup
+				macTerminalUtilise()
+				// Developer tools
 				macServer()
 				macDatabase()
-				macTerminalUtilise()
-				macCLIAppsGeneral()
+				macASDF()
+				macASDFLanguage()
+				// CLI App for useful & developed
 				macCLIAppsGeneral()
 				macCLIAppsDeveloper()
 				macCLIAppsProfessional()
+				// GUI App for useful & creative & developed
+				macGUIAppsGeneral()
 				macGUIAppsCreator()
 				macGUIAppsDeveloper()
 				macGUIAppsProfessional()
 			} else if cmdOpt == "7" {
+				// Default installation
 				macBegin()
 				macEnv()
+				// Dependencies installation
 				macDependencyDefault()
 				macDependencyExtended()
 				macDependencyExpert()
+				// Language installation (dependencies)
 				macLanguageDefault()
 				macLanguageExtended()
 				macLanguageExpert()
+				// Terminal setup
+				macTerminalUtilise()
+				// Developer tools
 				macServer()
 				macDatabase()
-				macTerminalUtilise()
 				macASDF()
 				macASDFLanguage()
+				// CLI App for useful & developed
 				macCLIAppsGeneral()
 				macCLIAppsDeveloper()
 				macCLIAppsProfessional()
 				macCLIAppsSpecialist()
+				// GUI App for useful & creative & developed
 				macGUIAppsGeneral()
 				macGUIAppsCreator()
 				macGUIAppsDeveloper()
