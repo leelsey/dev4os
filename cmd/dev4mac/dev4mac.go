@@ -325,6 +325,29 @@ func p10kiTerm2() {
 	checkError(err)
 }
 
+func p10kTMUX() {
+	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
+	respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devhelp.zsh")
+	if err != nil {
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		os.Exit(0)
+	}
+	defer func() {
+		err := respP10kTMUX.Body.Close()
+		checkError(err)
+	}()
+	rawFileP10kTMUX, _ := ioutil.ReadAll(respP10kTMUX.Body)
+
+	confP10kTMUX, err := os.OpenFile(dlP10kTMUX, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	checkError(err)
+	defer func() {
+		err := confP10kTMUX.Close()
+		checkError(err)
+	}()
+	_, err = confP10kTMUX.Write(rawFileP10kTMUX)
+	checkError(err)
+}
+
 func updateBrew() {
 	updateHomebrew := exec.Command(cmdPMS, "update")
 	updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
@@ -776,6 +799,7 @@ func macTerminal(runOpt string) {
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		p10kApple()
 		p10kiTerm2()
+		p10kTMUX()
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
 			"# POWERLEVEL10K\n" +
@@ -786,8 +810,12 @@ func macTerminal(runOpt string) {
 			"if [[ -d /Applications/iTerm.app ]]; then\n" +
 			"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
 			"    [[ ! -f " + p10kPath + "p10k-apple.zsh ]] || source " + p10kPath + "p10k-apple.zsh\n" +
-			"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n    echo ''; neofetch --bold off\n" +
+			"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n" +
+			"    echo ''; neofetch --bold off\n" +
 			"    [[ ! -f " + p10kPath + "p10k-iterm2.zsh ]] || source " + p10kPath + "p10k-iterm2.zsh\n" +
+			"  elif [[ $TERM_PROGRAM = \"tmux\" ]]; then\n" +
+			"    echo ''; neofetch --bold off\n" +
+			"    [[ ! -f " + p10kPath + "p10k-tmux.zsh ]] || source " + p10kPath + "p10k-tmux.zsh\n" +
 			"  else\n" +
 			"    [[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + "p10k-all.zsh\n" +
 			"  fi\n" +
@@ -1271,15 +1299,14 @@ func macGUIApp(runOpt string) {
 	brewSignal := exec.Command(cmdPMS, pmsIns, pmsAlt, "signal")
 	brewDiscord := exec.Command(cmdPMS, pmsIns, pmsAlt, "discord")
 	brewRectangle := exec.Command(cmdPMS, pmsIns, pmsAlt, "rectangle")
-	brewRectanglePro := exec.Command(cmdPMS, pmsIns, pmsAlt, "rectangle-pro")
 
+	brewDropbox := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox")
+	brewDropboxCapture := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox-capture")
 	brewSketch := exec.Command(cmdPMS, pmsIns, pmsAlt, "sketch")
 	brewZeplin := exec.Command(cmdPMS, pmsIns, pmsAlt, "zeplin")
 	brewBlender := exec.Command(cmdPMS, pmsIns, pmsAlt, "blender")
 	brewOBS := exec.Command(cmdPMS, pmsIns, pmsAlt, "obs")
 	brewBlackhole64ch := exec.Command(cmdPMS, pmsIns, pmsAlt, "blackhole-64ch")
-	brewDropbox := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox")
-	brewDropboxCapture := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox-capture")
 
 	brewiTerm2 := exec.Command(cmdPMS, pmsIns, pmsAlt, "iterm2")
 	brewVSCode := exec.Command(cmdPMS, pmsIns, pmsAlt, "visual-studio-code")
@@ -1331,19 +1358,17 @@ func macGUIApp(runOpt string) {
 	if err := brewDiscord.Run(); err != nil {
 		checkError(err)
 	}
-
-	if runOpt == "1" || runOpt == "2" || runOpt == "3" || runOpt == "4" || runOpt == "5" {
-		if err := brewRectangle.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if runOpt == "6" || runOpt == "7" {
-		if err := brewRectanglePro.Run(); err != nil {
-			checkError(err)
-		}
+	if err := brewRectangle.Run(); err != nil {
+		checkError(err)
 	}
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
+		if err := brewDropbox.Run(); err != nil {
+			checkError(err)
+		}
+		if err := brewDropboxCapture.Run(); err != nil {
+			checkError(err)
+		}
 		if err := brewSketch.Run(); err != nil {
 			checkError(err)
 		}
@@ -1359,25 +1384,19 @@ func macGUIApp(runOpt string) {
 		if err := brewBlackhole64ch.Run(); err != nil {
 			checkError(err)
 		}
-		if err := brewDropbox.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewDropboxCapture.Run(); err != nil {
-			checkError(err)
-		}
 	}
 
 	if runOpt == "3" || runOpt == "4" {
 		if err := brewVSCode.Run(); err != nil {
 			checkError(err)
 		}
-		if err := brewFork.Run(); err != nil {
-			checkError(err)
-		}
 		if err := brewIntellijIdeaCE.Run(); err != nil {
 			checkError(err)
 		}
 		if err := brewAndroidStudio.Run(); err != nil {
+			checkError(err)
+		}
+		if err := brewFork.Run(); err != nil {
 			checkError(err)
 		}
 	}
@@ -1418,16 +1437,6 @@ func macGUIApp(runOpt string) {
 		}
 	}
 
-	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		shrcAppend := "# ANDROID STUDIO\n" +
-			"#export ANDROID_HOME=$HOME/Library/Android/sdk\n" +
-			"#export PATH=$PATH:$ANDROID_HOME/emulator\n" +
-			"#export PATH=$PATH:$ANDROID_HOME/tools\n" +
-			"#export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
-			"#export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
-		appendFile(shrcPath, shrcAppend)
-	}
-
 	if runOpt == "6" || runOpt == "7" {
 		if err := brewVNCViewer.Run(); err != nil {
 			checkError(err)
@@ -1465,6 +1474,16 @@ func macGUIApp(runOpt string) {
 		if err := brewCutter.Run(); err != nil {
 			checkError(err)
 		}
+	}
+
+	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		shrcAppend := "# ANDROID STUDIO\n" +
+			"export ANDROID_HOME=$HOME/Library/Android/sdk\n" +
+			"export PATH=$PATH:$ANDROID_HOME/emulator\n" +
+			"export PATH=$PATH:$ANDROID_HOME/tools\n" +
+			"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
+			"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
+		appendFile(shrcPath, shrcAppend)
 	}
 
 	ldBar.Stop()
