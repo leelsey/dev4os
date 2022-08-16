@@ -258,9 +258,9 @@ func confG4s() {
 
 func p10kAll() {
 	dlP10kAll := p10kPath + "p10k-all.zsh"
-	respP10kAll, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devbegin.zsh")
+	respP10kAll, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
 	if err != nil {
-		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -281,9 +281,9 @@ func p10kAll() {
 
 func p10kApple() {
 	dlP10kApple := p10kPath + "p10k-apple.zsh"
-	respP10kApple, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devsimple.zsh")
+	respP10kApple, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
 	if err != nil {
-		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -304,9 +304,9 @@ func p10kApple() {
 
 func p10kiTerm2() {
 	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
-	respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devwork.zsh")
+	respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
 	if err != nil {
-		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
 		os.Exit(0)
 	}
 	defer func() {
@@ -327,9 +327,9 @@ func p10kiTerm2() {
 
 func p10kTMUX() {
 	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
-	respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ZshTheme/main/p10k-devhelp.zsh")
+	respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
 	if err != nil {
-		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ZshTheme\n")
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
 		os.Exit(0)
 	}
 	defer func() {
