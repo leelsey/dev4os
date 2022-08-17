@@ -269,7 +269,7 @@ func p10kAll() {
 	}()
 	rawFileP10kAll, _ := ioutil.ReadAll(respP10kAll.Body)
 
-	confP10kAll, err := os.OpenFile(dlP10kAll, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	confP10kAll, err := os.OpenFile(dlP10kAll, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
 		err := confP10kAll.Close()
@@ -292,7 +292,7 @@ func p10kApple() {
 	}()
 	rawFileP10kApple, _ := ioutil.ReadAll(respP10kApple.Body)
 
-	confP10kApple, err := os.OpenFile(dlP10kApple, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	confP10kApple, err := os.OpenFile(dlP10kApple, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
 		err := confP10kApple.Close()
@@ -315,7 +315,7 @@ func p10kiTerm2() {
 	}()
 	rawFileP10kiTerm2, _ := ioutil.ReadAll(respP10kiTerm2.Body)
 
-	confP10kiTerm2, err := os.OpenFile(dlP10kiTerm2, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	confP10kiTerm2, err := os.OpenFile(dlP10kiTerm2, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
 		err := confP10kiTerm2.Close()
@@ -338,13 +338,36 @@ func p10kTMUX() {
 	}()
 	rawFileP10kTMUX, _ := ioutil.ReadAll(respP10kTMUX.Body)
 
-	confP10kTMUX, err := os.OpenFile(dlP10kTMUX, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	confP10kTMUX, err := os.OpenFile(dlP10kTMUX, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
 		err := confP10kTMUX.Close()
 		checkError(err)
 	}()
 	_, err = confP10kTMUX.Write(rawFileP10kTMUX)
+	checkError(err)
+}
+
+func iTerm2Conf() {
+	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
+	respiTerm2Conf, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
+	if err != nil {
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
+		os.Exit(0)
+	}
+	defer func() {
+		err := respiTerm2Conf.Body.Close()
+		checkError(err)
+	}()
+	rawFileiTerm2Conf, _ := ioutil.ReadAll(respiTerm2Conf.Body)
+
+	confiTerm2Conf, err := os.OpenFile(dliTerm2Conf, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	checkError(err)
+	defer func() {
+		err := confiTerm2Conf.Close()
+		checkError(err)
+	}()
+	_, err = confiTerm2Conf.Write(rawFileiTerm2Conf)
 	checkError(err)
 }
 
@@ -734,23 +757,14 @@ func macTerminal(runOpt string) {
 	if err := brewZshTheme.Run(); err != nil {
 		checkError(err)
 	}
+
+	makeFile(homeDir(), ".z")
+	makeDir(p10kPath)
+	makeDir(p10kCache)
+	p10kAll()
+
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		if err := brewZsh.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewZshComp.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewZshSyntax.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewZshAuto.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewZ.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewTree.Run(); err != nil {
 			checkError(err)
 		}
 		if err := brewFzf.Run(); err != nil {
@@ -765,15 +779,9 @@ func macTerminal(runOpt string) {
 		if err := brewNeoFetch.Run(); err != nil {
 			checkError(err)
 		}
-		if err := brewZshTheme.Run(); err != nil {
-			checkError(err)
-		}
-	}
 
-	makeFile(homeDir(), ".z")
-	makeDir(p10kPath)
-	makeDir(p10kCache)
-	p10kAll()
+		iTerm2Conf()
+	}
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
 		profileAppend := "# POWERLEVEL10K\n" +
