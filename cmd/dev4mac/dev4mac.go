@@ -422,6 +422,7 @@ func installBrew() {
 }
 
 func checkPermission() string {
+	fmt.Print("   ")
 	sudoPW := exec.Command("sudo", "whoami")
 	sudoPW.Env = os.Environ()
 	sudoPW.Stdin = os.Stdin
@@ -1499,7 +1500,7 @@ func macGUIAppPlus(runOpt string) {
 	fmt.Println(" - Check root permission (sudo) for install the GUI App")
 
 	brewBlackHole := exec.Command(cmdPMS, pmsIns, pmsAlt, "blackhole-64ch")
-	brewVMwareFusion := exec.Command(cmdPMS, pmsIns, pmsAlt, "vmware-fusion")
+	//brewVMwareFusion := exec.Command(cmdPMS, pmsIns, pmsAlt, "vmware-fusion")
 	brewWireShark := exec.Command(cmdPMS, pmsIns, pmsAlt, "wireshark")
 
 	if checkPermission() == "root\n" {
@@ -1512,11 +1513,12 @@ func macGUIAppPlus(runOpt string) {
 			checkError(err)
 		}
 
-		if runOpt == "6" || runOpt == "7" {
-			if err := brewVMwareFusion.Run(); err != nil {
-				checkError(err)
-			}
-		}
+		//fmt.Println(" - Installing VMware Fusion")
+		//if runOpt == "6" || runOpt == "7" {
+		//	if err := brewVMwareFusion.Run(); err != nil {
+		//		checkError(err)
+		//	}
+		//}
 
 		if runOpt == "7" {
 			if err := brewWireShark.Run(); err != nil {
@@ -1583,6 +1585,7 @@ func main() {
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
 				macGUIApp(cmdOpt)
+				macGUIAppPlus(cmdOpt)
 			} else if cmdOpt == "4" {
 				// Default installation
 				macBegin()
@@ -1633,6 +1636,7 @@ func main() {
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
 				macGUIApp(cmdOpt)
+				macGUIAppPlus(cmdOpt)
 			} else if cmdOpt == "7" {
 				// Default installation
 				macBegin()
@@ -1641,13 +1645,13 @@ func main() {
 				macDependency(cmdOpt)
 				// Language installation (dependencies)
 				macLanguage(cmdOpt)
-				// Terminal setup
+				//Terminal setup
 				macTerminal(cmdOpt)
-				// Developer tools
+				//Developer tools
 				macServer()
 				macDatabase()
 				macASDF()
-				// CLI App for useful
+				//CLI App for useful
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
 				macGUIApp(cmdOpt)
@@ -1660,25 +1664,17 @@ func main() {
 			}
 			break
 		}
+
 		macEnd()
 
-		fmt.Println("\nFinished to setup! You can choose 4 options. (Recommend option is 1)\n" +
-			"\t1. Easily configure git global setting\n" +
-			"\t0. Nothing, finish to run Dev4mac\n")
-	endOpt:
-		for {
-			fmt.Printf("Select command: ")
-			_, err := fmt.Scanln(&cmdOpt)
-			checkError(err)
-			if cmdOpt == "1" {
-				confG4s()
-			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
-			} else {
-				fmt.Println("Wrong answer. Please choose number 0-1")
-				goto endOpt
-			}
-			break
+		fmt.Println("\nFinished to setup!\nEnter (Y) if easily configure git global setting, else just enter any key to exit ")
+
+		_, err := fmt.Scanln(&cmdOpt)
+		checkError(err)
+		if cmdOpt == "y" || cmdOpt == "Y" || cmdOpt == "yes" || cmdOpt == "Yes" || cmdOpt == "YES" {
+			confG4s()
 		}
+
 		fmt.Println("\n----------Finished!----------\n" +
 			"Please RESTART your terminal!\n" +
 			lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
