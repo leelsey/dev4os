@@ -27,6 +27,7 @@ var (
 	//pmsReIn     = "reinstall"
 	//pmsRm       = "remove"
 	pmsAlt     = "--cask"
+	pmsRepo    = "tap"
 	cmdGit     = "git"
 	cmdASDF    = checkASDFPath()
 	asdfPlugin = "plugin"
@@ -39,7 +40,7 @@ var (
 
 func checkError(err error) bool {
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("\n" + err.Error())
 		os.Exit(0)
 	}
 	return err != nil
@@ -373,7 +374,7 @@ func iTerm2Conf() {
 
 func updateBrew() {
 	updateHomebrew := exec.Command(cmdPMS, "update")
-	updateBrewCask := exec.Command(cmdPMS, "tap", "homebrew/cask-versions")
+	updateBrewCask := exec.Command(cmdPMS, pmsRepo, "homebrew/cask-versions")
 
 	if err := updateHomebrew.Run(); err != nil {
 		checkError(err)
@@ -407,6 +408,7 @@ func installBrew() {
 
 	installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
 	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
+
 	if err := installHomebrew.Run(); err != nil {
 		rmFile(dlBrewPath)
 		checkError(err)
@@ -417,6 +419,23 @@ func installBrew() {
 		fmt.Println("Brew install failed, please check your system\n")
 		os.Exit(0)
 	}
+}
+
+func checkPermission() string {
+	sudoPW := exec.Command("sudo", "whoami")
+	sudoPW.Env = os.Environ()
+	sudoPW.Stdin = os.Stdin
+	sudoPW.Stderr = os.Stderr
+	whoAmI, err := sudoPW.Output()
+
+	if err != nil {
+		fmt.Println(lstDot+"Shell command sudo error: ", err.Error())
+		os.Exit(0)
+		//} else if string(whoAmI) == "root\n" {
+		//	return true
+	}
+	//return false
+	return string(whoAmI)
 }
 
 func macBegin() {
@@ -432,16 +451,7 @@ func macBegin() {
 		ldBar.Stop()
 	case checkBrewExists() == false:
 		fmt.Println(" - Check root permission (sudo) for install the Homebrew")
-		sudoPW := exec.Command("sudo", "whoami")
-		sudoPW.Env = os.Environ()
-		sudoPW.Stdin = os.Stdin
-		sudoPW.Stderr = os.Stderr
-		whoAmI, err := sudoPW.Output()
-
-		if err != nil {
-			fmt.Println(lstDot+"Shell command sudo error: ", err)
-			os.Exit(0)
-		} else if string(whoAmI) == "root\n" {
+		if checkPermission() == "root\n" {
 			ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 			ldBar.Suffix = " Installing homebrew..."
 			ldBar.FinalMSG = " - Installed and updated brew!\n"
@@ -454,7 +464,7 @@ func macBegin() {
 		} else {
 			fmt.Println(lstDot + "Incorrect user, please check permission of sudo.\n" +
 				lstDot + "It need sudo command of \"root\" user's permission.\n" +
-				lstDot + "Now your username: " + string(whoAmI))
+				lstDot + "Now your username: " + checkPermission())
 			os.Exit(0)
 		}
 	}
@@ -481,6 +491,7 @@ func macDependency(runOpt string) {
 	ldBar.Suffix = " Installing dependencies for basic environment configuration..."
 	ldBar.FinalMSG = " - Installed basic dependencies!\n"
 	ldBar.Start()
+
 	brewPkgConfig := exec.Command(cmdPMS, pmsIns, "pkg-config")
 	brewCaCert := exec.Command(cmdPMS, pmsIns, "ca-certificates")
 	brewSSL3 := exec.Command(cmdPMS, pmsIns, "openssl")
@@ -758,10 +769,9 @@ func macTerminal(runOpt string) {
 		checkError(err)
 	}
 
-	makeFile(homeDir(), ".z")
+	makeFile(homeDir()+".z", "")
 	makeDir(p10kPath)
 	makeDir(p10kCache)
-	p10kAll()
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		if err := brewZsh.Run(); err != nil {
@@ -782,6 +792,8 @@ func macTerminal(runOpt string) {
 
 		iTerm2Conf()
 	}
+
+	p10kAll()
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
 		profileAppend := "# POWERLEVEL10K\n" +
@@ -808,6 +820,7 @@ func macTerminal(runOpt string) {
 		p10kApple()
 		p10kiTerm2()
 		p10kTMUX()
+
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
 			"# POWERLEVEL10K\n" +
@@ -998,7 +1011,7 @@ func macDatabase() {
 	brewPostgreSQL := exec.Command(cmdPMS, pmsIns, "postgresql")
 	brewMySQL := exec.Command(cmdPMS, pmsIns, "mysql")
 	brewRedis := exec.Command(cmdPMS, pmsIns, "redis")
-	brewAddMongoDB := exec.Command(cmdPMS, "tap", "mongodb/brew")
+	brewAddMongoDB := exec.Command(cmdPMS, pmsRepo, "mongodb/brew")
 	brewMongoDB := exec.Command(cmdPMS, pmsIns, "mongodb-community")
 
 	if err := brewSQLiteAnalyzer.Run(); err != nil {
@@ -1059,7 +1072,7 @@ func macLanguage(runOpt string) {
 	brewR := exec.Command(cmdPMS, pmsIns, "r")
 	brewHaskell := exec.Command(cmdPMS, pmsIns, "haskell-stack")
 	brewHaskellServer := exec.Command(cmdPMS, pmsIns, "haskell-language-server")
-	brewAddDart := exec.Command(cmdPMS, "tap", "dart-lang/dart")
+	brewAddDart := exec.Command(cmdPMS, pmsRepo, "dart-lang/dart")
 	brewDart := exec.Command(cmdPMS, pmsIns, "dart")
 
 	if err := brewGawk.Run(); err != nil {
@@ -1314,7 +1327,6 @@ func macGUIApp(runOpt string) {
 	brewZeplin := exec.Command(cmdPMS, pmsIns, pmsAlt, "zeplin")
 	brewBlender := exec.Command(cmdPMS, pmsIns, pmsAlt, "blender")
 	brewOBS := exec.Command(cmdPMS, pmsIns, pmsAlt, "obs")
-	brewBlackhole64ch := exec.Command(cmdPMS, pmsIns, pmsAlt, "blackhole-64ch")
 
 	brewiTerm2 := exec.Command(cmdPMS, pmsIns, pmsAlt, "iterm2")
 	brewVSCode := exec.Command(cmdPMS, pmsIns, pmsAlt, "visual-studio-code")
@@ -1331,11 +1343,9 @@ func macGUIApp(runOpt string) {
 	brewFirefoxDev := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox-developer-edition")
 
 	brewVNCViewer := exec.Command(cmdPMS, pmsIns, pmsAlt, "vnc-viewer")
-	brewVMwareFusion := exec.Command(cmdPMS, pmsIns, pmsAlt, "vmware-fusion")
 
 	brewBurpSuite := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite")
 	brewBurpSuitePro := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite-professional")
-	brewWireShark := exec.Command(cmdPMS, pmsIns, pmsAlt, "wireshark")
 	brewSensei := exec.Command(cmdPMS, pmsIns, pmsAlt, "sensei")
 	brewiMazing := exec.Command(cmdPMS, pmsIns, pmsAlt, "imazing")
 	brewApparency := exec.Command(cmdPMS, pmsIns, pmsAlt, "apparency")
@@ -1387,9 +1397,6 @@ func macGUIApp(runOpt string) {
 			checkError(err)
 		}
 		if err := brewOBS.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewBlackhole64ch.Run(); err != nil {
 			checkError(err)
 		}
 	}
@@ -1449,12 +1456,6 @@ func macGUIApp(runOpt string) {
 		if err := brewVNCViewer.Run(); err != nil {
 			checkError(err)
 		}
-		if err := brewVMwareFusion.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewIntellijIdea.Run(); err != nil {
-			checkError(err)
-		}
 	}
 
 	if runOpt == "7" {
@@ -1462,9 +1463,6 @@ func macGUIApp(runOpt string) {
 			checkError(err)
 		}
 		if err := brewBurpSuitePro.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewWireShark.Run(); err != nil {
 			checkError(err)
 		}
 		if err := brewSensei.Run(); err != nil {
@@ -1495,6 +1493,39 @@ func macGUIApp(runOpt string) {
 	}
 
 	ldBar.Stop()
+}
+
+func macGUIAppPlus(runOpt string) {
+	fmt.Println(" - Check root permission (sudo) for install the GUI App")
+
+	brewBlackHole := exec.Command(cmdPMS, pmsIns, pmsAlt, "blackhole-64ch")
+	brewVMwareFusion := exec.Command(cmdPMS, pmsIns, pmsAlt, "vmware-fusion")
+	brewWireShark := exec.Command(cmdPMS, pmsIns, pmsAlt, "wireshark")
+
+	if checkPermission() == "root\n" {
+		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+		ldBar.Suffix = " Installing advanced tools for GUI"
+		ldBar.FinalMSG = " - Installed developer utilities!\n"
+		ldBar.Start()
+
+		if err := brewBlackHole.Run(); err != nil {
+			checkError(err)
+		}
+
+		if runOpt == "6" || runOpt == "7" {
+			if err := brewVMwareFusion.Run(); err != nil {
+				checkError(err)
+			}
+		}
+
+		if runOpt == "7" {
+			if err := brewWireShark.Run(); err != nil {
+				checkError(err)
+			}
+		}
+
+		ldBar.Stop()
+	}
 }
 
 func macEnd() {
@@ -1620,7 +1651,9 @@ func main() {
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
 				macGUIApp(cmdOpt)
+				macGUIAppPlus(cmdOpt)
 			} else if cmdOpt == "0" || cmdOpt == "q" || cmdOpt == "e" || cmdOpt == "quit" || cmdOpt == "exit" {
+				os.Exit(0)
 			} else {
 				fmt.Println("Wrong answer. Please choose number 0-7")
 				goto startOpt
