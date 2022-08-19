@@ -1105,8 +1105,11 @@ func macASDF(runOpt string) {
 
 	if runOpt == "6" || runOpt == "7" {
 		asdfPerlLatest := exec.Command(cmdASDF, pmsIns, "perl", "latest")
-		asdfJavaLTS11 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-11.0.2")
-		asdfJavaLTS17 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-17.0.2")
+		asdfOpenJDK11 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-11.0.2")
+		asdfOpenJDK17 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-17.0.2")
+		asdfTemurin8 := exec.Command(cmdASDF, pmsIns, "java", "temurin-8.0.345+1")
+		asdfTemurin11 := exec.Command(cmdASDF, pmsIns, "java", "temurin-11.0.16+8")
+		asdfTemurin17 := exec.Command(cmdASDF, pmsIns, "java", "temurin-17.0.4+8")
 		//asdfRubyLatest := exec.Command(cmdASDF, pmsIns, "ruby", "latest")     // error
 		//asdfPythonLatest := exec.Command(cmdASDF, pmsIns, "python", "latest") // error
 		asdfRustLatest := exec.Command(cmdASDF, pmsIns, "rust", "latest")
@@ -1124,10 +1127,19 @@ func macASDF(runOpt string) {
 		if err := asdfPerlLatest.Run(); err != nil {
 			checkError(err)
 		}
-		if err := asdfJavaLTS11.Run(); err != nil {
+		if err := asdfOpenJDK11.Run(); err != nil {
 			checkError(err)
 		}
-		if err := asdfJavaLTS17.Run(); err != nil {
+		if err := asdfOpenJDK17.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfTemurin8.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfTemurin11.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfTemurin17.Run(); err != nil {
 			checkError(err)
 		}
 		//if err := asdfRubyLatest.Run(); err != nil {
@@ -1453,9 +1465,13 @@ func macGUIApp(runOpt string) {
 	brewFork := exec.Command(cmdPMS, pmsIns, pmsAlt, "fork")
 
 	if runOpt == "3" || runOpt == "4" {
+		brewEclipse := exec.Command(cmdPMS, pmsIns, pmsAlt, "eclipse-ide")
 		brewIntellijIdeaCE := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea-ce")
 		brewAndroidStudio := exec.Command(cmdPMS, pmsIns, pmsAlt, "android-studio")
 
+		if err := brewEclipse.Run(); err != nil {
+			checkError(err)
+		}
 		if err := brewVSCode.Run(); err != nil {
 			checkError(err)
 		}
