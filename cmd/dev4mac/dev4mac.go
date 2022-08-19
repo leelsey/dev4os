@@ -272,49 +272,26 @@ func confG4s() {
 	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDirPath)
 }
 
-func p10kAll() {
-	dlP10kAll := p10kPath + "p10k-all.zsh"
-	respP10kAll, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
+func p10kTerminal() {
+	dlP10kTerminal := p10kPath + "p10k-terminal.zsh"
+	respP10kTerminal, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
 	if err != nil {
 		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
 		os.Exit(0)
 	}
 	defer func() {
-		err := respP10kAll.Body.Close()
+		err := respP10kTerminal.Body.Close()
 		checkError(err)
 	}()
-	rawFileP10kAll, _ := ioutil.ReadAll(respP10kAll.Body)
+	rawFileP10kTerminal, _ := ioutil.ReadAll(respP10kTerminal.Body)
 
-	confP10kAll, err := os.OpenFile(dlP10kAll, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	confP10kTerminal, err := os.OpenFile(dlP10kTerminal, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
-		err := confP10kAll.Close()
+		err := confP10kTerminal.Close()
 		checkError(err)
 	}()
-	_, err = confP10kAll.Write(rawFileP10kAll)
-	checkError(err)
-}
-
-func p10kApple() {
-	dlP10kApple := p10kPath + "p10k-apple.zsh"
-	respP10kApple, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
-	if err != nil {
-		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
-		os.Exit(0)
-	}
-	defer func() {
-		err := respP10kApple.Body.Close()
-		checkError(err)
-	}()
-	rawFileP10kApple, _ := ioutil.ReadAll(respP10kApple.Body)
-
-	confP10kApple, err := os.OpenFile(dlP10kApple, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err)
-	defer func() {
-		err := confP10kApple.Close()
-		checkError(err)
-	}()
-	_, err = confP10kApple.Write(rawFileP10kApple)
+	_, err = confP10kTerminal.Write(rawFileP10kTerminal)
 	checkError(err)
 }
 
@@ -364,6 +341,29 @@ func p10kTMUX() {
 	checkError(err)
 }
 
+func p10kEtc() {
+	dlP10kEtc := p10kPath + "p10k-etc.zsh"
+	respP10kEtc, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
+	if err != nil {
+		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
+		os.Exit(0)
+	}
+	defer func() {
+		err := respP10kEtc.Body.Close()
+		checkError(err)
+	}()
+	rawFileP10kEtc, _ := ioutil.ReadAll(respP10kEtc.Body)
+
+	confP10kEtc, err := os.OpenFile(dlP10kEtc, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	checkError(err)
+	defer func() {
+		err := confP10kEtc.Close()
+		checkError(err)
+	}()
+	_, err = confP10kEtc.Write(rawFileP10kEtc)
+	checkError(err)
+}
+
 func iTerm2Conf() {
 	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
 	respiTerm2Conf, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
@@ -385,18 +385,6 @@ func iTerm2Conf() {
 	}()
 	_, err = confiTerm2Conf.Write(rawFileiTerm2Conf)
 	checkError(err)
-}
-
-func updateBrew() {
-	updateHomebrew := exec.Command(cmdPMS, "update")
-	updateBrewCask := exec.Command(cmdPMS, pmsRepo, "homebrew/cask-versions")
-
-	if err := updateHomebrew.Run(); err != nil {
-		checkError(err)
-	}
-	if err := updateBrewCask.Run(); err != nil {
-		checkError(err)
-	}
 }
 
 func installBrew() {
@@ -433,6 +421,30 @@ func installBrew() {
 	if checkBrewExists() == false {
 		fmt.Println("Brew install failed, please check your system\n")
 		os.Exit(0)
+	}
+}
+
+func updateBrew() {
+	if err := os.Chmod(brewPrefix+"share", 0755); err != nil {
+		checkError(err)
+	}
+
+	updateHomebrew := exec.Command(cmdPMS, "update")
+	updateBrewCore := exec.Command(cmdPMS, pmsRepo, "homebrew/core")
+	updateBrewCask := exec.Command(cmdPMS, pmsRepo, "homebrew/cask")
+	updateBrewCaskVersions := exec.Command(cmdPMS, pmsRepo, "homebrew/cask-versions")
+
+	if err := updateHomebrew.Run(); err != nil {
+		checkError(err)
+	}
+	if err := updateBrewCore.Run(); err != nil {
+		checkError(err)
+	}
+	if err := updateBrewCask.Run(); err != nil {
+		checkError(err)
+	}
+	if err := updateBrewCaskVersions.Run(); err != nil {
+		checkError(err)
 	}
 }
 
@@ -792,7 +804,7 @@ func macTerminal(runOpt string) {
 		iTerm2Conf()
 	}
 
-	p10kAll()
+	p10kTerminal()
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
 		profileAppend := "# POWERLEVEL10K\n" +
@@ -800,14 +812,7 @@ func macTerminal(runOpt string) {
 			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
 			"fi\n" +
-			"[[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + ".p10k-all.zsh\n" +
-			"# ZSH-COMPLETIONS\n" +
-			"if type brew &>/dev/null; then\n" +
-			"  mv () { command mv \"$@\" ; }" +
-			"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
-			"  autoload -Uz compinit\n" +
-			"  compinit\n" +
-			"fi\n\n" +
+			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n" +
 			"# ZSH SYNTAX HIGHTLIGHTING\n" +
 			"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
 			"# ZSH AUTOSUGGESTIONS\n" +
@@ -816,9 +821,9 @@ func macTerminal(runOpt string) {
 			"source " + brewPrefix + "etc/profile.d/z.sh\n\n"
 		appendFile(profilePath, profileAppend)
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		p10kApple()
 		p10kiTerm2()
 		p10kTMUX()
+		p10kEtc()
 
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
@@ -829,7 +834,7 @@ func macTerminal(runOpt string) {
 			"fi\n" +
 			"if [[ -d /Applications/iTerm.app ]]; then\n" +
 			"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
-			"    [[ ! -f " + p10kPath + "p10k-apple.zsh ]] || source " + p10kPath + "p10k-apple.zsh\n" +
+			"    [[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n" +
 			"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n" +
 			"    echo ''; neofetch --bold off\n" +
 			"    [[ ! -f " + p10kPath + "p10k-iterm2.zsh ]] || source " + p10kPath + "p10k-iterm2.zsh\n" +
@@ -837,10 +842,10 @@ func macTerminal(runOpt string) {
 			"    echo ''; neofetch --bold off\n" +
 			"    [[ ! -f " + p10kPath + "p10k-tmux.zsh ]] || source " + p10kPath + "p10k-tmux.zsh\n" +
 			"  else\n" +
-			"    [[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + "p10k-all.zsh\n" +
+			"    [[ ! -f " + p10kPath + "p10k-etc.zsh ]] || source " + p10kPath + "p10k-etc.zsh\n" +
 			"  fi\n" +
 			"else\n" +
-			"  [[ ! -f " + p10kPath + "p10k-all.zsh ]] || source " + p10kPath + ".p10k-all.zsh\n" +
+			"  [[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n" +
 			"fi\n\n" +
 			"# ZSH-COMPLETIONS\n" +
 			"if type brew &>/dev/null; then\n" +
@@ -1102,18 +1107,18 @@ func macASDF(runOpt string) {
 		asdfPerlLatest := exec.Command(cmdASDF, pmsIns, "perl", "latest")
 		asdfJavaLTS11 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-11.0.2")
 		asdfJavaLTS17 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-17.0.2")
-		asdfRubyLatest := exec.Command(cmdASDF, pmsIns, "ruby", "latest")     // error
-		asdfPythonLatest := exec.Command(cmdASDF, pmsIns, "python", "latest") // error
+		//asdfRubyLatest := exec.Command(cmdASDF, pmsIns, "ruby", "latest")     // error
+		//asdfPythonLatest := exec.Command(cmdASDF, pmsIns, "python", "latest") // error
 		asdfRustLatest := exec.Command(cmdASDF, pmsIns, "rust", "latest")
 		asdfGoLatest := exec.Command(cmdASDF, pmsIns, "golang", "latest")
 		asdfNodeLatest := exec.Command(cmdASDF, pmsIns, "nodejs", "latest")
 		asdfLuaLatest := exec.Command(cmdASDF, pmsIns, "lua", "latest")
-		asdfPHPLatest := exec.Command(cmdASDF, pmsIns, "php", "latest") // error
+		//asdfPHPLatest := exec.Command(cmdASDF, pmsIns, "php", "latest") // error
 		asdfGroovyLatest := exec.Command(cmdASDF, pmsIns, "groovy", "latest")
 		asdfKotlinLatest := exec.Command(cmdASDF, pmsIns, "kotlin", "latest")
 		asdfScalaLatest := exec.Command(cmdASDF, pmsIns, "scala", "latest")
 		asdfClojureLatest := exec.Command(cmdASDF, pmsIns, "clojure", "latest")
-		asdfErlangLatest := exec.Command(cmdASDF, pmsIns, "erlang", "latest") // error
+		//asdfErlangLatest := exec.Command(cmdASDF, pmsIns, "erlang", "latest") // error
 		asdfElixirLatest := exec.Command(cmdASDF, pmsIns, "elixir", "latest")
 
 		if err := asdfPerlLatest.Run(); err != nil {
@@ -1125,12 +1130,12 @@ func macASDF(runOpt string) {
 		if err := asdfJavaLTS17.Run(); err != nil {
 			checkError(err)
 		}
-		if err := asdfRubyLatest.Run(); err != nil {
-			checkError(err)
-		}
-		if err := asdfPythonLatest.Run(); err != nil {
-			checkError(err)
-		}
+		//if err := asdfRubyLatest.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := asdfPythonLatest.Run(); err != nil {
+		//	checkError(err)
+		//}
 		if err := asdfRustLatest.Run(); err != nil {
 			checkError(err)
 		}
@@ -1143,9 +1148,9 @@ func macASDF(runOpt string) {
 		if err := asdfLuaLatest.Run(); err != nil {
 			checkError(err)
 		}
-		if err := asdfPHPLatest.Run(); err != nil {
-			checkError(err)
-		}
+		//if err := asdfPHPLatest.Run(); err != nil {
+		//	checkError(err)
+		//}
 		if err := asdfGroovyLatest.Run(); err != nil {
 			checkError(err)
 		}
@@ -1158,9 +1163,9 @@ func macASDF(runOpt string) {
 		if err := asdfClojureLatest.Run(); err != nil {
 			checkError(err)
 		}
-		if err := asdfErlangLatest.Run(); err != nil {
-			checkError(err)
-		}
+		//if err := asdfErlangLatest.Run(); err != nil {
+		//	checkError(err)
+		//}
 		if err := asdfElixirLatest.Run(); err != nil {
 			checkError(err)
 		}
@@ -1693,14 +1698,20 @@ func main() {
 		}
 		macEnd()
 
-		fmt.Printf("\nFinished to setup!\nEnter (Y) if easily configure git global setting, else just enter any key to exit. ")
-
-		_, err := fmt.Scanln(&cmdOpt)
-		checkError(err)
-		if cmdOpt == "y" || cmdOpt == "Y" || cmdOpt == "yes" || cmdOpt == "Yes" || cmdOpt == "YES" {
-			confG4s()
+		fmt.Printf("\nFinished to setup!\nEnter [Y] to set git global configuration, or enter [N] key to exit. ")
+	finishOpt:
+		for {
+			_, err := fmt.Scan(&cmdOpt)
+			checkError(err)
+			if cmdOpt == "y" || cmdOpt == "Y" || cmdOpt == "yes" || cmdOpt == "Yes" || cmdOpt == "YES" {
+				confG4s()
+			} else if cmdOpt == "n" || cmdOpt == "N" || cmdOpt == "no" || cmdOpt == "No" || cmdOpt == "NO" {
+				break
+			} else {
+				fmt.Printf("Wrong answer. Please enter [Y] or [N]. ")
+				goto finishOpt
+			}
 		}
-
 		fmt.Println("\n----------Finished!----------\n" +
 			"Please RESTART your terminal!\n" +
 			lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
