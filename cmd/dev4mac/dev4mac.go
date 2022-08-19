@@ -865,7 +865,7 @@ func macTerminal(runOpt string) {
 	ldBar.Stop()
 }
 
-func macASDF() {
+func macASDF(runOpt string) {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing ASDF-VM with plugin..."
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
@@ -876,14 +876,20 @@ func macASDF() {
 		checkError(err)
 	}
 
-	shrcAppend := "# ASDF VM\n" +
+	profileAppend := "# ASDF VM\n" +
 		"source " + brewPrefix + "/opt/asdf/libexec/asdf.sh\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(profilePath, profileAppend)
 
 	pluginPath := homeDir() + ".asdf/plugins/"
 	if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
 		asdfAddPerl := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "perl")
 		if err := asdfAddPerl.Run(); err != nil {
+			checkError(err)
+		}
+	}
+	if _, err := os.Stat(pluginPath + "java"); errors.Is(err, os.ErrNotExist) {
+		asdfAddJava := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "java")
+		if err := asdfAddJava.Run(); err != nil {
 			checkError(err)
 		}
 	}
@@ -899,9 +905,9 @@ func macASDF() {
 			checkError(err)
 		}
 	}
-	if _, err := os.Stat(pluginPath + "lua"); errors.Is(err, os.ErrNotExist) {
-		asdfAddLua := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "lua")
-		if err := asdfAddLua.Run(); err != nil {
+	if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
+		asdfAddRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
+		if err := asdfAddRust.Run(); err != nil {
 			checkError(err)
 		}
 	}
@@ -911,27 +917,21 @@ func macASDF() {
 			checkError(err)
 		}
 	}
-	if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
-		asdfAddRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
-		if err := asdfAddRust.Run(); err != nil {
-			checkError(err)
-		}
-	}
 	if _, err := os.Stat(pluginPath + "nodejs"); errors.Is(err, os.ErrNotExist) {
 		asdfAddNode := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "nodejs")
 		if err := asdfAddNode.Run(); err != nil {
 			checkError(err)
 		}
 	}
-	if _, err := os.Stat(pluginPath + "php"); errors.Is(err, os.ErrNotExist) {
-		asdfAddPHP := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "php")
-		if err := asdfAddPHP.Run(); err != nil {
+	if _, err := os.Stat(pluginPath + "lua"); errors.Is(err, os.ErrNotExist) {
+		asdfAddLua := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "lua")
+		if err := asdfAddLua.Run(); err != nil {
 			checkError(err)
 		}
 	}
-	if _, err := os.Stat(pluginPath + "java"); errors.Is(err, os.ErrNotExist) {
-		asdfAddJava := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "java")
-		if err := asdfAddJava.Run(); err != nil {
+	if _, err := os.Stat(pluginPath + "php"); errors.Is(err, os.ErrNotExist) {
+		asdfAddPHP := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "php")
+		if err := asdfAddPHP.Run(); err != nil {
 			checkError(err)
 		}
 	}
@@ -971,9 +971,78 @@ func macASDF() {
 			checkError(err)
 		}
 	}
+
 	asdfReshim := exec.Command(cmdASDF, asdfShim)
 	if err := asdfReshim.Run(); err != nil {
 		checkError(err)
+	}
+
+	if runOpt == "6" || runOpt == "7" {
+		asdfPerlLatest := exec.Command(cmdASDF, pmsIns, "perl", "latest")
+		asdfJavaLTS11 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-11.0.2")
+		asdfJavaLTS17 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-17.0.2")
+		asdfRubyLatest := exec.Command(cmdASDF, pmsIns, "ruby", "latest")     // error
+		asdfPythonLatest := exec.Command(cmdASDF, pmsIns, "python", "latest") // error
+		asdfRustLatest := exec.Command(cmdASDF, pmsIns, "rust", "latest")
+		asdfGoLatest := exec.Command(cmdASDF, pmsIns, "golang", "latest")
+		asdfNodeLatest := exec.Command(cmdASDF, pmsIns, "nodejs", "latest")
+		asdfLuaLatest := exec.Command(cmdASDF, pmsIns, "lua", "latest")
+		asdfPHPLatest := exec.Command(cmdASDF, pmsIns, "php", "latest") // error
+		asdfGroovyLatest := exec.Command(cmdASDF, pmsIns, "groovy", "latest")
+		asdfKotlinLatest := exec.Command(cmdASDF, pmsIns, "kotlin", "latest")
+		asdfScalaLatest := exec.Command(cmdASDF, pmsIns, "scala", "latest")
+		asdfClojureLatest := exec.Command(cmdASDF, pmsIns, "clojure", "latest")
+		asdfErlangLatest := exec.Command(cmdASDF, pmsIns, "erlang", "latest") // error
+		asdfElixirLatest := exec.Command(cmdASDF, pmsIns, "elixir", "latest")
+
+		if err := asdfPerlLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfJavaLTS11.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfJavaLTS17.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfRubyLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfPythonLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfRustLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfGoLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfNodeLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfLuaLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfPHPLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfGroovyLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfKotlinLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfScalaLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfClojureLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfErlangLatest.Run(); err != nil {
+			checkError(err)
+		}
+		if err := asdfElixirLatest.Run(); err != nil {
+			checkError(err)
+		}
 	}
 
 	ldBar.Stop()
@@ -1052,7 +1121,7 @@ func macLanguage(runOpt string) {
 
 	brewGawk := exec.Command(cmdPMS, pmsIns, "gawk")
 	brewPerl := exec.Command(cmdPMS, pmsIns, "perl")
-	brewJDK := exec.Command(cmdPMS, pmsIns, "openjdk")
+	brewJava := exec.Command(cmdPMS, pmsIns, "openjdk")
 	brewRuby := exec.Command(cmdPMS, pmsIns, "ruby")
 	brewPython := exec.Command(cmdPMS, pmsIns, "python")
 	//fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
@@ -1088,7 +1157,7 @@ func macLanguage(runOpt string) {
 	if err := brewPython.Run(); err != nil {
 		checkError(err)
 	}
-	if err := brewJDK.Run(); err != nil {
+	if err := brewJava.Run(); err != nil {
 		checkError(err)
 	}
 	//if err := fixPython.Run(); err != nil {
@@ -1613,7 +1682,7 @@ func main() {
 				// Developer tools
 				macServer()
 				macDatabase()
-				macASDF()
+				macASDF(cmdOpt)
 				// CLI App for useful
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
@@ -1631,7 +1700,7 @@ func main() {
 				// Developer tools
 				macServer()
 				macDatabase()
-				macASDF()
+				macASDF(cmdOpt)
 				// CLI App for useful
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
@@ -1650,7 +1719,7 @@ func main() {
 				//Developer tools
 				macServer()
 				macDatabase()
-				macASDF()
+				macASDF(cmdOpt)
 				//CLI App for useful
 				macCLIApp(cmdOpt)
 				// GUI App for useful & creative
@@ -1664,7 +1733,6 @@ func main() {
 			}
 			break
 		}
-
 		macEnd()
 
 		fmt.Println("\nFinished to setup!\nEnter (Y) if easily configure git global setting, else just enter any key to exit ")
