@@ -190,6 +190,17 @@ func brewInstall(pkg string) {
 	}
 }
 
+func brewCask(pkg, app string) {
+	if _, errExist := os.Stat("/Applications/" + app + ".app"); errors.Is(errExist, os.ErrNotExist) {
+		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+		brewIns.Stderr = os.Stderr
+		if err := brewIns.Run(); err != nil {
+			fmt.Println("\n" + lstDot + "Brew " + app + ".app install (cask) error: " + err.Error())
+			os.Exit(0)
+		}
+	}
+}
+
 func confA4s() {
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
@@ -1531,190 +1542,232 @@ func macGUIApp(runOpt string) {
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	brewKeka := exec.Command(cmdPMS, pmsIns, pmsAlt, "keka")
-	brewIINA := exec.Command(cmdPMS, pmsIns, pmsAlt, "iina")
-	brewChrome := exec.Command(cmdPMS, pmsIns, pmsAlt, "google-chrome")
-	brewFirefox := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox")
-	brewTorBrowser := exec.Command(cmdPMS, pmsIns, pmsAlt, "tor-browser")
-	brewTransmission := exec.Command(cmdPMS, pmsIns, pmsAlt, "transmission")
-	brewSignal := exec.Command(cmdPMS, pmsIns, pmsAlt, "signal")
-	brewDiscord := exec.Command(cmdPMS, pmsIns, pmsAlt, "discord")
-	brewRectangle := exec.Command(cmdPMS, pmsIns, pmsAlt, "rectangle")
+	brewCask("keka", "Keka")
+	brewCask("iina", "IINA")
+	brewCask("transmission", "Transmission")
+	brewCask("signal", "Signal")
+	brewCask("discord", "Discord")
+	brewCask("rectangle", "Rectangle")
+	brewCask("google-chrome", "Google Chrome")
+	brewCask("firefox", "Firefox")
+	brewCask("tor-browser", "Tor Browser")
 
-	if err := brewKeka.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewIINA.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewChrome.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewFirefox.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTorBrowser.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewTransmission.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewSignal.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewDiscord.Run(); err != nil {
-		checkError(err)
-	}
-	if err := brewRectangle.Run(); err != nil {
-		checkError(err)
+	//brewKeka := exec.Command(cmdPMS, pmsIns, pmsAlt, "keka")
+	//brewIINA := exec.Command(cmdPMS, pmsIns, pmsAlt, "iina")
+	//brewTransmission := exec.Command(cmdPMS, pmsIns, pmsAlt, "transmission")
+	//brewSignal := exec.Command(cmdPMS, pmsIns, pmsAlt, "signal")
+	//brewDiscord := exec.Command(cmdPMS, pmsIns, pmsAlt, "discord")
+	//brewRectangle := exec.Command(cmdPMS, pmsIns, pmsAlt, "rectangle")
+	//brewChrome := exec.Command(cmdPMS, pmsIns, pmsAlt, "google-chrome")
+	//brewFirefox := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox")
+	//brewTorBrowser := exec.Command(cmdPMS, pmsIns, pmsAlt, "tor-browser")
+
+	//if err := brewKeka.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewIINA.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewTransmission.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewSignal.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewDiscord.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewRectangle.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewChrome.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewFirefox.Run(); err != nil {
+	//	checkError(err)
+	//}
+	//if err := brewTorBrowser.Run(); err != nil {
+	//	checkError(err)
+	//}
+
+	if runOpt != "7" {
+		brewCask("appcleaner", "AppCleaner")
+	} else if runOpt == "7" {
+		brewCask("sensei", "Sensei")
 	}
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		brewDropbox := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox")
-		brewDropboxCapture := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox-capture")
-		brewSketch := exec.Command(cmdPMS, pmsIns, pmsAlt, "sketch")
-		brewZeplin := exec.Command(cmdPMS, pmsIns, pmsAlt, "zeplin")
-		brewBlender := exec.Command(cmdPMS, pmsIns, pmsAlt, "blender")
-		brewOBS := exec.Command(cmdPMS, pmsIns, pmsAlt, "obs")
-
-		if err := brewDropbox.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewDropboxCapture.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewSketch.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewZeplin.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewBlender.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewOBS.Run(); err != nil {
-			checkError(err)
-		}
+		//brewDropbox := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox")
+		//brewDropboxCapture := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox-capture")
+		//brewSketch := exec.Command(cmdPMS, pmsIns, pmsAlt, "sketch")
+		//brewZeplin := exec.Command(cmdPMS, pmsIns, pmsAlt, "zeplin")
+		//brewBlender := exec.Command(cmdPMS, pmsIns, pmsAlt, "blender")
+		//brewOBS := exec.Command(cmdPMS, pmsIns, pmsAlt, "obs")
+		//
+		//if err := brewDropbox.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewDropboxCapture.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewSketch.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewZeplin.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewBlender.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewOBS.Run(); err != nil {
+		//	checkError(err)
+		//}
+		brewCask("dropbox", "Dropbox")
+		brewCask("dropbox-capture", "Dropbox Capture")
+		brewCask("sketch", "Sketch")
+		brewCask("zeplin", "Zeplin")
+		brewCask("blender", "Blender")
+		brewCask("obs", "OBS")
 	}
 
-	brewVSCode := exec.Command(cmdPMS, pmsIns, pmsAlt, "visual-studio-code")
-	brewFork := exec.Command(cmdPMS, pmsIns, pmsAlt, "fork")
+	//brewVSCode := exec.Command(cmdPMS, pmsIns, pmsAlt, "visual-studio-code")
+	//brewFork := exec.Command(cmdPMS, pmsIns, pmsAlt, "fork")
 
 	if runOpt == "3" || runOpt == "4" {
-		brewEclipse := exec.Command(cmdPMS, pmsIns, pmsAlt, "eclipse-ide")
-		brewIntellijIdeaCE := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea-ce")
-		brewAndroidStudio := exec.Command(cmdPMS, pmsIns, pmsAlt, "android-studio")
+		//brewEclipse := exec.Command(cmdPMS, pmsIns, pmsAlt, "eclipse-ide")
+		//brewIntellijIdeaCE := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea-ce")
+		//brewAndroidStudio := exec.Command(cmdPMS, pmsIns, pmsAlt, "android-studio")
 
-		if err := brewEclipse.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewVSCode.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewIntellijIdeaCE.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewAndroidStudio.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewFork.Run(); err != nil {
-			checkError(err)
-		}
+		//if err := brewVSCode.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewEclipse.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewIntellijIdeaCE.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewAndroidStudio.Run(); err != nil {
+		//	checkError(err)
+		//}
+
+		brewCask("visual-studio-code", "Visual Studio Code")
+		brewCask("eclipse-ide", "Eclipse")
+		brewCask("intellij-idea-ce", "IntelliJ IDEA CE")
+		brewCask("android-studio", "Android Studio")
+		brewCask("fork", "Fork")
+	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		//brewiTerm2 := exec.Command(cmdPMS, pmsIns, pmsAlt, "iterm2")
+		//brewIntellijIdea := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea")
+		//brewTablePlus := exec.Command(cmdPMS, pmsIns, pmsAlt, "tableplus")
+		//brewProxyman := exec.Command(cmdPMS, pmsIns, pmsAlt, "proxyman")
+		//brewPaw := exec.Command(cmdPMS, pmsIns, pmsAlt, "paw")
+		//brewDocker := exec.Command(cmdPMS, pmsIns, pmsAlt, "docker")
+		//brewGithub := exec.Command(cmdPMS, pmsIns, pmsAlt, "github")
+		//brewBoop := exec.Command(cmdPMS, pmsIns, pmsAlt, "boop")
+		//brewFirefoxDev := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox-developer-edition")
+
+		//if err := brewiTerm2.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewVSCode.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewIntellijIdea.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewTablePlus.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewProxyman.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewPaw.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewDocker.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewGithub.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewFork.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewBoop.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewFirefoxDev.Run(); err != nil {
+		//	checkError(err)
+		//}
+
+		brewCask("iterm2", "iTerm")
+		brewCask("visual-studio-code", "Visual Studio Code")
+		brewCask("intellij-idea", "IntelliJ IDEA")
+		brewCask("tableplus", "TablePlus")
+		brewCask("proxyman", "Proxyman")
+		brewCask("paw", "Paw")
+		brewCask("github", "Github")
+		brewCask("fork", "Fork")
+		brewCask("boop", "Boop")
+		brewCask("docker", "Docker")
+		brewCask("firefox-developer-edition", "Firefox Developer Edition")
 	}
 
-	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewiTerm2 := exec.Command(cmdPMS, pmsIns, pmsAlt, "iterm2")
-		brewIntellijIdea := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea")
-		brewTablePlus := exec.Command(cmdPMS, pmsIns, pmsAlt, "tableplus")
-		brewProxyman := exec.Command(cmdPMS, pmsIns, pmsAlt, "proxyman")
-		brewPaw := exec.Command(cmdPMS, pmsIns, pmsAlt, "paw")
-		brewDocker := exec.Command(cmdPMS, pmsIns, pmsAlt, "docker")
-		brewGithub := exec.Command(cmdPMS, pmsIns, pmsAlt, "github")
-		brewBoop := exec.Command(cmdPMS, pmsIns, pmsAlt, "boop")
-		brewFirefoxDev := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox-developer-edition")
+	shrcAppend := "# ANDROID STUDIO\n" +
+		"export ANDROID_HOME=$HOME/Library/Android/sdk\n" +
+		"export PATH=$PATH:$ANDROID_HOME/emulator\n" +
+		"export PATH=$PATH:$ANDROID_HOME/tools\n" +
+		"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
+		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
+	appendFile(shrcPath, shrcAppend)
 
-		if err := brewiTerm2.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewVSCode.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewIntellijIdea.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewTablePlus.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewProxyman.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewPaw.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewDocker.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewGithub.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewFork.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewBoop.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewFirefoxDev.Run(); err != nil {
-			checkError(err)
-		}
-	}
+	if runOpt == "6" {
+		//brewVNCViewer := exec.Command(cmdPMS, pmsIns, pmsAlt, "vnc-viewer")
+		//if err := brewVNCViewer.Run(); err != nil {
+		//	checkError(err)
+		//}
 
-	if runOpt == "6" || runOpt == "7" {
-		brewVNCViewer := exec.Command(cmdPMS, pmsIns, pmsAlt, "vnc-viewer")
-		if err := brewVNCViewer.Run(); err != nil {
-			checkError(err)
-		}
-	}
+		brewCask("vnc-viewer", "VNC Viewer")
+	} else if runOpt == "7" {
+		//brewBurpSuite := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite")
+		//brewBurpSuitePro := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite-professional")
+		//brewSensei := exec.Command(cmdPMS, pmsIns, pmsAlt, "sensei")
+		//brewiMazing := exec.Command(cmdPMS, pmsIns, pmsAlt, "imazing")
+		//brewApparency := exec.Command(cmdPMS, pmsIns, pmsAlt, "apparency")
+		//brewSuspiciousPackage := exec.Command(cmdPMS, pmsIns, pmsAlt, "suspicious-package")
+		//brewCutter := exec.Command(cmdPMS, pmsIns, pmsAlt, "cutter")
 
-	if runOpt == "7" {
-		brewBurpSuite := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite")
-		brewBurpSuitePro := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite-professional")
-		brewSensei := exec.Command(cmdPMS, pmsIns, pmsAlt, "sensei")
-		brewiMazing := exec.Command(cmdPMS, pmsIns, pmsAlt, "imazing")
-		brewApparency := exec.Command(cmdPMS, pmsIns, pmsAlt, "apparency")
-		brewSuspiciousPackage := exec.Command(cmdPMS, pmsIns, pmsAlt, "suspicious-package")
-		brewCutter := exec.Command(cmdPMS, pmsIns, pmsAlt, "cutter")
+		//if err := brewBurpSuite.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewBurpSuitePro.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewSensei.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewiMazing.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewApparency.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewSuspiciousPackage.Run(); err != nil {
+		//	checkError(err)
+		//}
+		//if err := brewCutter.Run(); err != nil {
+		//	checkError(err)
+		//}
 
-		if err := brewBurpSuite.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewBurpSuitePro.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewSensei.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewiMazing.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewApparency.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewSuspiciousPackage.Run(); err != nil {
-			checkError(err)
-		}
-		if err := brewCutter.Run(); err != nil {
-			checkError(err)
-		}
-	}
-
-	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		shrcAppend := "# ANDROID STUDIO\n" +
-			"export ANDROID_HOME=$HOME/Library/Android/sdk\n" +
-			"export PATH=$PATH:$ANDROID_HOME/emulator\n" +
-			"export PATH=$PATH:$ANDROID_HOME/tools\n" +
-			"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
-			"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
-		appendFile(shrcPath, shrcAppend)
+		brewCask("vnc-viewer", "VNC Viewer")
+		brewCask("burp-suite", "Burp Suite Community Edition")
+		brewCask("burp-suite-professional", "Burp Suite Professional")
+		brewCask("imazing", "iMazing")
+		brewCask("apparency", "Apparency")
+		brewCask("suspicious-package", "Suspicious Package")
+		brewCask("cutter", "Cutter")
+		// Gihdra
 	}
 
 	ldBar.Stop()
