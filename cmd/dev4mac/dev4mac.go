@@ -179,12 +179,12 @@ func newZshRC() {
 	makeFile(shrcPath, fileContents)
 }
 
-func brewInstall(pkg string) {
+func brewPkg(pkg string) {
 	if _, errExist := os.Stat(brewPrefix + "Cellar/" + pkg); errors.Is(errExist, os.ErrNotExist) {
 		brewIns := exec.Command(cmdPMS, pmsIns, pkg)
-		brewIns.Stderr = os.Stderr
 		if err := brewIns.Run(); err != nil {
 			fmt.Println("\n" + lstDot + "Brew " + pkg + " install error: " + err.Error())
+			brewIns.Stderr = os.Stderr
 			os.Exit(0)
 		}
 	}
@@ -193,11 +193,29 @@ func brewInstall(pkg string) {
 func brewCask(pkg, app string) {
 	if _, errExist := os.Stat("/Applications/" + app + ".app"); errors.Is(errExist, os.ErrNotExist) {
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
-		brewIns.Stderr = os.Stderr
 		if err := brewIns.Run(); err != nil {
 			fmt.Println("\n" + lstDot + "Brew " + app + ".app install (cask) error: " + err.Error())
+			brewIns.Stderr = os.Stderr
 			os.Exit(0)
 		}
+	}
+}
+
+func asdfLang(lang, ver string) {
+	if _, errExist := os.Stat(homeDir() + ".asdf/plugins/" + lang); errors.Is(errExist, os.ErrNotExist) {
+		asdfPlugin := exec.Command(cmdASDF, asdfPlugin, asdfAdd, lang)
+		if err := asdfPlugin.Run(); err != nil {
+			fmt.Println("\n" + lstDot + "ASDF " + lang + " add plugin error: " + err.Error())
+			asdfPlugin.Stderr = os.Stderr
+			os.Exit(0)
+		}
+	}
+
+	asdfInstall := exec.Command(cmdASDF, pmsIns, lang, ver)
+	if err := asdfInstall.Run(); err != nil {
+		fmt.Println("\n" + lstDot + "ASDF " + lang + " (" + ver + ") install error: " + err.Error())
+		asdfInstall.Stderr = os.Stderr
+		os.Exit(0)
 	}
 }
 
@@ -572,18 +590,18 @@ func macDependency(runOpt string) {
 	//	checkError(err)
 	//}
 
-	brewInstall("pkg-config")
-	brewInstall("ca-certificates")
-	brewInstall("openssl@3")
-	brewInstall("openssl@1.1")
-	brewInstall("ncurses")
-	brewInstall("autoconf")
-	brewInstall("mpdecimal")
-	brewInstall("libyaml")
-	brewInstall("readline")
-	brewInstall("gdbm")
-	brewInstall("xz")
-	brewInstall("sqlite")
+	brewPkg("pkg-config")
+	brewPkg("ca-certificates")
+	brewPkg("openssl@3")
+	brewPkg("openssl@1.1")
+	brewPkg("ncurses")
+	brewPkg("autoconf")
+	brewPkg("mpdecimal")
+	brewPkg("libyaml")
+	brewPkg("readline")
+	brewPkg("gdbm")
+	brewPkg("xz")
+	brewPkg("sqlite")
 
 	shrcAppend := "# OPENSSL-3\n" +
 		"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
@@ -613,8 +631,8 @@ func macDependency(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("pcre")
-		brewInstall("pcre2")
+		brewPkg("pcre")
+		brewPkg("pcre2")
 	}
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
@@ -736,35 +754,35 @@ func macDependency(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("krb5")
-		brewInstall("gnupg")
-		brewInstall("curl")
-		brewInstall("wget")
-		brewInstall("gzip")
-		brewInstall("libzip")
-		brewInstall("bzip2")
-		brewInstall("zlib")
-		brewInstall("ghc")
-		brewInstall("ccache")
-		brewInstall("cabal")
-		brewInstall("m4")
-		brewInstall("automake")
-		brewInstall("libffi")
-		brewInstall("guile")
-		brewInstall("gnu-getopt")
-		brewInstall("coreutils")
-		brewInstall("bison")
-		brewInstall("libiconv")
-		brewInstall("icu4c")
-		brewInstall("re2c")
-		brewInstall("gd")
-		brewInstall("ldns")
-		brewInstall("html-xml-utils")
-		brewInstall("xmlto")
-		brewInstall("gmp")
-		brewInstall("libsodium")
-		brewInstall("imagemagick")
-		brewInstall("ghostscript")
+		brewPkg("krb5")
+		brewPkg("gnupg")
+		brewPkg("curl")
+		brewPkg("wget")
+		brewPkg("gzip")
+		brewPkg("libzip")
+		brewPkg("bzip2")
+		brewPkg("zlib")
+		brewPkg("ghc")
+		brewPkg("ccache")
+		brewPkg("cabal")
+		brewPkg("m4")
+		brewPkg("automake")
+		brewPkg("libffi")
+		brewPkg("guile")
+		brewPkg("gnu-getopt")
+		brewPkg("coreutils")
+		brewPkg("bison")
+		brewPkg("libiconv")
+		brewPkg("icu4c")
+		brewPkg("re2c")
+		brewPkg("gd")
+		brewPkg("ldns")
+		brewPkg("html-xml-utils")
+		brewPkg("xmlto")
+		brewPkg("gmp")
+		brewPkg("libsodium")
+		brewPkg("imagemagick")
+		brewPkg("ghostscript")
 
 		shrcAppend := "# KRB5\n" +
 			"export PATH=\"" + brewPrefix + "opt/krb5/bin:$PATH\"\n" +
@@ -840,12 +858,12 @@ func macTerminal(runOpt string) {
 	//	checkError(err)
 	//}
 
-	brewInstall("zsh-completions")
-	brewInstall("zsh-syntax-highlighting")
-	brewInstall("zsh-autosuggestions")
-	brewInstall("z")
-	brewInstall("tree")
-	brewInstall("romkatv/powerlevel10k/powerlevel10k")
+	brewPkg("zsh-completions")
+	brewPkg("zsh-syntax-highlighting")
+	brewPkg("zsh-autosuggestions")
+	brewPkg("z")
+	brewPkg("tree")
+	brewPkg("romkatv/powerlevel10k/powerlevel10k")
 
 	makeFile(homeDir()+".z", "")
 	makeDir(p10kPath)
@@ -874,11 +892,11 @@ func macTerminal(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("zsh")
-		brewInstall("fzf")
-		brewInstall("tmux")
-		brewInstall("tmuxinator")
-		brewInstall("neofetch")
+		brewPkg("zsh")
+		brewPkg("fzf")
+		brewPkg("tmux")
+		brewPkg("tmuxinator")
+		brewPkg("neofetch")
 
 		iTerm2Conf()
 	}
@@ -980,11 +998,11 @@ func macLanguage(runOpt string) {
 	//	checkError(err)
 	//}
 
-	brewInstall("gawk")
-	brewInstall("openjdk")
-	brewInstall("perl")
-	brewInstall("ruby")
-	brewInstall("python")
+	brewPkg("gawk")
+	brewPkg("perl")
+	brewPkg("ruby")
+	brewPkg("python")
+	brewPkg("openjdk")
 
 	shrcAppend := "# JAVA\n" +
 		"#export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
@@ -1021,10 +1039,10 @@ func macLanguage(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("rust")
-		brewInstall("go")
-		brewInstall("node")
-		brewInstall("lua")
+		brewPkg("rust")
+		brewPkg("go")
+		brewPkg("node")
+		brewPkg("lua")
 	}
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
@@ -1077,19 +1095,19 @@ func macLanguage(runOpt string) {
 		//if err := brewDart.Run(); err != nil {
 		//	checkError(err)
 		//}
-		brewInstall("php")
-		brewInstall("groovy")
-		brewInstall("kotlin")
-		brewInstall("scala")
-		brewInstall("clojure")
-		brewInstall("erlang")
-		brewInstall("elixir")
-		brewInstall("typescript")
-		brewInstall("r")
-		brewInstall("haskell-stack")
-		brewInstall("haskell-language-server")
-		brewInstall("dart-lang/dart")
-		brewInstall("dart")
+		brewPkg("php")
+		brewPkg("groovy")
+		brewPkg("kotlin")
+		brewPkg("scala")
+		brewPkg("clojure")
+		brewPkg("erlang")
+		brewPkg("elixir")
+		brewPkg("typescript")
+		brewPkg("r")
+		brewPkg("haskell-stack")
+		brewPkg("haskell-language-server")
+		brewPkg("dart-lang/dart")
+		brewPkg("dart")
 	}
 
 	ldBar.Stop()
@@ -1101,106 +1119,125 @@ func macASDF(runOpt string) {
 	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
 	ldBar.Start()
 
-	brewASDF := exec.Command(cmdPMS, pmsIns, "asdf")
-	if err := brewASDF.Run(); err != nil {
-		checkError(err)
-	}
+	//brewASDF := exec.Command(cmdPMS, pmsIns, "asdf")
+	//if err := brewASDF.Run(); err != nil {
+	//	checkError(err)
+	//}
+
+	brewPkg("asdf")
 
 	profileAppend := "# ASDF VM\n" +
 		"source " + brewPrefix + "/opt/asdf/libexec/asdf.sh\n\n"
 	appendFile(profilePath, profileAppend)
 
-	pluginPath := homeDir() + ".asdf/plugins/"
-	if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
-		asdfAddPerl := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "perl")
-		if err := asdfAddPerl.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "java"); errors.Is(err, os.ErrNotExist) {
-		asdfAddJava := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "java")
-		if err := asdfAddJava.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "ruby"); errors.Is(err, os.ErrNotExist) {
-		asdfAddRuby := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "ruby")
-		if err := asdfAddRuby.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "python"); errors.Is(err, os.ErrNotExist) {
-		asdfAddPython := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "python")
-		if err := asdfAddPython.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
-		asdfAddRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
-		if err := asdfAddRust.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "golang"); errors.Is(err, os.ErrNotExist) {
-		asdfAddGo := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "golang")
-		if err := asdfAddGo.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "nodejs"); errors.Is(err, os.ErrNotExist) {
-		asdfAddNode := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "nodejs")
-		if err := asdfAddNode.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "lua"); errors.Is(err, os.ErrNotExist) {
-		asdfAddLua := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "lua")
-		if err := asdfAddLua.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "php"); errors.Is(err, os.ErrNotExist) {
-		asdfAddPHP := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "php")
-		if err := asdfAddPHP.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "groovy"); errors.Is(err, os.ErrNotExist) {
-		asdfAddGroovy := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "groovy")
-		if err := asdfAddGroovy.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "kotlin"); errors.Is(err, os.ErrNotExist) {
-		asdfAddKotlin := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "kotlin")
-		if err := asdfAddKotlin.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "scala"); errors.Is(err, os.ErrNotExist) {
-		asdfAddScala := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "scala")
-		if err := asdfAddScala.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "clojure"); errors.Is(err, os.ErrNotExist) {
-		asdfAddClojure := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "clojure")
-		if err := asdfAddClojure.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "erlang"); errors.Is(err, os.ErrNotExist) {
-		asdfAddErlang := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "erlang")
-		if err := asdfAddErlang.Run(); err != nil {
-			checkError(err)
-		}
-	}
-	if _, err := os.Stat(pluginPath + "elixir"); errors.Is(err, os.ErrNotExist) {
-		asdfAddElixir := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "elixir")
-		if err := asdfAddElixir.Run(); err != nil {
-			checkError(err)
-		}
-	}
+	//pluginPath := homeDir() + ".asdf/plugins/"
+	//if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddPerl := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "perl")
+	//	if err := asdfAddPerl.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "java"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddJava := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "java")
+	//	if err := asdfAddJava.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "ruby"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddRuby := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "ruby")
+	//	if err := asdfAddRuby.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "python"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddPython := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "python")
+	//	if err := asdfAddPython.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
+	//	if err := asdfAddRust.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "golang"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddGo := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "golang")
+	//	if err := asdfAddGo.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "nodejs"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddNode := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "nodejs")
+	//	if err := asdfAddNode.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "lua"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddLua := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "lua")
+	//	if err := asdfAddLua.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "php"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddPHP := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "php")
+	//	if err := asdfAddPHP.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "groovy"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddGroovy := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "groovy")
+	//	if err := asdfAddGroovy.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "kotlin"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddKotlin := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "kotlin")
+	//	if err := asdfAddKotlin.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "scala"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddScala := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "scala")
+	//	if err := asdfAddScala.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "clojure"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddClojure := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "clojure")
+	//	if err := asdfAddClojure.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "erlang"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddErlang := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "erlang")
+	//	if err := asdfAddErlang.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+	//if _, err := os.Stat(pluginPath + "elixir"); errors.Is(err, os.ErrNotExist) {
+	//	asdfAddElixir := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "elixir")
+	//	if err := asdfAddElixir.Run(); err != nil {
+	//		checkError(err)
+	//	}
+	//}
+
+	asdfLang("perl", "latest")
+	//asdfLang("ruby", "latest")   // error
+	//asdfLang("python", "latest") // error
+	asdfLang("java", "openjdk-11.0.2") // JDK LTS 11
+	asdfLang("java", "openjdk-17.0.2") // JDK LTS 17
+	asdfLang("rust", "latest")
+	asdfLang("golang", "latest")
+	asdfLang("nodejs", "latest")
+	asdfLang("lua", "latest")
+	//asdfLang("php", "latest") // error
+	asdfLang("groovy", "latest")
+	asdfLang("kotlin", "latest")
+	asdfLang("scala", "latest")
+	asdfLang("clojure", "latest")
+	//asdfLang("erlang", "latest") // error
+	asdfLang("elixir", "latest")
 
 	asdfReshim := exec.Command(cmdASDF, asdfShim)
 	if err := asdfReshim.Run(); err != nil {
@@ -1310,9 +1347,9 @@ func macServer() {
 	//	checkError(err)
 	//}
 
-	brewInstall("httpd")
-	brewInstall("tomcat")
-	brewInstall("nginx")
+	brewPkg("httpd")
+	brewPkg("tomcat")
+	brewPkg("nginx")
 
 	ldBar.Stop()
 }
@@ -1349,12 +1386,12 @@ func macDatabase() {
 	//	checkError(err)
 	//}
 
-	brewInstall("sqlite-analyzer")
-	brewInstall("postgresql")
-	brewInstall("mysql")
-	brewInstall("redis")
-	brewInstall("mongodb-community")
-	brewInstall("mongodb")
+	brewPkg("sqlite-analyzer")
+	brewPkg("postgresql")
+	brewPkg("mysql")
+	brewPkg("redis")
+	brewPkg("mongodb-community")
+	brewPkg("mongodb")
 
 	shrcAppend := "# SQLITE3\n" +
 		"export PATH=\"" + brewPrefix + "opt/sqlite/bin:$PATH\"\n" +
@@ -1377,7 +1414,7 @@ func macCLIApp(runOpt string) {
 	//	checkError(err)
 	//}
 
-	brewInstall("diffutils")
+	brewPkg("diffutils")
 
 	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		//brewMake := exec.Command(cmdPMS, pmsIns, "make")
@@ -1426,17 +1463,17 @@ func macCLIApp(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("make")
-		brewInstall("ninja")
-		brewInstall("maven")
-		brewInstall("gradle")
-		brewInstall("tldr")
-		brewInstall("diffr")
-		brewInstall("bat")
-		brewInstall("tig")
-		brewInstall("direnv")
-		brewInstall("watchman")
-		brewInstall("jupyterlab")
+		brewPkg("make")
+		brewPkg("ninja")
+		brewPkg("maven")
+		brewPkg("gradle")
+		brewPkg("tldr")
+		brewPkg("diffr")
+		brewPkg("bat")
+		brewPkg("tig")
+		brewPkg("direnv")
+		brewPkg("watchman")
+		brewPkg("jupyterlab")
 
 		profileAppend := "# DIRENV\n" +
 			"eval \"$(direnv hook zsh)\"\n\n"
@@ -1498,19 +1535,19 @@ func macCLIApp(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("openssh")
-		brewInstall(cmdGit)
-		brewInstall("git-lfs")
-		brewInstall("gh")
-		brewInstall("htop")
-		brewInstall("qemu")
-		brewInstall("vim")
-		brewInstall("neovim")
-		brewInstall("httpie")
-		brewInstall("curlie")
-		brewInstall("jq")
-		brewInstall("asciinema")
-		brewInstall("stylish-haskell")
+		brewPkg("openssh")
+		brewPkg(cmdGit)
+		brewPkg("git-lfs")
+		brewPkg("gh")
+		brewPkg("htop")
+		brewPkg("qemu")
+		brewPkg("vim")
+		brewPkg("neovim")
+		brewPkg("httpie")
+		brewPkg("curlie")
+		brewPkg("jq")
+		brewPkg("asciinema")
+		brewPkg("stylish-haskell")
 	}
 
 	if runOpt == "7" {
@@ -1528,9 +1565,9 @@ func macCLIApp(runOpt string) {
 		//	checkError(err)
 		//}
 
-		brewInstall("tor")
-		brewInstall("torsocks")
-		brewInstall("radare2")
+		brewPkg("tor")
+		brewPkg("torsocks")
+		brewPkg("radare2")
 	}
 
 	ldBar.Stop()
