@@ -26,16 +26,13 @@ var (
 	pmsIns      = "install"
 	//pmsReIn     = "reinstall"
 	//pmsRm       = "remove"
-	pmsAlt     = "--cask"
-	pmsRepo    = "tap"
-	cmdGit     = "git"
-	cmdASDF    = checkASDFPath()
-	asdfPlugin = "plugin"
-	asdfAdd    = "add"
-	asdfShim   = "reshim"
-	p10kPath   = homeDir() + ".config/p10k/"
-	p10kCache  = homeDir() + ".cache/p10k-" + userName()
-	cmdOpt     string
+	pmsAlt    = "--cask"
+	pmsRepo   = "tap"
+	cmdGit    = "git"
+	cmdASDF   = checkASDFPath()
+	p10kPath  = homeDir() + ".config/p10k/"
+	p10kCache = homeDir() + ".cache/p10k-" + userName()
+	cmdOpt    string
 )
 
 func checkError(err error) {
@@ -203,16 +200,10 @@ func brewInsCask(pkg, app string) {
 
 func asdfIns(plugin, version string) {
 	if _, errExist := os.Stat(homeDir() + ".asdf/plugins/" + plugin); errors.Is(errExist, os.ErrNotExist) {
-		asdfPlugin := exec.Command(cmdASDF, asdfPlugin, asdfAdd, plugin)
+		asdfPlugin := exec.Command(cmdASDF, "plugin", "add", plugin)
 		if err := asdfPlugin.Run(); err != nil {
-			fmt.Println("\n" + lstDot + "ASDF " + plugin + " add plugin error: " + err.Error())
-			asdfPlugin.Stderr = os.Stderr
-			os.Exit(0)
-		}
-
-		asdfReshim := exec.Command(cmdASDF, asdfShim)
-		if err := asdfReshim.Run(); err != nil {
-			fmt.Println("\n" + lstDot + "ASDF " + plugin + " reshim error: " + err.Error())
+			fmt.Println("\n" + lstDot + "Failed ASDF-VM " + plugin + " add plugin \n" +
+				"   Error code: " + err.Error())
 			asdfPlugin.Stderr = os.Stderr
 			os.Exit(0)
 		}
@@ -220,8 +211,17 @@ func asdfIns(plugin, version string) {
 
 	asdfInstall := exec.Command(cmdASDF, pmsIns, plugin, version)
 	if err := asdfInstall.Run(); err != nil {
-		fmt.Println("\n" + lstDot + "ASDF " + plugin + " (" + version + ") install error: " + err.Error())
+		fmt.Println("\n" + lstDot + "Failed ASDF-VM " + plugin + " (" + version + ") install\n" +
+			"   Error code: " + err.Error())
 		asdfInstall.Stderr = os.Stderr
+		os.Exit(0)
+	}
+
+	asdfGlobal := exec.Command(cmdASDF, "global", plugin, version)
+	if err := asdfGlobal.Run(); err != nil {
+		fmt.Println("\n" + lstDot + "Failed ASDF-VM " + plugin + " (" + version + ") globalisation\n" +
+			"   Error code: " + err.Error())
+		asdfGlobal.Stderr = os.Stderr
 		os.Exit(0)
 	}
 }
@@ -317,26 +317,26 @@ func confG4s() {
 	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDirPath)
 }
 
-func p10kTerminal() {
-	dlP10kTerminal := p10kPath + "p10k-terminal.zsh"
-	respP10kTerminal, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
+func p10kTerm() {
+	dlP10kTerm := p10kPath + "p10k-term.zsh"
+	respP10kTerm, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
 	if err != nil {
 		fmt.Println(lstDot + "ZshTheme‘s URL is maybe changed, please check https://github.com/leelsey/ConfStore\n")
 		os.Exit(0)
 	}
 	defer func() {
-		err := respP10kTerminal.Body.Close()
+		err := respP10kTerm.Body.Close()
 		checkError(err)
 	}()
-	rawFileP10kTerminal, _ := ioutil.ReadAll(respP10kTerminal.Body)
+	rawFileP10kTerm, _ := ioutil.ReadAll(respP10kTerm.Body)
 
-	confP10kTerminal, err := os.OpenFile(dlP10kTerminal, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	confP10kTerm, err := os.OpenFile(dlP10kTerm, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
 	checkError(err)
 	defer func() {
-		err := confP10kTerminal.Close()
+		err := confP10kTerm.Close()
 		checkError(err)
 	}()
-	_, err = confP10kTerminal.Write(rawFileP10kTerminal)
+	_, err = confP10kTerm.Write(rawFileP10kTerm)
 	checkError(err)
 }
 
@@ -547,56 +547,6 @@ func macDependency(runOpt string) {
 	ldBar.FinalMSG = " - Installed basic dependencies!\n"
 	ldBar.Start()
 
-	//brewPkgConfig := exec.Command(cmdPMS, pmsIns, "pkg-config")
-	//brewCaCert := exec.Command(cmdPMS, pmsIns, "ca-certificates")
-	//brewSSL3 := exec.Command(cmdPMS, pmsIns, "openssl@3")
-	//brewSSL1 := exec.Command(cmdPMS, pmsIns, "openssl@1.1")
-	//brewNCurses := exec.Command(cmdPMS, pmsIns, "ncurses")
-	//brewAutoconf := exec.Command(cmdPMS, pmsIns, "autoconf")
-	//brewMpdecimal := exec.Command(cmdPMS, pmsIns, "mpdecimal")
-	//brewLibYaml := exec.Command(cmdPMS, pmsIns, "libyaml")
-	//brewReadLine := exec.Command(cmdPMS, pmsIns, "readline")
-	//brewGDBM := exec.Command(cmdPMS, pmsIns, "gdbm")
-	//brewXZ := exec.Command(cmdPMS, pmsIns, "xz")
-	//brewSQLite := exec.Command(cmdPMS, pmsIns, "sqlite")
-	//
-	//if err := brewPkgConfig.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewCaCert.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewSSL3.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewSSL1.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewNCurses.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewAutoconf.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewMpdecimal.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewLibYaml.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewReadLine.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewGDBM.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewXZ.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewSQLite.Run(); err != nil {
-	//	checkError(err)
-	//}
-
 	brewIns("pkg-config")
 	brewIns("ca-certificates")
 	brewIns("openssl@3")
@@ -628,139 +578,11 @@ func macDependency(runOpt string) {
 	appendFile(shrcPath, shrcAppend)
 
 	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewPCRE := exec.Command(cmdPMS, pmsIns, "pcre")
-		//brewPCRE2 := exec.Command(cmdPMS, pmsIns, "pcre2")
-		//
-		//if err := brewPCRE.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewPCRE2.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewIns("pcre")
 		brewIns("pcre2")
 	}
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewKRB5 := exec.Command(cmdPMS, pmsIns, "krb5")
-		//brewGnuPG := exec.Command(cmdPMS, pmsIns, "gnupg")
-		//brewGzip := exec.Command(cmdPMS, pmsIns, "gzip")
-		//brewLibzip := exec.Command(cmdPMS, pmsIns, "libzip")
-		//brewBzip2 := exec.Command(cmdPMS, pmsIns, "bzip2")
-		//brewZLib := exec.Command(cmdPMS, pmsIns, "zlib")
-		//brewGHC := exec.Command(cmdPMS, pmsIns, "ghc")
-		//brewCCache := exec.Command(cmdPMS, pmsIns, "ccache")
-		//brewCabal := exec.Command(cmdPMS, pmsIns, "cabal-install")
-		//brewM4 := exec.Command(cmdPMS, pmsIns, "m4")
-		//brewAutomake := exec.Command(cmdPMS, pmsIns, "automake")
-		//brewLibffi := exec.Command(cmdPMS, pmsIns, "libffi")
-		//brewGuile := exec.Command(cmdPMS, pmsIns, "guile")
-		//brewGnuGetOpt := exec.Command(cmdPMS, pmsIns, "gnu-getopt")
-		//brewCoreUtils := exec.Command(cmdPMS, pmsIns, "coreutils")
-		//brewBison := exec.Command(cmdPMS, pmsIns, "bison")
-		//brewLibIconv := exec.Command(cmdPMS, pmsIns, "libiconv")
-		//brewICU4C := exec.Command(cmdPMS, pmsIns, "icu4c")
-		//brewRe2C := exec.Command(cmdPMS, pmsIns, "re2c")
-		//brewGD := exec.Command(cmdPMS, pmsIns, "gd")
-		//brewLDNS := exec.Command(cmdPMS, pmsIns, "ldns")
-		//brewHTMLXMLUtils := exec.Command(cmdPMS, pmsIns, "html-xml-utils")
-		//brewXMLto := exec.Command(cmdPMS, pmsIns, "xmlto")
-		//brewGMP := exec.Command(cmdPMS, pmsIns, "gmp")
-		//brewLibSodium := exec.Command(cmdPMS, pmsIns, "libsodium")
-		//brewImageMagick := exec.Command(cmdPMS, pmsIns, "imagemagick")
-		//brewGhostscript := exec.Command(cmdPMS, pmsIns, "ghostscript")
-		//brewcURL := exec.Command(cmdPMS, pmsIns, "curl")
-		//brewWget := exec.Command(cmdPMS, pmsIns, "wget")
-		//
-		//if err := brewKRB5.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGnuPG.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewcURL.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewWget.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGzip.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewLibzip.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewBzip2.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewZLib.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGHC.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewCCache.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewCabal.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewM4.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewAutomake.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewLibffi.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGuile.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGnuGetOpt.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewCoreUtils.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewBison.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewLibIconv.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewICU4C.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewRe2C.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGD.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewLDNS.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewHTMLXMLUtils.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewXMLto.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGMP.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewLibSodium.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewImageMagick.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGhostscript.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewIns("krb5")
 		brewIns("gnupg")
 		brewIns("curl")
@@ -833,37 +655,153 @@ func macDependency(runOpt string) {
 	ldBar.Stop()
 }
 
+func macLanguage(runOpt string) {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Installing computer programming language..."
+	ldBar.FinalMSG = " - Installed basic languages!\n"
+	ldBar.Start()
+
+	brewIns("awk")
+
+	if runOpt == "4" {
+		brewIns("openjdk")
+		brewIns("nvm")
+		shrcAppend := "# JAVA\n" +
+			"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n" +
+			"# NVM\n" +
+			"export NVM_DIR=\"$HOME/.nvm\"\n" +
+			"[ -s \"" + brewPrefix + "opt/nvm/nvm.sh\" ] && source \"" + brewPrefix + "opt/nvm/nvm.sh\"\n" +
+			"[ -s \"" + brewPrefix + "opt/nvm/etc/bash_completion.d/nvm\" ] && source \"" + brewPrefix + "opt/nvm/etc/bash_completion.d/nvm\"\n\n"
+		appendFile(shrcPath, shrcAppend)
+
+		nvmIns := exec.Command("nvm", pmsIns, "--lts")
+		if err := nvmIns.Run(); err != nil {
+			fmt.Println("\n" + lstDot + "NVM" + " install error: " + err.Error())
+			nvmIns.Stderr = os.Stderr
+			os.Exit(0)
+		}
+	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		brewIns("gawk")
+		brewIns("perl")
+		brewIns("ruby")
+		brewIns("python")
+		brewIns("openjdk")
+		brewIns("rust")
+		brewIns("go")
+		brewIns("node")
+		brewIns("lua")
+		brewIns("php")
+		brewIns("groovy")
+		brewIns("kotlin")
+		brewIns("scala")
+		brewIns("clojure")
+		brewIns("erlang")
+		brewIns("elixir")
+		brewIns("typescript")
+		brewIns("r")
+		brewIns("haskell-stack")
+		brewIns("haskell-language-server")
+		brewIns("stylish-haskell")
+
+		shrcAppend := "# RUBY\n" +
+			"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n" +
+			"# JAVA\n" +
+			"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
+		appendFile(shrcPath, shrcAppend)
+	}
+
+	ldBar.Stop()
+}
+
+func macServer() {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Installing developing tools for server..."
+	ldBar.FinalMSG = " - Installed servers!\n"
+	ldBar.Start()
+
+	brewIns("httpd")
+	brewIns("tomcat")
+	brewIns("nginx")
+
+	ldBar.Stop()
+}
+
+func macDatabase() {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Installing developing tools for database..."
+	ldBar.FinalMSG = " - Installed databases!\n"
+	ldBar.Start()
+
+	brewIns("sqlite-analyzer")
+	brewIns("postgresql")
+	brewIns("mysql")
+	brewIns("redis")
+	brewIns("mongodb-community")
+	brewIns("mongodb")
+
+	shrcAppend := "# SQLITE3\n" +
+		"export PATH=\"" + brewPrefix + "opt/sqlite/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/sqlite/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/sqlite/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/sqlite/lib/pkgconfig\"\n\n"
+	appendFile(shrcPath, shrcAppend)
+
+	ldBar.Stop()
+}
+
+func macDevVM() {
+	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	ldBar.Suffix = " Installing management developer tool version with plugin..."
+	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
+	ldBar.Start()
+
+	brewIns("asdf")
+
+	asdfIns("perl", "latest")
+	//asdfIns("ruby", "latest")   // error
+	//asdfIns("python", "latest") // error
+	asdfIns("java", "openjdk-11.0.2") // JDK LTS 11
+	asdfIns("java", "openjdk-17.0.2") // JDK LTS 17
+	asdfIns("rust", "latest")
+	asdfIns("golang", "latest")
+	asdfIns("nodejs", "latest")
+	asdfIns("lua", "latest")
+	//asdfIns("php", "latest") // error
+	asdfIns("groovy", "latest")
+	asdfIns("kotlin", "latest")
+	asdfIns("scala", "latest")
+	asdfIns("clojure", "latest")
+	//asdfIns("erlang", "latest") // error
+	asdfIns("elixir", "latest")
+	asdfIns("haskell", "latest")
+	asdfIns("gleam", "latest")
+	//asdfIns("r", "latest") // error
+
+	shrcAppend := "# ASDF VM\n" +
+		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
+		"source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n" +
+		"java_macos_integration_enable = yes\n\n"
+	appendFile(shrcPath, shrcAppend)
+
+	asdfReshim := exec.Command(cmdASDF, "reshim")
+	if err := asdfReshim.Run(); err != nil {
+		fmt.Println("\n" + lstDot + "ASDF reshim error: " + err.Error())
+		os.Exit(0)
+	}
+
+	ldBar.Stop()
+}
+
 func macTerminal(runOpt string) {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing zsh with useful tools..."
 	ldBar.FinalMSG = " - Installed useful tools for terminal!\n"
 	ldBar.Start()
-
-	//brewZshComp := exec.Command(cmdPMS, pmsIns, "zsh-completions")
-	//brewZshSyntax := exec.Command(cmdPMS, pmsIns, "zsh-syntax-highlighting")
-	//brewZshAuto := exec.Command(cmdPMS, pmsIns, "zsh-autosuggestions")
-	//brewZ := exec.Command(cmdPMS, pmsIns, "z")
-	//brewTree := exec.Command(cmdPMS, pmsIns, "tree")
-	//brewZshTheme := exec.Command(cmdPMS, pmsIns, "romkatv/powerlevel10k/powerlevel10k")
-	//
-	//if err := brewZshComp.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewZshSyntax.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewZshAuto.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewZ.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewTree.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewZshTheme.Run(); err != nil {
-	//	checkError(err)
-	//}
 
 	brewIns("zsh-completions")
 	brewIns("zsh-syntax-highlighting")
@@ -877,28 +815,6 @@ func macTerminal(runOpt string) {
 	makeDir(p10kCache)
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewZsh := exec.Command(cmdPMS, pmsIns, "zsh")
-		//brewFzf := exec.Command(cmdPMS, pmsIns, "fzf")
-		//brewTmux := exec.Command(cmdPMS, pmsIns, "tmux")
-		//brewTmuxinator := exec.Command(cmdPMS, pmsIns, "tmuxinator")
-		//brewNeoFetch := exec.Command(cmdPMS, pmsIns, "neofetch")
-		//
-		//if err := brewZsh.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewFzf.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTmux.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTmuxinator.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewNeoFetch.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewIns("zsh")
 		brewIns("fzf")
 		brewIns("tmux")
@@ -908,11 +824,11 @@ func macTerminal(runOpt string) {
 		iTerm2Conf()
 	}
 
-	p10kTerminal()
+	p10kTerm()
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
 		profileAppend := "# POWERLEVEL10K\n" +
-			"source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
 			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
 			"fi\n" +
@@ -926,13 +842,13 @@ func macTerminal(runOpt string) {
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
 			"# POWERLEVEL10K\n" +
-			"source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
 			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
 			"fi\n" +
 			"if [[ -d /Applications/iTerm.app ]]; then\n" +
 			"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
-			"    [[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n" +
+			"    [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
 			"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n" +
 			"    echo ''; neofetch --bold off\n" +
 			"    [[ ! -f " + p10kPath + "p10k-iterm2.zsh ]] || source " + p10kPath + "p10k-iterm2.zsh\n" +
@@ -943,7 +859,7 @@ func macTerminal(runOpt string) {
 			"    [[ ! -f " + p10kPath + "p10k-etc.zsh ]] || source " + p10kPath + "p10k-etc.zsh\n" +
 			"  fi\n" +
 			"else\n" +
-			"  [[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n" +
+			"  [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
 			"fi\n\n"
 		appendFile(profilePath, profileAppend)
 	}
@@ -972,510 +888,27 @@ func macTerminal(runOpt string) {
 	ldBar.Stop()
 }
 
-func macLanguage(runOpt string) {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing basic computer programming language..."
-	ldBar.FinalMSG = " - Installed basic languages!\n"
-	ldBar.Start()
-
-	//brewGawk := exec.Command(cmdPMS, pmsIns, "gawk")
-	//brewPerl := exec.Command(cmdPMS, pmsIns, "perl")
-	//brewJava := exec.Command(cmdPMS, pmsIns, "openjdk")
-	//brewRuby := exec.Command(cmdPMS, pmsIns, "ruby")
-	//brewPython := exec.Command(cmdPMS, pmsIns, "python")
-	//
-	//if err := brewGawk.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewPerl.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewRuby.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewPython.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewJava.Run(); err != nil {
-	//	checkError(err)
-	//}
-
-	//fixPython := exec.Command(cmdPMS, "link", "--overwrite", "python@3.10")
-	//if err := fixPython.Run(); err != nil {
-	//	checkError(err)
-	//}
-
-	brewIns("gawk")
-	brewIns("perl")
-	brewIns("ruby")
-	brewIns("python")
-	brewIns("openjdk")
-
-	shrcAppend := "# JAVA\n" +
-		"#export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
-		"#export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n" +
-		"# RUBY\n" +
-		"#export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
-		"#export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
-		"#export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
-		"#export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n" +
-		"# PYTHON\n" +
-		"# brew link --overwrite python@[version]\n\n"
-	appendFile(shrcPath, shrcAppend)
-
-	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewRust := exec.Command(cmdPMS, pmsIns, "rust")
-		//brewGo := exec.Command(cmdPMS, pmsIns, "go")
-		//brewNode := exec.Command(cmdPMS, pmsIns, "node")
-		//brewLua := exec.Command(cmdPMS, pmsIns, "lua")
-		//brewPHP := exec.Command(cmdPMS, pmsIns, "php")
-		//
-		//if err := brewRust.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGo.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewNode.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewLua.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewPHP.Run(); err != nil {
-		//	checkError(err)
-		//}
-
-		brewIns("rust")
-		brewIns("go")
-		brewIns("node")
-		brewIns("lua")
-	}
-
-	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewGroovy := exec.Command(cmdPMS, pmsIns, "groovy")
-		//brewKotlin := exec.Command(cmdPMS, pmsIns, "kotlin")
-		//brewScala := exec.Command(cmdPMS, pmsIns, "scala")
-		//brewClojure := exec.Command(cmdPMS, pmsIns, "clojure")
-		//brewErlang := exec.Command(cmdPMS, pmsIns, "erlang")
-		//brewElixir := exec.Command(cmdPMS, pmsIns, "elixir")
-		//brewTS := exec.Command(cmdPMS, pmsIns, "typescript")
-		//brewR := exec.Command(cmdPMS, pmsIns, "r")
-		//brewHaskell := exec.Command(cmdPMS, pmsIns, "haskell-stack")
-		//brewHaskellServer := exec.Command(cmdPMS, pmsIns, "haskell-language-server")
-		//brewAddDart := exec.Command(cmdPMS, pmsRepo, "dart-lang/dart")
-		//brewDart := exec.Command(cmdPMS, pmsIns, "dart")
-		//
-		//if err := brewGroovy.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewKotlin.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewScala.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewClojure.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewErlang.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewElixir.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTS.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewR.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewHaskell.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewHaskellServer.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewAddDart.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewDart.Run(); err != nil {
-		//	checkError(err)
-		//}
-		brewIns("php")
-		brewIns("groovy")
-		brewIns("kotlin")
-		brewIns("scala")
-		brewIns("clojure")
-		brewIns("erlang")
-		brewIns("elixir")
-		brewIns("typescript")
-		brewIns("r")
-		brewIns("haskell-stack")
-		brewIns("haskell-language-server")
-		brewIns("stylish-haskell")
-		brewIns("dart-lang/dart")
-		brewIns("dart")
-	}
-
-	ldBar.Stop()
-}
-
-func macASDF(runOpt string) {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing ASDF-VM with plugin..."
-	ldBar.FinalMSG = " - Installed ASDF-VM, and add basic languages!\n"
-	ldBar.Start()
-
-	//brewASDF := exec.Command(cmdPMS, pmsIns, "asdf")
-	//if err := brewASDF.Run(); err != nil {
-	//	checkError(err)
-	//}
-
-	brewIns("asdf")
-
-	profileAppend := "# ASDF VM\n" +
-		"source " + brewPrefix + "/opt/asdf/libexec/asdf.sh\n\n"
-	appendFile(profilePath, profileAppend)
-
-	//pluginPath := homeDir() + ".asdf/plugins/"
-	//if _, err := os.Stat(pluginPath + "perl"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddPerl := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "perl")
-	//	if err := asdfAddPerl.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "java"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddJava := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "java")
-	//	if err := asdfAddJava.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "ruby"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddRuby := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "ruby")
-	//	if err := asdfAddRuby.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "python"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddPython := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "python")
-	//	if err := asdfAddPython.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "rust"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddRust := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "rust")
-	//	if err := asdfAddRust.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "golang"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddGo := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "golang")
-	//	if err := asdfAddGo.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "nodejs"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddNode := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "nodejs")
-	//	if err := asdfAddNode.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "lua"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddLua := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "lua")
-	//	if err := asdfAddLua.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "php"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddPHP := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "php")
-	//	if err := asdfAddPHP.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "groovy"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddGroovy := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "groovy")
-	//	if err := asdfAddGroovy.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "kotlin"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddKotlin := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "kotlin")
-	//	if err := asdfAddKotlin.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "scala"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddScala := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "scala")
-	//	if err := asdfAddScala.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "clojure"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddClojure := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "clojure")
-	//	if err := asdfAddClojure.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "erlang"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddErlang := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "erlang")
-	//	if err := asdfAddErlang.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-	//if _, err := os.Stat(pluginPath + "elixir"); errors.Is(err, os.ErrNotExist) {
-	//	asdfAddElixir := exec.Command(cmdASDF, asdfPlugin, asdfAdd, "elixir")
-	//	if err := asdfAddElixir.Run(); err != nil {
-	//		checkError(err)
-	//	}
-	//}
-
-	if runOpt == "6" || runOpt == "7" {
-		//asdfPerlLatest := exec.Command(cmdASDF, pmsIns, "perl", "latest")
-		//asdfOpenJDK11 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-11.0.2")
-		//asdfOpenJDK17 := exec.Command(cmdASDF, pmsIns, "java", "openjdk-17.0.2")
-		//asdfTemurin8 := exec.Command(cmdASDF, pmsIns, "java", "temurin-8.0.345+1")
-		//asdfTemurin11 := exec.Command(cmdASDF, pmsIns, "java", "temurin-11.0.16+8")
-		//asdfTemurin17 := exec.Command(cmdASDF, pmsIns, "java", "temurin-17.0.4+8")
-		//asdfRubyLatest := exec.Command(cmdASDF, pmsIns, "ruby", "latest")     // error
-		//asdfPythonLatest := exec.Command(cmdASDF, pmsIns, "python", "latest") // error
-		//asdfRustLatest := exec.Command(cmdASDF, pmsIns, "rust", "latest")
-		//asdfGoLatest := exec.Command(cmdASDF, pmsIns, "golang", "latest")
-		//asdfNodeLatest := exec.Command(cmdASDF, pmsIns, "nodejs", "latest")
-		//asdfLuaLatest := exec.Command(cmdASDF, pmsIns, "lua", "latest")
-		//asdfPHPLatest := exec.Command(cmdASDF, pmsIns, "php", "latest") // error
-		//asdfGroovyLatest := exec.Command(cmdASDF, pmsIns, "groovy", "latest")
-		//asdfKotlinLatest := exec.Command(cmdASDF, pmsIns, "kotlin", "latest")
-		//asdfScalaLatest := exec.Command(cmdASDF, pmsIns, "scala", "latest")
-		//asdfClojureLatest := exec.Command(cmdASDF, pmsIns, "clojure", "latest")
-		//asdfErlangLatest := exec.Command(cmdASDF, pmsIns, "erlang", "latest") // error
-		//asdfElixirLatest := exec.Command(cmdASDF, pmsIns, "elixir", "latest")
-		//
-		//if err := asdfPerlLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfOpenJDK11.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfOpenJDK17.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfTemurin8.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfTemurin11.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfTemurin17.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfRubyLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfPythonLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfRustLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfGoLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfNodeLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfLuaLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfPHPLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfGroovyLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfKotlinLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfScalaLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfClojureLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfErlangLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := asdfElixirLatest.Run(); err != nil {
-		//	checkError(err)
-		//}
-
-		asdfIns("perl", "latest")
-		//asdfIns("ruby", "latest")   // error
-		//asdfIns("python", "latest") // error
-		asdfIns("java", "openjdk-11.0.2") // JDK LTS 11
-		asdfIns("java", "openjdk-17.0.2") // JDK LTS 17
-		asdfIns("rust", "latest")
-		asdfIns("golang", "latest")
-		asdfIns("nodejs", "latest")
-		asdfIns("lua", "latest")
-		//asdfIns("php", "latest") // error
-		asdfIns("groovy", "latest")
-		asdfIns("kotlin", "latest")
-		asdfIns("scala", "latest")
-		asdfIns("clojure", "latest")
-		//asdfIns("erlang", "latest") // error
-		asdfIns("elixir", "latest")
-	}
-
-	ldBar.Stop()
-}
-
-func macServer() {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing developing tools for server..."
-	ldBar.FinalMSG = " - Installed servers!\n"
-	ldBar.Start()
-
-	//brewHTTPD := exec.Command(cmdPMS, pmsIns, "httpd")
-	//brewTomcat := exec.Command(cmdPMS, pmsIns, "tomcat")
-	//brewNGINX := exec.Command(cmdPMS, pmsIns, "nginx")
-	//
-	//if err := brewHTTPD.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewTomcat.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewNGINX.Run(); err != nil {
-	//	checkError(err)
-	//}
-
-	brewIns("httpd")
-	brewIns("tomcat")
-	brewIns("nginx")
-
-	ldBar.Stop()
-}
-
-func macDatabase() {
-	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	ldBar.Suffix = " Installing developing tools for database..."
-	ldBar.FinalMSG = " - Installed databases!\n"
-	ldBar.Start()
-
-	//brewSQLiteAnalyzer := exec.Command(cmdPMS, pmsIns, "sqlite-analyzer")
-	//brewPostgreSQL := exec.Command(cmdPMS, pmsIns, "postgresql")
-	//brewMySQL := exec.Command(cmdPMS, pmsIns, "mysql")
-	//brewRedis := exec.Command(cmdPMS, pmsIns, "redis")
-	//brewAddMongoDB := exec.Command(cmdPMS, pmsRepo, "mongodb/brew")
-	//brewMongoDB := exec.Command(cmdPMS, pmsIns, "mongodb-community")
-	//
-	//if err := brewSQLiteAnalyzer.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewPostgreSQL.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewMySQL.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewRedis.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewAddMongoDB.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewMongoDB.Run(); err != nil {
-	//	checkError(err)
-	//}
-
-	brewIns("sqlite-analyzer")
-	brewIns("postgresql")
-	brewIns("mysql")
-	brewIns("redis")
-	brewIns("mongodb-community")
-	brewIns("mongodb")
-
-	shrcAppend := "# SQLITE3\n" +
-		"export PATH=\"" + brewPrefix + "opt/sqlite/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + brewPrefix + "opt/sqlite/lib\"\n" +
-		"export CPPFLAGS=\"" + brewPrefix + "opt/sqlite/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/sqlite/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend)
-
-	ldBar.Stop()
-}
-
 func macCLIApp(runOpt string) {
 	ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 	ldBar.Suffix = " Installing developer tools for CLI"
 	ldBar.FinalMSG = " - Installed developer utilities!\n"
 	ldBar.Start()
 
-	//brewDiff := exec.Command(cmdPMS, pmsIns, "diffutils")
-	//if err := brewDiff.Run(); err != nil {
-	//	checkError(err)
-	//}
-
 	brewIns("diffutils")
 
-	if runOpt == "3" || runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewMake := exec.Command(cmdPMS, pmsIns, "make")
-		//brewNinja := exec.Command(cmdPMS, pmsIns, "ninja")
-		//brewMaven := exec.Command(cmdPMS, pmsIns, "maven")
-		//brewGradle := exec.Command(cmdPMS, pmsIns, "gradle")
-		//brewTLDR := exec.Command(cmdPMS, pmsIns, "tldr")
-		//brewDiffr := exec.Command(cmdPMS, pmsIns, "diffr")
-		//brewBat := exec.Command(cmdPMS, pmsIns, "bat")
-		//brewTig := exec.Command(cmdPMS, pmsIns, "tig")
-		//brewDirEnv := exec.Command(cmdPMS, pmsIns, "direnv")
-		//brewWatchman := exec.Command(cmdPMS, pmsIns, "watchman")
-		//brewJupyterLab := exec.Command(cmdPMS, pmsIns, "jupyterlab")
-		//
-		//if err := brewMake.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewNinja.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewMaven.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGradle.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTLDR.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewDiffr.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTig.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewBat.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewDirEnv.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewWatchman.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewJupyterLab.Run(); err != nil {
-		//	checkError(err)
-		//}
-
-		brewIns("make")
-		brewIns("ninja")
-		brewIns("maven")
-		brewIns("gradle")
+	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		brewIns("openssh")
+		brewIns("mosh")
+		brewIns("inetutils")
+		brewIns("git")
+		brewIns("git-lfs")
+		brewIns("gh")
 		brewIns("tldr")
 		brewIns("diffr")
 		brewIns("bat")
 		brewIns("tig")
-		brewIns("direnv")
 		brewIns("watchman")
+		brewIns("direnv")
 		brewIns("jupyterlab")
 
 		profileAppend := "# DIRENV\n" +
@@ -1484,66 +917,11 @@ func macCLIApp(runOpt string) {
 	}
 
 	if runOpt == "6" || runOpt == "7" {
-		//brewSSH := exec.Command(cmdPMS, pmsIns, "openssh")
-		//brewGit := exec.Command(cmdPMS, pmsIns, cmdGit)
-		//brewGitLfs := exec.Command(cmdPMS, pmsIns, "git-lfs")
-		//brewGH := exec.Command(cmdPMS, pmsIns, "gh")
-		//brewHtop := exec.Command(cmdPMS, pmsIns, "htop")
-		//brewQEMU := exec.Command(cmdPMS, pmsIns, "qemu")
-		//brewVim := exec.Command(cmdPMS, pmsIns, "vim")
-		//brewNeoVim := exec.Command(cmdPMS, pmsIns, "neovim")
-		//brewHTTPie := exec.Command(cmdPMS, pmsIns, "httpie")
-		//brewCurlie := exec.Command(cmdPMS, pmsIns, "curlie")
-		//brewJQ := exec.Command(cmdPMS, pmsIns, "jq")
-		//brewAsciinema := exec.Command(cmdPMS, pmsIns, "asciinema")
-		//brewHaskellStylish := exec.Command(cmdPMS, pmsIns, "stylish-haskell")
-		//
-		//if err := brewSSH.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGit.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGitLfs.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGH.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewHtop.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewQEMU.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewVim.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewNeoVim.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewHTTPie.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewCurlie.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewJQ.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewAsciinema.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewHaskellStylish.Run(); err != nil {
-		//	checkError(err)
-		//}
-
-		brewIns("openssh")
-		brewIns("mosh")
-		brewIns("inetutils")
-		brewIns("git")
-		brewIns("git-lfs")
-		brewIns("gh")
+		brewIns("make")
+		brewIns("cmake")
+		brewIns("ninja")
+		brewIns("maven")
+		brewIns("gradle")
 		brewIns("htop")
 		brewIns("qemu")
 		brewIns("vim")
@@ -1551,27 +929,18 @@ func macCLIApp(runOpt string) {
 		brewIns("httpie")
 		brewIns("curlie")
 		brewIns("jq")
+		brewIns("yq")
+		brewIns("dasel")
 		brewIns("asciinema")
 	}
 
 	if runOpt == "7" {
-		//brewTor := exec.Command(cmdPMS, pmsIns, "tor")
-		//brewTorSocket := exec.Command(cmdPMS, pmsIns, "torsocks")
-		//brewRadare2 := exec.Command(cmdPMS, pmsIns, "radare2")
-		//
-		//if err := brewTor.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTorSocket.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewRadare2.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewIns("tor")
 		brewIns("torsocks")
+		brewIns("nmap")
 		brewIns("radare2")
+		brewIns("sleuthkit")
+		brewIns("autopsy")
 	}
 
 	ldBar.Stop()
@@ -1600,74 +969,12 @@ func macGUIApp(runOpt string) {
 	brewInsCask("signal", "Signal")
 	brewInsCask("slack", "Slack")
 	brewInsCask("discord", "Discord")
+
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewInsCask("jetbrains-space", "JetBrains Space")
 	}
 
-	//brewKeka := exec.Command(cmdPMS, pmsIns, pmsAlt, "keka")
-	//brewIINA := exec.Command(cmdPMS, pmsIns, pmsAlt, "iina")
-	//brewTransmission := exec.Command(cmdPMS, pmsIns, pmsAlt, "transmission")
-	//brewSignal := exec.Command(cmdPMS, pmsIns, pmsAlt, "signal")
-	//brewDiscord := exec.Command(cmdPMS, pmsIns, pmsAlt, "discord")
-	//brewRectangle := exec.Command(cmdPMS, pmsIns, pmsAlt, "rectangle")
-	//brewChrome := exec.Command(cmdPMS, pmsIns, pmsAlt, "google-chrome")
-	//brewFirefox := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox")
-	//brewTorBrowser := exec.Command(cmdPMS, pmsIns, pmsAlt, "tor-browser")
-
-	//if err := brewKeka.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewIINA.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewTransmission.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewSignal.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewDiscord.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewRectangle.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewChrome.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewFirefox.Run(); err != nil {
-	//	checkError(err)
-	//}
-	//if err := brewTorBrowser.Run(); err != nil {
-	//	checkError(err)
-	//}
-
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		//brewDropbox := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox")
-		//brewDropboxCapture := exec.Command(cmdPMS, pmsIns, pmsAlt, "dropbox-capture")
-		//brewSketch := exec.Command(cmdPMS, pmsIns, pmsAlt, "sketch")
-		//brewZeplin := exec.Command(cmdPMS, pmsIns, pmsAlt, "zeplin")
-		//brewBlender := exec.Command(cmdPMS, pmsIns, pmsAlt, "blender")
-		//brewOBS := exec.Command(cmdPMS, pmsIns, pmsAlt, "obs")
-		//
-		//if err := brewDropbox.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewDropboxCapture.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewSketch.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewZeplin.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewBlender.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewOBS.Run(); err != nil {
-		//	checkError(err)
-		//}
 		brewInsCask("dropbox", "Dropbox")
 		brewInsCask("dropbox-capture", "Dropbox Capture")
 		brewInsCask("sketch", "Sketch")
@@ -1676,27 +983,7 @@ func macGUIApp(runOpt string) {
 		brewInsCask("obs", "OBS")
 	}
 
-	//brewVSCode := exec.Command(cmdPMS, pmsIns, pmsAlt, "visual-studio-code")
-	//brewFork := exec.Command(cmdPMS, pmsIns, pmsAlt, "fork")
-
 	if runOpt == "3" || runOpt == "4" {
-		//brewEclipse := exec.Command(cmdPMS, pmsIns, pmsAlt, "eclipse-ide")
-		//brewIntellijIdeaCE := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea-ce")
-		//brewAndroidStudio := exec.Command(cmdPMS, pmsIns, pmsAlt, "android-studio")
-
-		//if err := brewVSCode.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewEclipse.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewIntellijIdeaCE.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewAndroidStudio.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewInsCask("visual-studio-code", "Visual Studio Code")
 		brewInsCask("atom", "Atom")
 		brewInsCask("eclipse-ide", "Eclipse")
@@ -1704,50 +991,6 @@ func macGUIApp(runOpt string) {
 		brewInsCask("android-studio", "Android Studio")
 		brewInsCask("fork", "Fork")
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//brewiTerm2 := exec.Command(cmdPMS, pmsIns, pmsAlt, "iterm2")
-		//brewIntellijIdea := exec.Command(cmdPMS, pmsIns, pmsAlt, "intellij-idea")
-		//brewTablePlus := exec.Command(cmdPMS, pmsIns, pmsAlt, "tableplus")
-		//brewProxyman := exec.Command(cmdPMS, pmsIns, pmsAlt, "proxyman")
-		//brewPaw := exec.Command(cmdPMS, pmsIns, pmsAlt, "paw")
-		//brewDocker := exec.Command(cmdPMS, pmsIns, pmsAlt, "docker")
-		//brewGithub := exec.Command(cmdPMS, pmsIns, pmsAlt, "github")
-		//brewBoop := exec.Command(cmdPMS, pmsIns, pmsAlt, "boop")
-		//brewFirefoxDev := exec.Command(cmdPMS, pmsIns, pmsAlt, "firefox-developer-edition")
-
-		//if err := brewiTerm2.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewVSCode.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewIntellijIdea.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewTablePlus.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewProxyman.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewPaw.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewDocker.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewGithub.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewFork.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewBoop.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewFirefoxDev.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewInsCask("iterm2", "iTerm")
 		brewInsCask("visual-studio-code", "Visual Studio Code")
 		brewInsCask("atom", "Atom")
@@ -1773,43 +1016,8 @@ func macGUIApp(runOpt string) {
 	appendFile(shrcPath, shrcAppend)
 
 	if runOpt == "6" {
-		//brewVNCViewer := exec.Command(cmdPMS, pmsIns, pmsAlt, "vnc-viewer")
-		//if err := brewVNCViewer.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewInsCask("vnc-viewer", "VNC Viewer")
 	} else if runOpt == "7" {
-		//brewBurpSuite := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite")
-		//brewBurpSuitePro := exec.Command(cmdPMS, pmsIns, pmsAlt, "burp-suite-professional")
-		//brewSensei := exec.Command(cmdPMS, pmsIns, pmsAlt, "sensei")
-		//brewiMazing := exec.Command(cmdPMS, pmsIns, pmsAlt, "imazing")
-		//brewApparency := exec.Command(cmdPMS, pmsIns, pmsAlt, "apparency")
-		//brewSuspiciousPackage := exec.Command(cmdPMS, pmsIns, pmsAlt, "suspicious-package")
-		//brewCutter := exec.Command(cmdPMS, pmsIns, pmsAlt, "cutter")
-
-		//if err := brewBurpSuite.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewBurpSuitePro.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewSensei.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewiMazing.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewApparency.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewSuspiciousPackage.Run(); err != nil {
-		//	checkError(err)
-		//}
-		//if err := brewCutter.Run(); err != nil {
-		//	checkError(err)
-		//}
-
 		brewInsCask("vnc-viewer", "VNC Viewer")
 		brewInsCask("burp-suite", "Burp Suite Community Edition")
 		brewInsCask("burp-suite-professional", "Burp Suite Professional")
@@ -1826,31 +1034,23 @@ func macGUIApp(runOpt string) {
 func macGUIAppPlus(runOpt string) {
 	fmt.Println(" - Check root permission (sudo) for install the GUI App")
 
-	brewBlackHole := exec.Command(cmdPMS, pmsIns, pmsAlt, "blackhole-64ch")
-	brewVMwareFusion := exec.Command(cmdPMS, pmsIns, pmsAlt, "vmware-fusion")
-	brewWireShark := exec.Command(cmdPMS, pmsIns, pmsAlt, "wireshark")
-
 	if checkPermission() == "root\n" {
 		ldBar := spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 		ldBar.Suffix = " Installing advanced tools for GUI"
 		ldBar.FinalMSG = " - Installed developer utilities!\n"
 		ldBar.Start()
 
-		if err := brewBlackHole.Run(); err != nil {
-			checkError(err)
+		if runOpt == "3" || runOpt == "6" || runOpt == "7" {
+			brewInsCask("loopback", "Loopback")
 		}
 
-		fmt.Println(" - Installing VMware Fusion")
 		if runOpt == "6" || runOpt == "7" {
-			if err := brewVMwareFusion.Run(); err != nil {
-				checkError(err)
-			}
+			brewInsCask("vmware-fusion", "VMware Fusion")
 		}
 
 		if runOpt == "7" {
-			if err := brewWireShark.Run(); err != nil {
-				checkError(err)
-			}
+			brewInsCask("wireshark", "Wireshark")
+			brewInsCask("zenmap", "Zenmap")
 		}
 
 		ldBar.Stop()
@@ -1913,10 +1113,9 @@ func main() {
 				macEnv()
 				macDependency(cmdOpt)
 				macLanguage(cmdOpt)
-				macTerminal(cmdOpt)
-				macASDF(cmdOpt)
 				macServer()
 				macDatabase()
+				macTerminal(cmdOpt)
 				macCLIApp(cmdOpt)
 				macGUIApp(cmdOpt)
 			} else if cmdOpt == "6" {
@@ -1924,10 +1123,10 @@ func main() {
 				macEnv()
 				macDependency(cmdOpt)
 				macLanguage(cmdOpt)
-				macTerminal(cmdOpt)
-				macASDF(cmdOpt)
 				macServer()
 				macDatabase()
+				macDevVM()
+				macTerminal(cmdOpt)
 				macCLIApp(cmdOpt)
 				macGUIApp(cmdOpt)
 				macGUIAppPlus(cmdOpt)
@@ -1936,10 +1135,10 @@ func main() {
 				macEnv()
 				macDependency(cmdOpt)
 				macLanguage(cmdOpt)
-				macTerminal(cmdOpt)
-				macASDF(cmdOpt)
 				macServer()
 				macDatabase()
+				macDevVM()
+				macTerminal(cmdOpt)
 				macCLIApp(cmdOpt)
 				macGUIApp(cmdOpt)
 				macGUIAppPlus(cmdOpt)
