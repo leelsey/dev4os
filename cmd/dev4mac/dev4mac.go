@@ -71,14 +71,15 @@ func checkCmdError(err error, msg, pkg string) {
 }
 
 func checkPermission() {
-	fmt.Printf("   ")
 	sudoPW := exec.Command("sudo", "whoami")
 	sudoPW.Env = os.Environ()
 	sudoPW.Stdin = os.Stdin
 	sudoPW.Stderr = os.Stderr
 	whoAmI, err := sudoPW.Output()
+	fmt.Print("\033[1A\033[K")
+	checkError(err, "Failed to get sudo permission")
 
-	if err != nil {
+	if string(whoAmI) != "root\n" {
 		log.Fatalln(clrRed + "Error >> " + clrReset + "Incorrect user, please check permission of sudo.\n" +
 			lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
 			lstDot + "Working username: " + string(whoAmI))
