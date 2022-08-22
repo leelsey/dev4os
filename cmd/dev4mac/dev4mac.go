@@ -79,12 +79,10 @@ func checkPermission() {
 	whoAmI, err := sudoPW.Output()
 
 	if err != nil {
-		//fmt.Println(lstDot + "Shell command sudo error: " + err.Error())
 		log.Fatalln(clrRed + "Error >> " + clrReset + "Incorrect user, please check permission of sudo.\n" +
 			lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
 			lstDot + "Working username: " + string(whoAmI))
 	}
-	//return string(whoAmI)
 }
 
 func checkNetStatus() {
@@ -503,7 +501,6 @@ func macBegin() {
 	case checkBrewExists() == false:
 		fmt.Println(" - Check root permission (sudo) for install the Homebrew")
 		checkPermission()
-		//if checkPermission() == "root\n" {
 		macLdBar.Suffix = " Installing homebrew... "
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
 		macLdBar.Start()
@@ -512,11 +509,6 @@ func macBegin() {
 		brewUpdate()
 
 		macLdBar.Stop()
-		//} else {
-		//	log.Fatalln(clrRed + "Error >> " + clrReset + "Incorrect user, please check permission of sudo.\n" +
-		//		lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
-		//		lstDot + "Now your username: " + checkPermission() + "\n")
-		//}
 	}
 }
 
@@ -1061,8 +1053,8 @@ func macGUIApp(runOpt string) {
 
 func macGUIAppPlus(runOpt string) {
 	fmt.Println(" - Check root permission (sudo) for install the GUI App")
+	checkPermission()
 
-	//if checkPermission() == "root\n" {
 	macLdBar.Suffix = " Installing advanced GUI applications... "
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install advanced GUI applications!\n"
 	macLdBar.Start()
@@ -1080,11 +1072,6 @@ func macGUIAppPlus(runOpt string) {
 		brewInstallCask("zenmap", "Zenmap")
 	}
 	macLdBar.Stop()
-	//} else {
-	//	log.Fatalln(clrRed + "Error >> " + clrReset + "Incorrect user, please check permission of sudo.\n" +
-	//		lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
-	//		lstDot + "Now your username: " + checkPermission() + "\n")
-	//}
 }
 
 func macEnd() {
@@ -1209,6 +1196,7 @@ startOpt:
 			macGUIApp(beginOpt)
 			macGUIAppPlus(beginOpt)
 		} else if beginOpt == "0" || beginOpt == "q" || beginOpt == "e" || beginOpt == "quit" || beginOpt == "exit" {
+			fmt.Println(lstDot + "Exited Dev4mac.")
 			os.Exit(0)
 		} else {
 			fmt.Println(fmt.Errorf(lstDot + clrYellow + beginOpt + clrReset +
