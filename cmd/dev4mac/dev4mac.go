@@ -235,8 +235,18 @@ func brewInstall(pkg string) {
 	}
 }
 
-func brewInstallCask(pkg, app string) {
+func brewCask(pkg, app string) {
 	if _, errExist := os.Stat("/Applications/" + app + ".app"); errors.Is(errExist, os.ErrNotExist) {
+		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+		brewIns.Stderr = os.Stderr
+		err := brewIns.Run()
+		checkCmdError(err, "Brew failed to install cask", pkg)
+	}
+}
+
+func brewCaskSudo(pkg, app string) {
+	checkPermission()
+	if _, errExist := os.Stat(app); errors.Is(errExist, os.ErrNotExist) {
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
 		brewIns.Stderr = os.Stderr
 		err := brewIns.Run()
@@ -269,9 +279,9 @@ func addJavaHome(tgVer, lnVer string) {
 	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
 
 	if _, errExist := os.Stat(brewPrefix + "Cellar/openjdk" + tgVer); errors.Is(errExist, os.ErrNotExist) {
-		addJavaHome := exec.Command(cmdRoot, "ln", "-sfn", tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
-		addJavaHome.Stderr = os.Stderr
-		err := addJavaHome.Run()
+		lnJavaHome := exec.Command(cmdRoot, "ln", "-sfn", tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
+		lnJavaHome.Stderr = os.Stderr
+		err := lnJavaHome.Run()
 		checkCmdError(err, "Add failed to java home", "OpenJDK")
 	}
 }
@@ -963,6 +973,7 @@ func macCLIApp(runOpt string) {
 		brewInstall("radare2")
 		brewInstall("sleuthkit")
 		brewInstall("autopsy")
+		brewInstall("virustotal-cli")
 	}
 
 	macLdBar.Stop()
@@ -974,58 +985,66 @@ func macGUIApp(runOpt string) {
 	macLdBar.Start()
 
 	if runOpt != "7" {
-		brewInstallCask("appcleaner", "AppCleaner")
+		brewCask("appcleaner", "AppCleaner")
 	} else if runOpt == "7" {
-		brewInstallCask("sensei", "Sensei")
+		brewCask("sensei", "Sensei")
 	}
 
-	brewInstallCask("keka", "Keka")
-	brewInstallCask("iina", "IINA")
-	brewInstallCask("transmission", "Transmission")
-	brewInstallCask("rectangle", "Rectangle")
-	brewInstallCask("google-chrome", "Google Chrome")
-	brewInstallCask("firefox", "Firefox")
-	brewInstallCask("tor-browser", "Tor Browser")
-	brewInstallCask("spotify", "Spotify")
-	brewInstallCask("signal", "Signal")
-	brewInstallCask("slack", "Slack")
-	brewInstallCask("discord", "Discord")
+	brewCask("keka", "Keka")
+	brewCask("iina", "IINA")
+	brewCask("transmission", "Transmission")
+	brewCask("rectangle", "Rectangle")
+	brewCask("google-chrome", "Google Chrome")
+	brewCask("firefox", "Firefox")
+	brewCask("tor-browser", "Tor Browser")
+	brewCask("spotify", "Spotify")
+	brewCask("signal", "Signal")
+	brewCask("slack", "Slack")
+	brewCask("discord", "Discord")
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewInstallCask("jetbrains-space", "JetBrains Space")
+		brewCask("jetbrains-space", "JetBrains Space")
 	}
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		brewInstallCask("dropbox", "Dropbox")
-		brewInstallCask("dropbox-capture", "Dropbox Capture")
-		brewInstallCask("sketch", "Sketch")
-		brewInstallCask("zeplin", "Zeplin")
-		brewInstallCask("blender", "Blender")
-		brewInstallCask("obs", "OBS")
+		brewCask("dropbox", "Dropbox")
+		brewCask("dropbox-capture", "Dropbox Capture")
+		brewCask("sketch", "Sketch")
+		brewCask("zeplin", "Zeplin")
+		brewCask("blender", "Blender")
+		brewCask("obs", "OBS")
+		brewCaskSudo("loopback", "/Applications/Loopback.app")
+	}
+
+	if runOpt == "3" {
+		brewCaskSudo("blackhole-64ch", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
 	}
 
 	if runOpt == "3" || runOpt == "4" {
-		brewInstallCask("visual-studio-code", "Visual Studio Code")
-		brewInstallCask("atom", "Atom")
-		brewInstallCask("eclipse-ide", "Eclipse")
-		brewInstallCask("intellij-idea-ce", "IntelliJ IDEA CE")
-		brewInstallCask("android-studio", "Android Studio")
-		brewInstallCask("fork", "Fork")
+		brewCask("visual-studio-code", "Visual Studio Code")
+		brewCask("atom", "Atom")
+		brewCask("eclipse-ide", "Eclipse")
+		brewCask("intellij-idea-ce", "IntelliJ IDEA CE")
+		brewCask("android-studio", "Android Studio")
+		brewCask("fork", "Fork")
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewInstallCask("iterm2", "iTerm")
-		brewInstallCask("visual-studio-code", "Visual Studio Code")
-		brewInstallCask("atom", "Atom")
-		brewInstallCask("intellij-idea", "IntelliJ IDEA")
-		brewInstallCask("tableplus", "TablePlus")
-		brewInstallCask("proxyman", "Proxyman")
-		brewInstallCask("postman", "Postman")
-		brewInstallCask("paw", "Paw")
-		brewInstallCask("github", "Github")
-		brewInstallCask("fork", "Fork")
-		brewInstallCask("boop", "Boop")
-		brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
-		brewInstallCask("staruml", "StarUML")
-		brewInstallCask("docker", "Docker")
+		brewCask("iterm2", "iTerm")
+		brewCask("visual-studio-code", "Visual Studio Code")
+		brewCask("atom", "Atom")
+		brewCask("intellij-idea", "IntelliJ IDEA")
+		brewCask("tableplus", "TablePlus")
+		brewCask("proxyman", "Proxyman")
+		brewCask("postman", "Postman")
+		brewCask("paw", "Paw")
+		brewCask("boop", "Boop")
+		brewCask("github", "Github")
+		brewCask("fork", "Fork")
+		brewCaskSudo("vmware-fusion", "/Applications/VMware Fusion.app")
+		brewCask("docker", "Docker")
+		brewCask("firefox-developer-edition", "Firefox Developer Edition")
+		brewCask("staruml", "StarUML")
+		brewCask("vnc-viewer", "VNC Viewer")
+		brewCask("forklift", "ForkLift")
 	}
 
 	shrcAppend := "# ANDROID STUDIO\n" +
@@ -1036,42 +1055,19 @@ func macGUIApp(runOpt string) {
 		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
 	appendFile(shrcPath, shrcAppend)
 
-	if runOpt == "6" {
-		brewInstallCask("vnc-viewer", "VNC Viewer")
-	} else if runOpt == "7" {
-		brewInstallCask("vnc-viewer", "VNC Viewer")
-		brewInstallCask("burp-suite", "Burp Suite Community Edition")
-		brewInstallCask("burp-suite-professional", "Burp Suite Professional")
-		brewInstallCask("imazing", "iMazing")
-		brewInstallCask("apparency", "Apparency")
-		brewInstallCask("suspicious-package", "Suspicious Package")
-		brewInstallCask("cutter", "Cutter")
-		// Gihdra
-	}
-
-	macLdBar.Stop()
-}
-
-func macGUIAppPlus(runOpt string) {
-	fmt.Println(" - Check root permission (sudo) for install the GUI App")
-	checkPermission()
-
-	macLdBar.Suffix = " Installing advanced GUI applications... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install advanced GUI applications!\n"
-	macLdBar.Start()
-
-	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		brewInstallCask("loopback", "Loopback")
-	}
-
-	if runOpt == "6" || runOpt == "7" {
-		brewInstallCask("vmware-fusion", "VMware Fusion")
-	}
-
 	if runOpt == "7" {
-		brewInstallCask("wireshark", "Wireshark")
-		brewInstallCask("zenmap", "Zenmap")
+		brewCask("burp-suite", "Burp Suite Community Edition")
+		brewCask("burp-suite-professional", "Burp Suite Professional")
+		brewCaskSudo("wireshark", "/Applications/Wireshark.app")
+		brewCaskSudo("zenmap", "/Applications/Zenmap.app")
+		brewCask("imazing", "iMazing")
+		brewCask("apparency", "Apparency")
+		brewCask("suspicious-package", "Suspicious Package")
+		brewCask("cutter", "Cutter")
+		// Ghidra
+		// Hopper Disassembler
 	}
+
 	macLdBar.Stop()
 }
 
@@ -1135,7 +1131,6 @@ startOpt:
 			macTerminal(beginOpt)
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
-			macGUIAppPlus(beginOpt)
 		} else if beginOpt == "4" {
 			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
 				", so install & update homebrew, generate zsh configure files" +
@@ -1179,7 +1174,6 @@ startOpt:
 			macTerminal(beginOpt)
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
-			macGUIAppPlus(beginOpt)
 		} else if beginOpt == "7" {
 			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
 				", so install & update homebrew, generate zsh configure files, install dependencies" +
@@ -1195,7 +1189,6 @@ startOpt:
 			macTerminal(beginOpt)
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
-			macGUIAppPlus(beginOpt)
 		} else if beginOpt == "0" || beginOpt == "q" || beginOpt == "e" || beginOpt == "quit" || beginOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
 			os.Exit(0)
