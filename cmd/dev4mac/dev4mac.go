@@ -207,7 +207,7 @@ func newZshRC() {
 
 func brewRepository(repo string) {
 	brewRepo := exec.Command(cmdPMS, pmsRepo, repo)
-	brewRepo.Stderr = os.Stderr
+	//brewRepo.Stderr = os.Stderr
 	err := brewRepo.Run()
 	checkCmdError(err, "Brew failed to add ", repo)
 }
@@ -217,7 +217,7 @@ func brewUpdate() {
 	checkError(errChmod, "Failed to change permissions on "+brewPrefix+"share to 755")
 
 	updateHomebrew := exec.Command(cmdPMS, "update", "--auto-update")
-	updateHomebrew.Stderr = os.Stderr
+	//updateHomebrew.Stderr = os.Stderr
 	errUpdate := updateHomebrew.Run()
 	checkCmdError(errUpdate, "Brew failed to", "update")
 
@@ -1105,14 +1105,14 @@ startOpt:
 		}
 
 		if beginOpt == "1" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew and generate zsh configure files.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Minimal" + clrReset +
+				": install/update homebrew, and generate zsh configure files.\n")
 			macBegin()
 			macEnv()
 		} else if beginOpt == "2" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew, generate zsh configure files, install dependencies" +
-				", improve terminal usability and install CLI applications.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Basic" + clrReset +
+				": install/update homebrew, generate zsh configure files, and install dependencies" +
+				", languages, terminal, CLI application.\n")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1120,10 +1120,9 @@ startOpt:
 			macTerminal(beginOpt)
 			macCLIApp(beginOpt)
 		} else if beginOpt == "3" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew, generate zsh configure files" +
-				", install dependencies & computer languages, improved terminal usability" +
-				" and install CLI & GUI applications for the creator.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Creator" + clrReset +
+				": install/update homebrew, generate zsh configure files, and install dependencies" +
+				", languages, terminal, CLI/GUI application.\n")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1132,10 +1131,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "4" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew, generate zsh configure files" +
-				", install dependencies & computer languages, improved terminal usability" +
-				" and install CLI & GUI applications for the developer.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Beginner" + clrReset +
+				": install/update homebrew, generate zsh configure files, and install dependencies" +
+				", languages, terminal, CLI/GUI application.\n")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1146,10 +1144,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "5" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew, generate zsh configure files, install dependencies" +
-				", developer tools to languages & server & database, improved terminal usability" +
-				" and install CLI & GUI applications for the professional.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Developer" + clrReset +
+				": install/update homebrew, generate zsh configure files, and install dependencies" +
+				", languages, server, database, terminal, CLI/GUI application.\n")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1160,10 +1157,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "6" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew, generate zsh configure files, install dependencies," +
-				", developer tools to languages & server & database, developer environment tools" +
-				", improved terminal usability and install CLI & GUI applications for the specialist.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Professional" + clrReset +
+				": install/update homebrew, generate zsh configure files, and install dependencies" +
+				", languages, server, database, manage developer tool, terminal, CLI/GUI application.\n")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1175,10 +1171,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "7" {
-			fmt.Println(lstDot + "Pressed " + clrBlue + beginOpt + clrReset +
-				", so install & update homebrew, generate zsh configure files, install dependencies" +
-				", developer tools to languages & server & database, developer environment tools" +
-				", improved terminal usability, install CLI & GUI applications\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Specialist" + clrReset +
+				": install/update homebrew, generate zsh configure files, and install dependencies" +
+				", languages, server, database, manage developer tool, terminal, CLI/GUI application.\n")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
