@@ -207,27 +207,38 @@ func newZshRC() {
 
 func brewRepository(repo string) {
 	brewRepo := exec.Command(cmdPMS, pmsRepo, repo)
-	//brewRepo.Stderr = os.Stderr
 	err := brewRepo.Run()
 	checkCmdError(err, "Brew failed to add ", repo)
 }
 
 func brewUpdate() {
-	errChmod := os.Chmod(brewPrefix+"share", 0755)
-	checkError(errChmod, "Failed to change permissions on "+brewPrefix+"share to 755")
-
 	updateHomebrew := exec.Command(cmdPMS, "update", "--auto-update")
-	//updateHomebrew.Stderr = os.Stderr
-	errUpdate := updateHomebrew.Run()
-	checkCmdError(errUpdate, "Brew failed to", "update")
+	err := updateHomebrew.Run()
+	checkCmdError(err, "Brew failed to", "update repositories")
+}
 
-	brewRepository("homebrew/core")
-	brewRepository("homebrew/cask")
-	brewRepository("homebrew/cask-version")
+func brewUpgrade() {
+	upgradeHomebrew := exec.Command(cmdPMS, "upgrade", "--greedy")
+	err := upgradeHomebrew.Run()
+	checkCmdError(err, "Brew failed to", "upgrade packages")
+}
+
+func brewCleanup() {
+	upgradeHomebrew := exec.Command(cmdPMS, "cleanup", "--prune=all", "-nsd")
+	err := upgradeHomebrew.Run()
+	checkCmdError(err, "Brew failed to", "cleanup old packages")
+}
+
+func brewRemoveCache() {
+	upgradeHomebrew := exec.Command("rm", "-rf", "\"$(brew --cache)\"")
+	err := upgradeHomebrew.Run()
+	checkCmdError(err, "Brew failed to", "remove cache")
 }
 
 func brewInstall(pkg string) {
 	if _, errExist := os.Stat(brewPrefix + "Cellar/" + pkg); errors.Is(errExist, os.ErrNotExist) {
+		brewUpdate()
+
 		brewIns := exec.Command(cmdPMS, pmsIns, pkg)
 		brewIns.Stderr = os.Stderr
 		err := brewIns.Run()
@@ -237,21 +248,31 @@ func brewInstall(pkg string) {
 
 func brewCask(pkg, app string) {
 	if _, errExist := os.Stat("/Applications/" + app + ".app"); errors.Is(errExist, os.ErrNotExist) {
+		brewUpdate()
+
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
-		brewIns.Stderr = os.Stderr
 		err := brewIns.Run()
 		checkCmdError(err, "Brew failed to install cask", pkg)
 	}
 }
 
 func brewCaskSudo(pkg, app string) {
+	macLdBar.Stop()
+
+	fmt.Println(lstDot + "Check root permission (sudo) for install " + app)
 	checkPermission()
+	fmt.Print("\033[1A\033[K")
+
+	macLdBar.Start()
+
 	if _, errExist := os.Stat(app); errors.Is(errExist, os.ErrNotExist) {
+		brewUpdate()
+
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
-		brewIns.Stderr = os.Stderr
 		err := brewIns.Run()
 		checkCmdError(err, "Brew failed to install cask", pkg)
 	}
+
 }
 
 func asdfInstall(plugin, version string) {
@@ -500,27 +521,32 @@ func installBrew() {
 }
 
 func macBegin() {
-	switch {
-	case checkBrewExists() == true:
+	if checkBrewExists() == true {
 		macLdBar.Suffix = " Updating homebrew... "
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
 		macLdBar.Start()
-
-		brewUpdate()
-
-		macLdBar.Stop()
-	case checkBrewExists() == false:
-		fmt.Println(" - Check root permission (sudo) for install the Homebrew")
+	} else {
+		fmt.Println(lstDot + "Check root permission (sudo) for install the Homebrew")
 		checkPermission()
+		fmt.Print("\033[1A\033[K")
+
 		macLdBar.Suffix = " Installing homebrew... "
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
 		macLdBar.Start()
 
 		installBrew()
-		brewUpdate()
-
-		macLdBar.Stop()
 	}
+
+	err := os.Chmod(brewPrefix+"share", 0755)
+	checkError(err, "Failed to change permissions on "+brewPrefix+"share to 755")
+
+	brewUpdate()
+	brewRepository("homebrew/core")
+	brewRepository("homebrew/cask")
+	brewRepository("homebrew/cask-versions")
+	brewUpgrade()
+
+	macLdBar.Stop()
 }
 
 func macEnv() {
@@ -541,120 +567,123 @@ func macEnv() {
 func macDependency(runOpt string) {
 	macLdBar.Suffix = " Installing dependencies... "
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install dependencies!\n"
+	macLdBar.Start()
+
+	brewInstall("pkg-config")
+	brewInstall("ca-certificates")
+	brewInstall("openssl")
+	brewInstall("openssl@1.1")
+	brewInstall("ncurses")
+	brewInstall("readline")
+	brewInstall("autoconf")
+	brewInstall("automake")
+	brewInstall("mpdecimal")
+	brewInstall("m4")
+	brewInstall("gmp")
+	brewInstall("mpfr")
+	brewInstall("gettext")
+	brewInstall("libtool")
+	brewInstall("libevent")
+	brewInstall("libpng")
+	brewInstall("libyaml")
+	brewInstall("xz")
+	brewInstall("gdbm")
+	brewInstall("sqlite")
+	brewInstall("berkeley-db")
+	brewInstall("freetype")
+	brewInstall("pcre")
+	brewInstall("pcre2")
+
+	shrcAppend := "# OPENSSL-3\n" +
+		"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
+		"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@3/lib\"\n" +
+		"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@3/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@3/lib/pkgconfig\"\n\n" +
+		"# OPENSSL-1.1\n" +
+		"export PATH=\"" + brewPrefix + "opt/openssl@1.1/bin:$PATH\"\n" +
+		"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@1.1/lib\"\n" +
+		"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@1.1/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@1.1/lib/pkgconfig\"\n\n" +
+		"# NCURSES\n" +
+		"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n"
+	appendFile(shrcPath, shrcAppend)
+
 	if runOpt == "6" || runOpt == "7" {
-		macLdBar.Start()
-
-		brewInstall("pkg-config")
-		brewInstall("ca-certificates")
-		brewInstall("openssl@3")
-		brewInstall("openssl@1.1")
-		brewInstall("ncurses")
-		brewInstall("readline")
-		brewInstall("autoconf")
+		brewInstall("krb5")
+		brewInstall("gnupg")
+		brewInstall("curl")
+		brewInstall("wget")
+		brewInstall("gzip")
+		brewInstall("unzip")
+		brewInstall("libzip")
+		brewInstall("bzip2")
+		brewInstall("zlib")
+		brewInstall("libunistring")
+		brewInstall("libidn")
+		brewInstall("libidn2")
+		brewInstall("ghc")
+		brewInstall("ccache")
+		brewInstall("cabal")
 		brewInstall("automake")
-		brewInstall("mpdecimal")
-		brewInstall("gmp")
-		brewInstall("mpfr")
-		brewInstall("gettext")
-		brewInstall("libpng")
-		brewInstall("libyaml")
-		brewInstall("xz")
-		brewInstall("gdbm")
-		brewInstall("sqlite")
-		brewInstall("berkeley-db")
-		brewInstall("freetype")
-		brewInstall("pcre")
-		brewInstall("pcre2")
+		brewInstall("libffi")
+		brewInstall("guile")
+		brewInstall("gnu-getopt")
+		brewInstall("coreutils")
+		brewInstall("bison")
+		brewInstall("libiconv")
+		brewInstall("icu4c")
+		brewInstall("re2c")
+		brewInstall("gd")
+		brewInstall("ldns")
+		brewInstall("html-xml-utils")
+		brewInstall("xmlto")
+		brewInstall("libsodium")
+		brewInstall("imagemagick")
+		brewInstall("ghostscript")
 
-		shrcAppend := "# OPENSSL-3\n" +
-			"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
-			"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@3/lib\"\n" +
-			"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@3/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@3/lib/pkgconfig\"\n\n" +
-			"# OPENSSL-1.1\n" +
-			"export PATH=\"" + brewPrefix + "opt/openssl@1.1/bin:$PATH\"\n" +
-			"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@1.1/lib\"\n" +
-			"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@1.1/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@1.1/lib/pkgconfig\"\n\n" +
-			"# NCURSES\n" +
-			"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n"
+		shrcAppend := "# KRB5\n" +
+			"export PATH=\"" + brewPrefix + "opt/krb5/bin:$PATH\"\n" +
+			"export PATH=\"" + brewPrefix + "opt/krb5/sbin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/krb5/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/krb5/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/krb5/lib/pkgconfig\"\n\n" +
+			"# BZIP2\n" +
+			"export PATH=\"" + brewPrefix + "opt/bzip2/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/bzip2/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/bzip2/include\"\n\n" +
+			"# ZLIB\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n" +
+			"# GNU GETOPT\n" +
+			"export PATH=\"" + brewPrefix + "opt/gnu-getopt/bin:$PATH\"\n\n" +
+			"# COREUTILS\n" +
+			"export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
+			"# BISON\n" +
+			"export PATH=\"" + brewPrefix + "opt/bison/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/bison/lib\"\n\n" +
+			"# LIBICONV\n" +
+			"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/libiconv/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/libiconv/include\"\n\n" +
+			"# ICU4C\n" +
+			"export PATH=\"" + brewPrefix + "opt/icu4c/bin:$PATH\"\n" +
+			"export PATH=\"" + brewPrefix + "opt/icu4c/sbin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/icu4c/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n" +
+			"# CURL\n" +
+			"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n"
 		appendFile(shrcPath, shrcAppend)
-
-		if runOpt == "6" || runOpt == "7" {
-			brewInstall("krb5")
-			brewInstall("gnupg")
-			brewInstall("curl")
-			brewInstall("wget")
-			brewInstall("gzip")
-			brewInstall("unzip")
-			brewInstall("libzip")
-			brewInstall("bzip2")
-			brewInstall("zlib")
-			brewInstall("ghc")
-			brewInstall("ccache")
-			brewInstall("cabal")
-			brewInstall("m4")
-			brewInstall("automake")
-			brewInstall("libffi")
-			brewInstall("guile")
-			brewInstall("gnu-getopt")
-			brewInstall("coreutils")
-			brewInstall("bison")
-			brewInstall("libiconv")
-			brewInstall("icu4c")
-			brewInstall("re2c")
-			brewInstall("gd")
-			brewInstall("ldns")
-			brewInstall("html-xml-utils")
-			brewInstall("xmlto")
-			brewInstall("libsodium")
-			brewInstall("imagemagick")
-			brewInstall("ghostscript")
-
-			shrcAppend := "# KRB5\n" +
-				"export PATH=\"" + brewPrefix + "opt/krb5/bin:$PATH\"\n" +
-				"export PATH=\"" + brewPrefix + "opt/krb5/sbin:$PATH\"\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/krb5/lib\"\n" +
-				"export CPPFLAGS=\"" + brewPrefix + "opt/krb5/include\"\n" +
-				"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/krb5/lib/pkgconfig\"\n\n" +
-				"# BZIP2\n" +
-				"export PATH=\"" + brewPrefix + "opt/bzip2/bin:$PATH\"\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/bzip2/lib\"\n" +
-				"export CPPFLAGS=\"" + brewPrefix + "opt/bzip2/include\"\n\n" +
-				"# ZLIB\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
-				"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
-				"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n" +
-				"# GNU GETOPT\n" +
-				"export PATH=\"" + brewPrefix + "opt/gnu-getopt/bin:$PATH\"\n\n" +
-				"# COREUTILS\n" +
-				"export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
-				"# BISON\n" +
-				"export PATH=\"" + brewPrefix + "opt/bison/bin:$PATH\"\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/bison/lib\"\n\n" +
-				"# LIBICONV\n" +
-				"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/libiconv/lib\"\n" +
-				"export CPPFLAGS=\"" + brewPrefix + "opt/libiconv/include\"\n\n" +
-				"# ICU4C\n" +
-				"export PATH=\"" + brewPrefix + "opt/icu4c/bin:$PATH\"\n" +
-				"export PATH=\"" + brewPrefix + "opt/icu4c/sbin:$PATH\"\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/icu4c/lib\"\n" +
-				"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
-				"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n" +
-				"# CURL\n" +
-				"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
-				"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
-				"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
-				"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n"
-			appendFile(shrcPath, shrcAppend)
-		}
-
-		macLdBar.Stop()
 	}
+
+	macLdBar.Stop()
 }
 
 func macLanguage(runOpt string) {
@@ -662,7 +691,7 @@ func macLanguage(runOpt string) {
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install languages!\n"
 	macLdBar.Start()
 
-	brewInstall("awk")
+	//brewInstall("awk")
 	brewInstall("gawk")
 	brewInstall("perl")
 	brewInstall("ruby")
@@ -790,7 +819,7 @@ func macDatabase(runOpt string) {
 }
 
 func macDevVM() {
-	macLdBar.Suffix = " Installing management developer tool version with plugin... "
+	macLdBar.Suffix = " Installing developer tools version management tool with plugin... "
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install ASDF-VM with languages!\n"
 	macLdBar.Start()
 
@@ -926,6 +955,7 @@ func macCLIApp(runOpt string) {
 	macLdBar.Start()
 
 	brewInstall("diffutils")
+	brewInstall("transmission-cli")
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewInstall("openssh")
@@ -1001,7 +1031,6 @@ func macGUIApp(runOpt string) {
 	brewCask("signal", "Signal")
 	brewCask("slack", "Slack")
 	brewCask("discord", "Discord")
-
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewCask("jetbrains-space", "JetBrains Space")
 	}
@@ -1014,10 +1043,9 @@ func macGUIApp(runOpt string) {
 		brewCask("blender", "Blender")
 		brewCask("obs", "OBS")
 		brewCaskSudo("loopback", "/Applications/Loopback.app")
-	}
-
-	if runOpt == "3" {
-		brewCaskSudo("blackhole-64ch", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
+		if runOpt == "3" {
+			brewCaskSudo("blackhole-64ch", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
+		}
 	}
 
 	if runOpt == "3" || runOpt == "4" {
@@ -1072,6 +1100,9 @@ func macGUIApp(runOpt string) {
 }
 
 func macEnd() {
+	brewCleanup()
+	brewRemoveCache()
+
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
 	appendFile(shrcPath, shrcAppend)
 }
@@ -1105,14 +1136,14 @@ startOpt:
 		}
 
 		if beginOpt == "1" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Minimal" + clrReset +
-				": install/update homebrew, and generate zsh configure files.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "1\n" + clrReset + lstDot + clrBlue + "Minimal" +
+				clrReset + ": setup homebrew with configure shell.")
 			macBegin()
 			macEnv()
 		} else if beginOpt == "2" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Basic" + clrReset +
-				": install/update homebrew, generate zsh configure files, and install dependencies" +
-				", languages, terminal, CLI application.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "2\n" + clrReset + lstDot + clrBlue + "Basic" +
+				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
+				"Terminal/CLI applications with set basic preferences.")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1120,9 +1151,9 @@ startOpt:
 			macTerminal(beginOpt)
 			macCLIApp(beginOpt)
 		} else if beginOpt == "3" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Creator" + clrReset +
-				": install/update homebrew, generate zsh configure files, and install dependencies" +
-				", languages, terminal, CLI/GUI application.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "3\n" + clrReset + lstDot + clrBlue + "Creator" +
+				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
+				"Terminal/CLI/GUI applications with set basic preferences.")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1131,9 +1162,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "4" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Beginner" + clrReset +
-				": install/update homebrew, generate zsh configure files, and install dependencies" +
-				", languages, terminal, CLI/GUI application.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "4\n" + clrReset + lstDot + clrBlue + "Beginner" +
+				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
+				"Terminal/CLI/GUI applications with set basic preferences.")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1144,9 +1175,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "5" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Developer" + clrReset +
-				": install/update homebrew, generate zsh configure files, and install dependencies" +
-				", languages, server, database, terminal, CLI/GUI application.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "5\n" + clrReset + lstDot + clrBlue + "Developer" +
+				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages, Server" +
+				", Database and Terminal/CLI/GUI applications with set basic preferences.")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1157,9 +1188,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "6" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Professional" + clrReset +
-				": install/update homebrew, generate zsh configure files, and install dependencies" +
-				", languages, server, database, manage developer tool, terminal, CLI/GUI application.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "6\n" + clrReset + lstDot + clrBlue + "Professional" +
+				clrReset + ": setup homebrew with configure shell, then install Dependencies, Danguages, Server" +
+				", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
@@ -1171,9 +1202,9 @@ startOpt:
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
 		} else if beginOpt == "7" {
-			fmt.Println(lstDot + "Select option " + clrBlue + beginOpt + ". Specialist" + clrReset +
-				": install/update homebrew, generate zsh configure files, and install dependencies" +
-				", languages, server, database, manage developer tool, terminal, CLI/GUI application.\n")
+			fmt.Println(lstDot + "Select option " + clrBlue + "7\n" + clrReset + lstDot + clrBlue + "Specialist" +
+				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages, Server" +
+				", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
 			macBegin()
 			macEnv()
 			macDependency(beginOpt)
