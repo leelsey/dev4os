@@ -1,17 +1,21 @@
 package main
 
 import (
+	"archive/zip"
 	"bufio"
 	"errors"
 	"fmt"
 	"github.com/briandowns/spinner"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -183,6 +187,58 @@ func removeFile(filePath string) {
 	}
 }
 
+func unzipFile(src, dest string) error {
+	reader, err := zip.OpenReader(src)
+	checkError(err, "Failed to open zip file")
+	defer func() {
+		err := reader.Close()
+		checkError(err, "Failed to close zip file")
+	}()
+
+	errMkDir := os.MkdirAll(dest, 0755)
+	checkError(errMkDir, "Failed to make directory")
+
+	extractFile := func(srcFile *zip.File) error {
+		rc, err := srcFile.Open()
+		checkError(err, "Failed to open zip file")
+		defer func() {
+			err := rc.Close()
+			checkError(err, "Failed to close zip file")
+		}()
+
+		destPath := filepath.Join(dest, srcFile.Name)
+
+		if !strings.HasPrefix(destPath, filepath.Clean(dest)+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path: %s", destPath)
+		}
+
+		if srcFile.FileInfo().IsDir() {
+			errMkDest := os.MkdirAll(destPath, srcFile.Mode())
+			checkError(errMkDest, "Failed to make directory")
+		} else {
+			errMkDest := os.MkdirAll(filepath.Dir(destPath), srcFile.Mode())
+			checkError(errMkDest, "Failed to make directory")
+			destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcFile.Mode())
+			checkError(err, "Failed to open file")
+			defer func() {
+				err := destFile.Close()
+				checkError(err, "Failed to close file")
+			}()
+
+			_, err = io.Copy(destFile, rc)
+			checkError(err, "Failed to copy zip file")
+		}
+		return nil
+	}
+
+	for _, files := range reader.File {
+		err := extractFile(files)
+		checkError(err, "Failed to extract zip file")
+	}
+
+	return nil
+}
+
 func newZProfile() {
 	fileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
 		"#   |___  /  __ \\|  __ \\ / __ \\|  ____|_   _| |    |  ____|\n" +
@@ -294,6 +350,77 @@ func asdfInstall(plugin, version string) {
 	checkCmdError(errConf, "ASDF-VM failed to install", plugin)
 }
 
+func downloadMacDmg(pkg, url string) {
+	dlPkgPath := workingDir() + "." + pkg + ".dmg"
+
+	resp, err := http.Get("https://" + url)
+	checkError(err, "Failed to download "+pkg)
+	defer func() {
+		err := resp.Body.Close()
+		checkError(err, "Failed to close "+pkg+" response body")
+	}()
+	raw, _ := ioutil.ReadAll(resp.Body)
+
+	macDmg, err := os.OpenFile(dlPkgPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	checkError(err, "Failed to create "+pkg+".dmg")
+	defer func() {
+		err := macDmg.Close()
+		checkError(err, "Failed to close "+pkg+".dmg")
+	}()
+	_, err = macDmg.Write(raw)
+	checkError(err, "Failed to write "+pkg+".dmg")
+
+	mountDmg := exec.Command("hdiutil", "attach", dlPkgPath)
+	errMount := mountDmg.Run()
+	checkError(errMount, "Failed to mount "+pkg)
+
+	removeFile(dlPkgPath)
+
+	bytesRead, err := ioutil.ReadFile("/Volumes/" + pkg + "/" + pkg + ".app")
+	checkError(err, "Failed to copy \""+pkg+"\" in \"/Volumes/"+pkg+"/"+pkg+".app\"")
+
+	err = ioutil.WriteFile("/Application/"+pkg+".app", bytesRead, 0644)
+	checkError(err, "Failed to past \""+pkg+".app\" to \"/Applications\"")
+
+	unmountDmg := exec.Command("hdiutil", "unmount", "/Volumes/"+pkg)
+	errUnmount := unmountDmg.Run()
+	checkError(errUnmount, "Failed to unmount "+pkg)
+}
+
+func downloadMacZip(pkg, url string) {
+	dlZipPath := workingDir() + "." + pkg + ".zip"
+	unZipPath := workingDir() + "." + pkg + "/" + pkg + ".app"
+
+	resp, err := http.Get("https://" + url)
+	checkError(err, "Failed to download "+pkg)
+	defer func() {
+		err := resp.Body.Close()
+		checkError(err, "Failed to close "+pkg+" response body")
+	}()
+	raw, _ := ioutil.ReadAll(resp.Body)
+
+	macDmg, err := os.OpenFile(dlZipPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	checkError(err, "Failed to create "+pkg+".dmg")
+	defer func() {
+		err := macDmg.Close()
+		checkError(err, "Failed to close "+pkg+".dmg")
+	}()
+	_, err = macDmg.Write(raw)
+	checkError(err, "Failed to write "+pkg+".dmg")
+
+	errUnzip := unzipFile(dlZipPath, workingDir()+"."+pkg)
+	checkError(errUnzip, "Failed to unzip "+pkg)
+	removeFile(dlZipPath)
+
+	bytesRead, err := ioutil.ReadFile(unZipPath)
+	checkError(err, "Failed to copy \""+pkg+"\" in \""+unZipPath+"\"")
+
+	err = ioutil.WriteFile("/Application/"+pkg+".app", bytesRead, 0644)
+	checkError(err, "Failed to past \""+pkg+".app\" to \"/Applications\"")
+
+	removeFile(unZipPath)
+}
+
 func addJavaHome(tgVer, lnVer string) {
 	tgHead := brewPrefix + "opt/openjdk"
 	tgTail := " /libexec/openjdk.jdk"
@@ -360,7 +487,7 @@ func confG4s() {
 
 	ignorePath := ignoreDirPath + "gitignore_global"
 	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
-	checkError(err, "Failed download git ignore file, please check https://github.com/leelsey/Git4set\n")
+	checkError(err, "Failed to download git ignore file, please check https://github.com/leelsey/Git4set\n")
 
 	defer func() {
 		err := resp.Body.Close()
@@ -386,7 +513,7 @@ func p10kTerm() {
 	dlP10kTerm := p10kPath + "p10k-term.zsh"
 
 	respP10kTerm, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
-	checkError(err, "Failed download p10k-term.zsh, please check https://github.com/leelsey/ConfStore")
+	checkError(err, "Failed to download p10k-term.zsh, please check https://github.com/leelsey/ConfStore")
 
 	defer func() {
 		err := respP10kTerm.Body.Close()
@@ -407,7 +534,7 @@ func p10kTerm() {
 func p10kiTerm2() {
 	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
 	respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
-	checkError(err, "Failed download p10k-iterm2.zsh, please check https://github.com/leelsey/ConfStore")
+	checkError(err, "Failed to download p10k-iterm2.zsh, please check https://github.com/leelsey/ConfStore")
 	defer func() {
 		err := respP10kiTerm2.Body.Close()
 		checkError(err, "Failed to close p10ki-iterm2.zsh response body")
@@ -427,7 +554,7 @@ func p10kiTerm2() {
 func p10kTMUX() {
 	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
 	respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
-	checkError(err, "Failed download p10k-tumx.zsh, please check https://github.com/leelsey/ConfStore")
+	checkError(err, "Failed to download p10k-tumx.zsh, please check https://github.com/leelsey/ConfStore")
 	defer func() {
 		err := respP10kTMUX.Body.Close()
 		checkError(err, "Failed to close p10k-tmux.zsh response body")
@@ -448,7 +575,7 @@ func p10kEtc() {
 	dlP10kEtc := p10kPath + "p10k-etc.zsh"
 
 	respP10kEtc, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
-	checkError(err, "Failed download p10k-etc.zsh, please check https://github.com/leelsey/ConfStore")
+	checkError(err, "Failed to download p10k-etc.zsh, please check https://github.com/leelsey/ConfStore")
 	defer func() {
 		err := respP10kEtc.Body.Close()
 		checkError(err, "Failed to close p10k-etc.zsh response body")
@@ -469,7 +596,7 @@ func iTerm2Conf() {
 	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
 
 	respiTerm2Conf, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
-	checkError(err, "Failed download iTerm2 configure file, please check https://github.com/leelsey/ConfStore")
+	checkError(err, "Failed to download iTerm2 configure file, please check https://github.com/leelsey/ConfStore")
 	defer func() {
 		err := respiTerm2Conf.Body.Close()
 		checkError(err, "Failed to close iTerm2.plist response body")
@@ -490,7 +617,7 @@ func installBrew() {
 	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
 
 	resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
-	checkError(err, "Failed download Homebrew install file, please check https://github.com/Homebrew/install")
+	checkError(err, "Failed to download Homebrew install file, please check https://github.com/Homebrew/install")
 	defer func() {
 		err := resp.Body.Close()
 		checkError(err, "Failed to close Homebrew install.sh response body")
