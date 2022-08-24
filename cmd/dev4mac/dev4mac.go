@@ -76,7 +76,7 @@ func checkPermission() {
 	sudoPW.Stdin = os.Stdin
 	sudoPW.Stderr = os.Stderr
 	whoAmI, err := sudoPW.Output()
-	fmt.Print("\033[1A\033[K")
+	fmt.Print("\033[1;A\033[K")
 	checkError(err, "Failed to get sudo permission")
 
 	if string(whoAmI) != "root\n" {
@@ -331,11 +331,12 @@ func brewCask(pkg, app string) {
 }
 
 func brewCaskSudo(pkg, app, path string) {
+	macLdBar.FinalMSG = "  Installing GUI applications... "
 	macLdBar.Stop()
 
-	fmt.Println(lstDot + "Check root permission (sudo) for install " + app)
+	fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew")
 	checkPermission()
-	fmt.Print("\033[1A\033[K")
+	fmt.Print("\033[3;A\033[K")
 
 	macLdBar.Start()
 
@@ -344,9 +345,8 @@ func brewCaskSudo(pkg, app, path string) {
 
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
 		err := brewIns.Run()
-		checkCmdError(err, "Brew failed to install cask", pkg)
+		checkCmdError(err, "Brew failed to install cask", app)
 	}
-
 }
 
 func asdfInstall(plugin, version string) {
@@ -618,8 +618,7 @@ func macBegin() {
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
 		macLdBar.Start()
 	} else {
-		//fmt.Println(lstDot + "Check root permission (sudo) for install the Homebrew")
-		fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew\n")
+		fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew")
 		checkPermission()
 		fmt.Print("\033[1A\033[K")
 
