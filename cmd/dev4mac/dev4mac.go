@@ -35,7 +35,6 @@ var (
 	p10kPath  = homeDir() + ".config/p10k/"
 	p10kCache = homeDir() + ".cache/p10k-" + userName()
 	macLdBar  = spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	//macPgBar =
 	clrReset  = "\033[0m"
 	clrRed    = "\033[31m"
 	clrGreen  = "\033[32m"
@@ -44,8 +43,6 @@ var (
 	clrPurple = "\033[35m"
 	clrCyan   = "\033[36m"
 	clrGrey   = "\033[37m"
-	//clrWhite  = "\033[97m"
-	//clrBlack  = "\033[30m"
 )
 
 func messageError(handling, msg, code string) {
@@ -293,10 +290,10 @@ func brewCask(pkg, app string) {
 }
 
 func brewCaskSudo(pkg, app, path string) {
-	macLdBar.FinalMSG = "  Installing GUI applications... "
+	macLdBar.FinalMSG = "  Installing GUI applications... \n"
 	macLdBar.Stop()
 
-	fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew")
+	fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) for install " + clrBlue + app + clrReset)
 	checkPermission()
 	clearLine(3)
 
@@ -328,6 +325,15 @@ func asdfInstall(plugin, version string) {
 }
 
 func addJavaHome(tgVer, lnVer string) {
+	macLdBar.FinalMSG = "  Installing computer programming language... \n"
+	macLdBar.Stop()
+
+	fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) for add " + clrBlue + "Java_Home" + clrReset)
+	checkPermission()
+	clearLine(3)
+
+	macLdBar.Start()
+
 	tgHead := brewPrefix + "opt/openjdk"
 	tgTail := " /libexec/openjdk.jdk"
 	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
@@ -451,7 +457,7 @@ func macBegin() {
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
 		macLdBar.Start()
 	} else {
-		fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew")
+		fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) for install " + clrBlue + "Homebrew" + clrReset)
 		checkPermission()
 		clearLine(1)
 
@@ -526,6 +532,7 @@ func macDependency(runOpt string) {
 	brewInstall("berkeley-db")
 	brewInstall("asciidoctor")
 	brewInstall("freetype")
+	brewInstall("fontconfig")
 	brewInstall("pcre")
 	brewInstall("pcre2")
 
@@ -547,9 +554,11 @@ func macDependency(runOpt string) {
 	appendFile(shrcPath, shrcAppend, 0600)
 
 	if runOpt != "2" && runOpt != "3" {
+		brewInstall("ccache")
+		brewInstall("gawk")
+		brewInstall("tcl-tk")
 		brewInstall("bash")
 		brewInstall("zsh")
-		brewInstall("ccache")
 		brewInstall("perl")
 		brewInstall("ruby")
 		brewInstall("python@3.10")
@@ -567,7 +576,6 @@ func macDependency(runOpt string) {
 		brewInstall("gzip")
 		brewInstall("bzip2")
 		brewInstall("fop")
-		brewInstall("jasper")
 		brewInstall("little-cms2")
 		brewInstall("imath")
 		brewInstall("openldap")
@@ -582,8 +590,6 @@ func macDependency(runOpt string) {
 		brewInstall("gnu-getopt")
 		brewInstall("brotli")
 		brewInstall("bison")
-		brewInstall("tcl-tk")
-		brewInstall("gawk") // awk
 		brewInstall("swig")
 		brewInstall("re2c")
 		brewInstall("icu4c")
@@ -592,6 +598,7 @@ func macDependency(runOpt string) {
 		brewInstall("wxwidgets")
 		brewInstall("sphinx-doc")
 		brewInstall("docbook")
+		brewInstall("docbook2x")
 		brewInstall("docbook-xsl")
 		brewInstall("xmlto")
 		brewInstall("html-xml-utils")
@@ -620,12 +627,12 @@ func macDependency(runOpt string) {
 		brewInstall("liblqr")
 		brewInstall("libomp")
 		brewInstall("libassuan")
+		brewInstall("p11-kit")
 		brewInstall("gnutls")
 		brewInstall("gd")
 		brewInstall("ghostscript")
 		brewInstall("imagemagick")
 		brewInstall("pinentry")
-		brewInstall("p11-kit")
 		brewInstall("gnupg")
 
 		shrcAppend := "# KRB5\n" +
@@ -645,17 +652,14 @@ func macDependency(runOpt string) {
 			"# BISON\n" +
 			"export PATH=\"" + brewPrefix + "opt/bison/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/bison/lib\"\n\n" +
-			"# TCL-TK\n" +
-			"export PATH=\"" + brewPrefix + "opt/tcl-tk/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/tcl-tk/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/tcl-tk/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/tcl-tk/lib/pkgconfig\"\n\n" +
 			"# ICU4C\n" +
 			"export PATH=\"" + brewPrefix + "opt/icu4c/bin:$PATH\"\n" +
 			"export PATH=\"" + brewPrefix + "opt/icu4c/sbin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/icu4c/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n" +
+			"# DOCBOOK" +
+			"export XML_CATALOG_FILES=\"" + brewPrefix + "etc/xml/catalog\"\n\n" +
 			"# ZLIB\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
@@ -687,6 +691,11 @@ func macLanguage(runOpt string) {
 
 	shrcAppend := "# CCACHE\n" +
 		"export PATH=\"" + brewPrefix + "opt/ccache/libexec:$PATH\"\n\n" +
+		"# TCL-TK\n" +
+		"export PATH=\"" + brewPrefix + "opt/tcl-tk/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/tcl-tk/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/tcl-tk/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/tcl-tk/lib/pkgconfig\"\n\n" +
 		"# RUBY\n" +
 		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
 		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
@@ -744,6 +753,9 @@ func macLanguage(runOpt string) {
 		brewInstall("haskell-stack")
 		brewInstall("haskell-language-server")
 		brewInstall("stylish-haskell")
+		stackIns := exec.Command("stack", pmsIns, "cabal-install")
+		err := stackIns.Run()
+		checkCmdError(err, "Stack(haskell) failed to install", "cabal")
 	}
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
@@ -824,13 +836,12 @@ func macDevVM() {
 	asdfInstall("clojure", "latest")
 	//asdfInstall("erlang", "latest") // error
 	asdfInstall("elixir", "latest")
-	asdfInstall("haskell", "latest")
+	//asdfInstall("haskell", "latest") // error
 	asdfInstall("gleam", "latest")
 
 	shrcAppend := "# ASDF VM\n" +
 		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
-		"source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n" +
-		"java_macos_integration_enable = yes\n\n"
+		"#source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n\n"
 	appendFile(shrcPath, shrcAppend, 0600)
 
 	asdfReshim := exec.Command(cmdASDF, "reshim")
@@ -850,6 +861,7 @@ func macTerminal(runOpt string) {
 	brewInstall("zsh-autosuggestions")
 	brewInstall("z")
 	brewInstall("tree")
+	brewRepository("romkatv/powerlevel10k")
 	brewInstall("romkatv/powerlevel10k/powerlevel10k")
 
 	makeFile(homeDir()+".z", "", 0644)
@@ -868,9 +880,7 @@ func macTerminal(runOpt string) {
 	p10kTerm()
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
-		profileAppend := "# ZSH\n" +
-			"export SHELL=zsh\n\n" +
-			"# POWERLEVEL10K\n" +
+		profileAppend := "# POWERLEVEL10K\n" +
 			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
 			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
@@ -955,7 +965,6 @@ func macCLIApp(runOpt string) {
 		brewInstall("tig")
 		brewInstall("watchman")
 		brewInstall("direnv")
-		brewInstall("jupyterlab")
 
 		shrcAppend := "# CURL\n" +
 			"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
@@ -969,7 +978,6 @@ func macCLIApp(runOpt string) {
 
 	if runOpt == "6" || runOpt == "7" {
 		brewInstall("make")
-		brewInstall("cmake")
 		brewInstall("ninja")
 		brewInstall("maven")
 		brewInstall("gradle")
@@ -978,7 +986,6 @@ func macCLIApp(runOpt string) {
 		brewInstall("qemu")
 		brewInstall("vim")
 		brewInstall("neovim")
-		brewInstall("httpie")
 		brewInstall("curlie")
 		brewInstall("jq")
 		brewInstall("yq")
@@ -1053,15 +1060,17 @@ func macGUIApp(runOpt string) {
 		brewCask("proxyman", "Proxyman")
 		brewCask("postman", "Postman")
 		brewCask("paw", "Paw")
+		brewCask("httpie", "HTTPie")
 		brewCask("boop", "Boop")
 		brewCask("github", "Github")
 		brewCask("fork", "Fork")
-		brewCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app")
 		brewCask("docker", "Docker")
-		brewCask("firefox-developer-edition", "Firefox Developer Edition")
+		brewCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app")
+		brewCask("cmake", "CMake")
 		brewCask("staruml", "StarUML")
 		brewCask("vnc-viewer", "VNC Viewer")
 		brewCask("forklift", "ForkLift")
+		brewCask("firefox-developer-edition", "Firefox Developer Edition")
 	}
 
 	shrcAppend := "# ANDROID STUDIO\n" +
@@ -1077,12 +1086,12 @@ func macGUIApp(runOpt string) {
 		brewCask("burp-suite-professional", "Burp Suite Professional")
 		brewCaskSudo("wireshark", "Wireshark", "/Applications/Wireshark.app")
 		brewCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app")
+		// Will add Hopper Disassembler
+		brewCask("cutter", "Cutter")
+		// Will add Ghidra
 		brewCask("imazing", "iMazing")
 		brewCask("apparency", "Apparency")
 		brewCask("suspicious-package", "Suspicious Package")
-		brewCask("cutter", "Cutter")
-		// Ghidra
-		// Hopper Disassembler
 	}
 
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
