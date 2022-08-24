@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/briandowns/spinner"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -160,42 +159,57 @@ func makeDir(dirPath string) {
 
 func makeFile(filePath, fileContents string) {
 	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
-	checkError(err, "Failed to make file")
+	checkError(err, "Failed to get file information to make new file from \""+filePath+"\"")
 	defer func() {
 		err := targetFile.Close()
-		checkError(err, "Failed to close file")
+		checkError(err, "Failed to finish make file to \""+filePath+"\"")
 	}()
 	_, err = targetFile.Write([]byte(fileContents))
-	checkError(err, "Failed to write file")
+	checkError(err, "Failed to fill in information to \""+filePath+"\"")
 }
 
 func appendFile(filePath, fileContents string) {
 	targetFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
-	checkError(err, "Failed to append file")
+	checkError(err, "Failed to get file information to append contents from \""+filePath+"\"")
 	defer func() {
 		err := targetFile.Close()
-		checkError(err, "Failed to close file")
+		checkError(err, "Failed to finish append ceontents to \""+filePath+"\"")
 	}()
 	_, err = targetFile.Write([]byte(fileContents))
-	checkError(err, "Failed to write file")
+	checkError(err, "Failed to append contents to \""+filePath+"\"")
 }
 
 func removeFile(filePath string) {
 	if _, errExist := os.Stat(filePath); !os.IsNotExist(errExist) {
 		err := os.Remove(filePath)
-		checkError(err, "Failed to remove file")
+		checkError(err, "Failed to remove file \""+filePath+"\"")
 	}
 }
 
-func unzipFile(src, dest string) error {
-	reader, err := zip.OpenReader(src)
+func downloadFile(filePath, urlPath string) {
+	resp, err := http.Get(urlPath)
+	checkError(err, "Failed to connect "+urlPath)
+
+	defer func() {
+		errBodyClose := resp.Body.Close()
+		checkError(errBodyClose, "Failed to download from "+urlPath)
+	}()
+
+	rawFile, err := io.ReadAll(resp.Body)
+	checkError(err, "Failed to read file information from "+urlPath)
+
+	makeFile(filePath, string(rawFile))
+}
+
+func unzipFile(srcPath, destPath string) error {
+	reader, err := zip.OpenReader(srcPath)
 	checkError(err, "Failed to open zip file")
 	defer func() {
 		err := reader.Close()
 		checkError(err, "Failed to close zip file")
 	}()
 
-	errMkDir := os.MkdirAll(dest, 0755)
+	errMkDir := os.MkdirAll(destPath, 0755)
 	checkError(errMkDir, "Failed to make directory")
 
 	extractFile := func(srcFile *zip.File) error {
@@ -206,9 +220,9 @@ func unzipFile(src, dest string) error {
 			checkError(err, "Failed to close zip file")
 		}()
 
-		destPath := filepath.Join(dest, srcFile.Name)
+		destPath := filepath.Join(destPath, srcFile.Name)
 
-		if !strings.HasPrefix(destPath, filepath.Clean(dest)+string(os.PathSeparator)) {
+		if !strings.HasPrefix(destPath, filepath.Clean(destPath)+string(os.PathSeparator)) {
 			return fmt.Errorf("illegal file path: %s", destPath)
 		}
 
@@ -312,7 +326,7 @@ func brewCask(pkg, app string) {
 	}
 }
 
-func brewCaskSudo(pkg, app string) {
+func brewCaskSudo(pkg, app, path string) {
 	macLdBar.Stop()
 
 	fmt.Println(lstDot + "Check root permission (sudo) for install " + app)
@@ -321,7 +335,7 @@ func brewCaskSudo(pkg, app string) {
 
 	macLdBar.Start()
 
-	if _, errExist := os.Stat(app); errors.Is(errExist, os.ErrNotExist) {
+	if _, errExist := os.Stat(path); errors.Is(errExist, os.ErrNotExist) {
 		brewUpdate()
 
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
@@ -334,91 +348,17 @@ func brewCaskSudo(pkg, app string) {
 func asdfInstall(plugin, version string) {
 	if _, errExist := os.Stat(homeDir() + ".asdf/plugins/" + plugin); errors.Is(errExist, os.ErrNotExist) {
 		asdfPlugin := exec.Command(cmdASDF, "plugin", "add", plugin)
-		asdfPlugin.Stderr = os.Stderr
 		err := asdfPlugin.Run()
 		checkCmdError(err, "ASDF-VM failed to add", plugin)
 	}
 
 	asdfIns := exec.Command(cmdASDF, pmsIns, plugin, version)
-	asdfIns.Stderr = os.Stderr
 	errIns := asdfIns.Run()
 	checkCmdError(errIns, "ASDF-VM", plugin)
 
 	asdfGlobal := exec.Command(cmdASDF, "global", plugin, version)
-	asdfGlobal.Stderr = os.Stderr
 	errConf := asdfGlobal.Run()
 	checkCmdError(errConf, "ASDF-VM failed to install", plugin)
-}
-
-func downloadMacDmg(pkg, url string) {
-	dlPkgPath := workingDir() + "." + pkg + ".dmg"
-
-	resp, err := http.Get("https://" + url)
-	checkError(err, "Failed to download "+pkg)
-	defer func() {
-		err := resp.Body.Close()
-		checkError(err, "Failed to close "+pkg+" response body")
-	}()
-	raw, _ := ioutil.ReadAll(resp.Body)
-
-	macDmg, err := os.OpenFile(dlPkgPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err, "Failed to create "+pkg+".dmg")
-	defer func() {
-		err := macDmg.Close()
-		checkError(err, "Failed to close "+pkg+".dmg")
-	}()
-	_, err = macDmg.Write(raw)
-	checkError(err, "Failed to write "+pkg+".dmg")
-
-	mountDmg := exec.Command("hdiutil", "attach", dlPkgPath)
-	errMount := mountDmg.Run()
-	checkError(errMount, "Failed to mount "+pkg)
-
-	removeFile(dlPkgPath)
-
-	bytesRead, err := ioutil.ReadFile("/Volumes/" + pkg + "/" + pkg + ".app")
-	checkError(err, "Failed to copy \""+pkg+"\" in \"/Volumes/"+pkg+"/"+pkg+".app\"")
-
-	err = ioutil.WriteFile("/Application/"+pkg+".app", bytesRead, 0644)
-	checkError(err, "Failed to past \""+pkg+".app\" to \"/Applications\"")
-
-	unmountDmg := exec.Command("hdiutil", "unmount", "/Volumes/"+pkg)
-	errUnmount := unmountDmg.Run()
-	checkError(errUnmount, "Failed to unmount "+pkg)
-}
-
-func downloadMacZip(pkg, url string) {
-	dlZipPath := workingDir() + "." + pkg + ".zip"
-	unZipPath := workingDir() + "." + pkg + "/" + pkg + ".app"
-
-	resp, err := http.Get("https://" + url)
-	checkError(err, "Failed to download "+pkg)
-	defer func() {
-		err := resp.Body.Close()
-		checkError(err, "Failed to close "+pkg+" response body")
-	}()
-	raw, _ := ioutil.ReadAll(resp.Body)
-
-	macDmg, err := os.OpenFile(dlZipPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err, "Failed to create "+pkg+".dmg")
-	defer func() {
-		err := macDmg.Close()
-		checkError(err, "Failed to close "+pkg+".dmg")
-	}()
-	_, err = macDmg.Write(raw)
-	checkError(err, "Failed to write "+pkg+".dmg")
-
-	errUnzip := unzipFile(dlZipPath, workingDir()+"."+pkg)
-	checkError(errUnzip, "Failed to unzip "+pkg)
-	removeFile(dlZipPath)
-
-	bytesRead, err := ioutil.ReadFile(unZipPath)
-	checkError(err, "Failed to copy \""+pkg+"\" in \""+unZipPath+"\"")
-
-	err = ioutil.WriteFile("/Application/"+pkg+".app", bytesRead, 0644)
-	checkError(err, "Failed to past \""+pkg+".app\" to \"/Applications\"")
-
-	removeFile(unZipPath)
 }
 
 func addJavaHome(tgVer, lnVer string) {
@@ -437,22 +377,26 @@ func addJavaHome(tgVer, lnVer string) {
 func confA4s() {
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
 
-	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
-	checkError(err, "Alias4sh‘s URL is maybe changed, please check https://github.com/leelsey/Alias4sh")
+	//resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
+	//checkError(err, "Alias4sh‘s URL is maybe changed, please check https://github.com/leelsey/Alias4sh")
+	//
+	//defer func() {
+	//	errBodyClose := resp.Body.Close()
+	//	checkError(errBodyClose, "Failed to close response body")
+	//}()
+	//rawFile, err := io.ReadAll(resp.Body)
+	//checkError(err, "Failed to read response body")
+	//
+	//makeFile(dlA4sPath, string(rawFile))
 
-	defer func() {
-		errBodyClose := resp.Body.Close()
-		checkError(errBodyClose, "Failed to close response body")
-	}()
-	rawFile, _ := ioutil.ReadAll(resp.Body)
-
-	makeFile(dlA4sPath, string(rawFile))
+	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
 
 	installA4s := exec.Command("/bin/sh", dlA4sPath)
 	if err := installA4s.Run(); err != nil {
 		removeFile(dlA4sPath)
 		checkError(err, "Failed to install Alias4sh")
 	}
+
 	removeFile(dlA4sPath)
 }
 
@@ -486,16 +430,18 @@ func confG4s() {
 	makeDir(ignoreDirPath)
 
 	ignorePath := ignoreDirPath + "gitignore_global"
-	resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
-	checkError(err, "Failed to download git ignore file, please check https://github.com/leelsey/Git4set\n")
+	//resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
+	//checkError(err, "Failed to download git ignore file, please check https://github.com/leelsey/Git4set\n")
+	//
+	//defer func() {
+	//	err := resp.Body.Close()
+	//	checkError(err, "Failed to close git ignore response body")
+	//}()
+	//rawFile, _ := ioutil.ReadAll(resp.Body)
 
-	defer func() {
-		err := resp.Body.Close()
-		checkError(err, "Failed to close git ignore response body")
-	}()
-	rawFile, _ := ioutil.ReadAll(resp.Body)
+	//makeFile(ignorePath, string(rawFile))
 
-	makeFile(ignorePath, string(rawFile))
+	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
 
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
 	errExcludesFile := setExcludesFile.Run()
@@ -504,7 +450,7 @@ func confG4s() {
 	fmt.Println(" " + lstDot + "Make \"gitignore_global\" file in " + ignoreDirPath)
 
 	fmt.Println("\n" + lstDot + "Check git global configuration")
-	contentGitConf, err := ioutil.ReadFile(homeDir() + ".gitconfig")
+	contentGitConf, err := os.ReadFile(homeDir() + ".gitconfig")
 	checkError(err, "Failed to get git config file")
 	fmt.Println(string(contentGitConf))
 }
@@ -512,126 +458,140 @@ func confG4s() {
 func p10kTerm() {
 	dlP10kTerm := p10kPath + "p10k-term.zsh"
 
-	respP10kTerm, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
-	checkError(err, "Failed to download p10k-term.zsh, please check https://github.com/leelsey/ConfStore")
+	//respP10kTerm, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
+	//checkError(err, "Failed to download p10k-term.zsh, please check https://github.com/leelsey/ConfStore")
+	//
+	//defer func() {
+	//	err := respP10kTerm.Body.Close()
+	//	checkError(err, "Failed to close p10k-term.zsh response body")
+	//}()
+	//rawFileP10kTerm, _ := ioutil.ReadAll(respP10kTerm.Body)
+	//
+	//confP10kTerm, err := os.OpenFile(dlP10kTerm, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	//checkError(err, "Failed to create p10k-term.zsh")
+	//defer func() {
+	//	err := confP10kTerm.Close()
+	//	checkError(err, "Failed to close p10k-term.zsh")
+	//}()
+	//_, err = confP10kTerm.Write(rawFileP10kTerm)
+	//checkError(err, "Failed to write p10k-term.zsh")
 
-	defer func() {
-		err := respP10kTerm.Body.Close()
-		checkError(err, "Failed to close p10k-term.zsh response body")
-	}()
-	rawFileP10kTerm, _ := ioutil.ReadAll(respP10kTerm.Body)
-
-	confP10kTerm, err := os.OpenFile(dlP10kTerm, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err, "Failed to create p10k-term.zsh")
-	defer func() {
-		err := confP10kTerm.Close()
-		checkError(err, "Failed to close p10k-term.zsh")
-	}()
-	_, err = confP10kTerm.Write(rawFileP10kTerm)
-	checkError(err, "Failed to write p10k-term.zsh")
+	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
 }
 
 func p10kiTerm2() {
 	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
-	respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
-	checkError(err, "Failed to download p10k-iterm2.zsh, please check https://github.com/leelsey/ConfStore")
-	defer func() {
-		err := respP10kiTerm2.Body.Close()
-		checkError(err, "Failed to close p10ki-iterm2.zsh response body")
-	}()
-	rawFileP10kiTerm2, _ := ioutil.ReadAll(respP10kiTerm2.Body)
 
-	confP10kiTerm2, err := os.OpenFile(dlP10kiTerm2, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err, "Failed to create p10ki-iterm2.zsh")
-	defer func() {
-		err := confP10kiTerm2.Close()
-		checkError(err, "Failed to close p10ki-iterm2.zsh")
-	}()
-	_, err = confP10kiTerm2.Write(rawFileP10kiTerm2)
-	checkError(err, "Failed to write p10ki-iterm2.zsh")
+	//respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
+	//checkError(err, "Failed to download p10k-iterm2.zsh, please check https://github.com/leelsey/ConfStore")
+	//defer func() {
+	//	err := respP10kiTerm2.Body.Close()
+	//	checkError(err, "Failed to close p10ki-iterm2.zsh response body")
+	//}()
+	//rawFileP10kiTerm2, _ := ioutil.ReadAll(respP10kiTerm2.Body)
+	//
+	//confP10kiTerm2, err := os.OpenFile(dlP10kiTerm2, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	//checkError(err, "Failed to create p10ki-iterm2.zsh")
+	//defer func() {
+	//	err := confP10kiTerm2.Close()
+	//	checkError(err, "Failed to close p10ki-iterm2.zsh")
+	//}()
+	//_, err = confP10kiTerm2.Write(rawFileP10kiTerm2)
+	//checkError(err, "Failed to write p10ki-iterm2.zsh")
+
+	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
 }
 
 func p10kTMUX() {
 	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
-	respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
-	checkError(err, "Failed to download p10k-tumx.zsh, please check https://github.com/leelsey/ConfStore")
-	defer func() {
-		err := respP10kTMUX.Body.Close()
-		checkError(err, "Failed to close p10k-tmux.zsh response body")
-	}()
-	rawFileP10kTMUX, _ := ioutil.ReadAll(respP10kTMUX.Body)
 
-	confP10kTMUX, err := os.OpenFile(dlP10kTMUX, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err, "Failed to create p10k-tmux.zsh")
-	defer func() {
-		err := confP10kTMUX.Close()
-		checkError(err, "Failed to close p10k-tmux.zsh")
-	}()
-	_, err = confP10kTMUX.Write(rawFileP10kTMUX)
-	checkError(err, "Failed to write p10k-tmux.zsh")
+	//respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
+	//checkError(err, "Failed to download p10k-tumx.zsh, please check https://github.com/leelsey/ConfStore")
+	//defer func() {
+	//	err := respP10kTMUX.Body.Close()
+	//	checkError(err, "Failed to close p10k-tmux.zsh response body")
+	//}()
+	//rawFileP10kTMUX, _ := ioutil.ReadAll(respP10kTMUX.Body)
+	//
+	//confP10kTMUX, err := os.OpenFile(dlP10kTMUX, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	//checkError(err, "Failed to create p10k-tmux.zsh")
+	//defer func() {
+	//	err := confP10kTMUX.Close()
+	//	checkError(err, "Failed to close p10k-tmux.zsh")
+	//}()
+	//_, err = confP10kTMUX.Write(rawFileP10kTMUX)
+	//checkError(err, "Failed to write p10k-tmux.zsh")
+
+	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
 }
 
 func p10kEtc() {
 	dlP10kEtc := p10kPath + "p10k-etc.zsh"
 
-	respP10kEtc, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
-	checkError(err, "Failed to download p10k-etc.zsh, please check https://github.com/leelsey/ConfStore")
-	defer func() {
-		err := respP10kEtc.Body.Close()
-		checkError(err, "Failed to close p10k-etc.zsh response body")
-	}()
-	rawFileP10kEtc, _ := ioutil.ReadAll(respP10kEtc.Body)
+	//respP10kEtc, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
+	//checkError(err, "Failed to download p10k-etc.zsh, please check https://github.com/leelsey/ConfStore")
+	//defer func() {
+	//	err := respP10kEtc.Body.Close()
+	//	checkError(err, "Failed to close p10k-etc.zsh response body")
+	//}()
+	//rawFileP10kEtc, _ := ioutil.ReadAll(respP10kEtc.Body)
+	//
+	//confP10kEtc, err := os.OpenFile(dlP10kEtc, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
+	//checkError(err, "Failed to create p10k-etc.zsh")
+	//defer func() {
+	//	err := confP10kEtc.Close()
+	//	checkError(err, "Failed to close p10k-etc.zsh")
+	//}()
+	//_, err = confP10kEtc.Write(rawFileP10kEtc)
+	//checkError(err, "Failed to write p10k-etc.zsh")
 
-	confP10kEtc, err := os.OpenFile(dlP10kEtc, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	checkError(err, "Failed to create p10k-etc.zsh")
-	defer func() {
-		err := confP10kEtc.Close()
-		checkError(err, "Failed to close p10k-etc.zsh")
-	}()
-	_, err = confP10kEtc.Write(rawFileP10kEtc)
-	checkError(err, "Failed to write p10k-etc.zsh")
+	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
 }
 
 func iTerm2Conf() {
 	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
 
-	respiTerm2Conf, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
-	checkError(err, "Failed to download iTerm2 configure file, please check https://github.com/leelsey/ConfStore")
-	defer func() {
-		err := respiTerm2Conf.Body.Close()
-		checkError(err, "Failed to close iTerm2.plist response body")
-	}()
-	rawFileiTerm2Conf, _ := ioutil.ReadAll(respiTerm2Conf.Body)
+	//respiTerm2Conf, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
+	//checkError(err, "Failed to download iTerm2 configure file, please check https://github.com/leelsey/ConfStore")
+	//defer func() {
+	//	err := respiTerm2Conf.Body.Close()
+	//	checkError(err, "Failed to close iTerm2.plist response body")
+	//}()
+	//rawFileiTerm2Conf, _ := ioutil.ReadAll(respiTerm2Conf.Body)
+	//
+	//confiTerm2Conf, err := os.OpenFile(dliTerm2Conf, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+	//checkError(err, "Failed to create iTerm2.plist")
+	//defer func() {
+	//	err := confiTerm2Conf.Close()
+	//	checkError(err, "Failed to close iTerm2.plist")
+	//}()
+	//_, err = confiTerm2Conf.Write(rawFileiTerm2Conf)
+	//checkError(err, "Failed to write iTerm2.plist")
 
-	confiTerm2Conf, err := os.OpenFile(dliTerm2Conf, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
-	checkError(err, "Failed to create iTerm2.plist")
-	defer func() {
-		err := confiTerm2Conf.Close()
-		checkError(err, "Failed to close iTerm2.plist")
-	}()
-	_, err = confiTerm2Conf.Write(rawFileiTerm2Conf)
-	checkError(err, "Failed to write iTerm2.plist")
+	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
 }
 
 func installBrew() {
 	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
 
-	resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
-	checkError(err, "Failed to download Homebrew install file, please check https://github.com/Homebrew/install")
-	defer func() {
-		err := resp.Body.Close()
-		checkError(err, "Failed to close Homebrew install.sh response body")
-	}()
-	rawFile, _ := ioutil.ReadAll(resp.Body)
+	//resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
+	//checkError(err, "Failed to download Homebrew install file, please check https://github.com/Homebrew/install")
+	//defer func() {
+	//	err := resp.Body.Close()
+	//	checkError(err, "Failed to close Homebrew install.sh response body")
+	//}()
+	//rawFile, _ := ioutil.ReadAll(resp.Body)
+	//
+	//brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
+	//checkError(err, "Failed to create install.sh")
+	//defer func() {
+	//	err := brewInstaller.Close()
+	//	checkError(err, "Failed to close install.sh")
+	//}()
+	//_, err = brewInstaller.Write(rawFile)
+	//checkError(err, "Failed to write install.sh")
 
-	brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
-	checkError(err, "Failed to create install.sh")
-	defer func() {
-		err := brewInstaller.Close()
-		checkError(err, "Failed to close install.sh")
-	}()
-	_, err = brewInstaller.Write(rawFile)
-	checkError(err, "Failed to write install.sh")
+	downloadFile(dlBrewPath, "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
 
 	installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
 	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
@@ -653,7 +613,8 @@ func macBegin() {
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
 		macLdBar.Start()
 	} else {
-		fmt.Println(lstDot + "Check root permission (sudo) for install the Homebrew")
+		//fmt.Println(lstDot + "Check root permission (sudo) for install the Homebrew")
+		fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew\n")
 		checkPermission()
 		fmt.Print("\033[1A\033[K")
 
@@ -698,30 +659,45 @@ func macDependency(runOpt string) {
 
 	brewInstall("pkg-config")
 	brewInstall("ca-certificates")
-	brewInstall("openssl")
-	brewInstall("openssl@1.1")
 	brewInstall("ncurses")
+	brewInstall("openssl@3")
+	brewInstall("openssl@1.1")
 	brewInstall("readline")
 	brewInstall("autoconf")
 	brewInstall("automake")
 	brewInstall("mpdecimal")
+	brewInstall("utf8proc")
 	brewInstall("m4")
 	brewInstall("gmp")
 	brewInstall("mpfr")
 	brewInstall("gettext")
+	brewInstall("jpeg-turbo")
 	brewInstall("libtool")
 	brewInstall("libevent")
+	brewInstall("libffi")
+	brewInstall("libtiff")
+	brewInstall("libvmaf")
 	brewInstall("libpng")
 	brewInstall("libyaml")
+	brewInstall("giflib")
 	brewInstall("xz")
 	brewInstall("gdbm")
 	brewInstall("sqlite")
+	brewInstall("lz4")
+	brewInstall("zstd")
+	brewInstall("hiredis")
 	brewInstall("berkeley-db")
+	brewInstall("asciidoctor")
 	brewInstall("freetype")
 	brewInstall("pcre")
 	brewInstall("pcre2")
 
-	shrcAppend := "# OPENSSL-3\n" +
+	shrcAppend := "# NCURSES\n" +
+		"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
+		"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
+		"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n" +
+		"# OPENSSL-3\n" +
 		"export PATH=\"" + brewPrefix + "opt/openssl@3/bin:$PATH\"\n" +
 		"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@3/lib\"\n" +
 		"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@3/include\"\n" +
@@ -730,46 +706,90 @@ func macDependency(runOpt string) {
 		"export PATH=\"" + brewPrefix + "opt/openssl@1.1/bin:$PATH\"\n" +
 		"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@1.1/lib\"\n" +
 		"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@1.1/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@1.1/lib/pkgconfig\"\n\n" +
-		"# NCURSES\n" +
-		"export PATH=\"" + brewPrefix + "opt/ncurses/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + brewPrefix + "opt/ncurses/lib\"\n" +
-		"export CPPFLAGS=\"" + brewPrefix + "opt/ncurses/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ncurses/lib/pkgconfig\"\n\n"
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@1.1/lib/pkgconfig\"\n\n"
 	appendFile(shrcPath, shrcAppend)
+
+	if runOpt != "2" && runOpt != "3" {
+		brewInstall("bash")
+		brewInstall("zsh")
+		brewInstall("ccache")
+		brewInstall("perl")
+		brewInstall("ruby")
+		brewInstall("python@3.10")
+		brewInstall("openjdk")
+		brewInstall("ghc")
+		brewInstall("cabal-install")
+	}
 
 	if runOpt == "6" || runOpt == "7" {
 		brewInstall("krb5")
-		brewInstall("gnupg")
-		brewInstall("curl")
-		brewInstall("wget")
+		brewInstall("libsodium")
+		brewInstall("nettle")
+		brewInstall("coreutils")
+		brewInstall("ldns")
 		brewInstall("gzip")
-		brewInstall("unzip")
-		brewInstall("libzip")
 		brewInstall("bzip2")
+		brewInstall("fop")
+		brewInstall("jasper")
+		brewInstall("little-cms2")
+		brewInstall("imath")
+		brewInstall("openldap")
+		brewInstall("openexr")
+		brewInstall("openjpeg")
+		brewInstall("jpeg-xl")
+		brewInstall("webp")
+		brewInstall("rtmpdump")
+		brewInstall("aom")
+		brewInstall("npth")
+		brewInstall("screenresolution")
+		brewInstall("gnu-getopt")
+		brewInstall("brotli")
+		brewInstall("bison")
+		brewInstall("tcl-tk")
+		brewInstall("gawk") // awk
+		brewInstall("swig")
+		brewInstall("re2c")
+		brewInstall("icu4c")
+		brewInstall("bdw-gc")
+		brewInstall("guile")
+		brewInstall("wxwidgets")
+		brewInstall("sphinx-doc")
+		brewInstall("docbook")
+		brewInstall("docbook-xsl")
+		brewInstall("xmlto")
+		brewInstall("html-xml-utils")
+		brewInstall("shared-mime-info")
+		brewInstall("x265")
 		brewInstall("zlib")
+		brewInstall("glib")
+		brewInstall("libgpg-error")
+		brewInstall("libgcrypt")
 		brewInstall("libunistring")
+		brewInstall("libatomic_ops")
+		brewInstall("libiconv")
 		brewInstall("libidn")
 		brewInstall("libidn2")
-		brewInstall("ghc")
-		brewInstall("ccache")
-		brewInstall("cabal")
-		brewInstall("automake")
-		brewInstall("libffi")
-		brewInstall("guile")
-		brewInstall("gnu-getopt")
-		brewInstall("coreutils")
-		brewInstall("bison")
-		brewInstall("libiconv")
-		brewInstall("icu4c")
-		brewInstall("re2c")
+		brewInstall("libssh2")
+		brewInstall("libnghttp2")
+		brewInstall("libxml2")
+		brewInstall("libtasn1")
+		brewInstall("libxslt")
+		brewInstall("libavif")
+		brewInstall("libzip")
+		brewInstall("libde265")
+		brewInstall("libheif")
+		brewInstall("libksba")
+		brewInstall("libusb")
+		brewInstall("liblqr")
+		brewInstall("libomp")
+		brewInstall("libassuan")
+		brewInstall("gnutls")
 		brewInstall("gd")
-		brewInstall("ldns")
-		brewInstall("html-xml-utils")
-		brewInstall("xmlto")
-		brewInstall("libsodium")
-		brewInstall("imagemagick")
 		brewInstall("ghostscript")
+		brewInstall("imagemagick")
+		brewInstall("pinentry")
+		brewInstall("p11-kit")
+		brewInstall("gnupg")
 
 		shrcAppend := "# KRB5\n" +
 			"export PATH=\"" + brewPrefix + "opt/krb5/bin:$PATH\"\n" +
@@ -777,36 +797,46 @@ func macDependency(runOpt string) {
 			"export LDFLAGS=\"" + brewPrefix + "opt/krb5/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/krb5/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/krb5/lib/pkgconfig\"\n\n" +
+			"# COREUTILS\n" +
+			"export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
+			"export PATH=\"" + brewPrefix + "opt/gnu-getopt/bin:$PATH\"\n\n" +
 			"# BZIP2\n" +
 			"export PATH=\"" + brewPrefix + "opt/bzip2/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/bzip2/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/bzip2/include\"\n\n" +
-			"# ZLIB\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n" +
 			"# GNU GETOPT\n" +
-			"export PATH=\"" + brewPrefix + "opt/gnu-getopt/bin:$PATH\"\n\n" +
-			"# COREUTILS\n" +
-			"export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
 			"# BISON\n" +
 			"export PATH=\"" + brewPrefix + "opt/bison/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/bison/lib\"\n\n" +
-			"# LIBICONV\n" +
-			"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/libiconv/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/libiconv/include\"\n\n" +
+			"# TCL-TK\n" +
+			"export PATH=\"" + brewPrefix + "opt/tcl-tk/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/tcl-tk/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/tcl-tk/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/tcl-tk/lib/pkgconfig\"\n\n" +
 			"# ICU4C\n" +
 			"export PATH=\"" + brewPrefix + "opt/icu4c/bin:$PATH\"\n" +
 			"export PATH=\"" + brewPrefix + "opt/icu4c/sbin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/icu4c/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n" +
-			"# CURL\n" +
-			"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n"
+			"# ZLIB\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n" +
+			"# LIBICONV\n" +
+			"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/libiconv/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/libiconv/include\"\n\n" +
+			"# LIBXML2\n" +
+			"export PATH=\"" + brewPrefix + "opt/libxml2/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/libxml2/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/libxml2/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/libxml2/lib/pkgconfig\"\n\n" +
+			"# LIBXSLT\n" +
+			"export PATH=\"" + brewPrefix + "opt/libxslt/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/libxslt/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/libxslt/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/libxslt/lib/pkgconfig\"\n\n"
 		appendFile(shrcPath, shrcAppend)
 	}
 
@@ -818,20 +848,13 @@ func macLanguage(runOpt string) {
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install languages!\n"
 	macLdBar.Start()
 
-	//brewInstall("awk")
-	brewInstall("gawk")
-	brewInstall("perl")
-	brewInstall("ruby")
-	brewInstall("python")
-
-	shrcAppend := "# RUBY\n" +
+	shrcAppend := "# CCACHE\n" +
+		"export PATH=\"" + brewPrefix + "opt/ccache/libexec:$PATH\"\n\n" +
+		"# RUBY\n" +
 		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
 		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n" +
-		"# JAVA\n" +
-		"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
-		"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
+		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
 	appendFile(shrcPath, shrcAppend)
 
 	if runOpt == "2" || runOpt == "3" {
@@ -843,8 +866,6 @@ func macLanguage(runOpt string) {
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
 		brewInstall("openjdk@17")
-		brewInstall("openjdk")
-		brewInstall("rust")
 		brewInstall("go")
 		brewInstall("php")
 		brewInstall("nvm")
@@ -871,9 +892,8 @@ func macLanguage(runOpt string) {
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
 		brewInstall("openjdk@17")
-		brewInstall("openjdk")
-		brewInstall("rust")
 		brewInstall("go")
+		brewInstall("rust")
 		brewInstall("node")
 		brewInstall("lua")
 		brewInstall("php")
@@ -884,12 +904,10 @@ func macLanguage(runOpt string) {
 		brewInstall("erlang")
 		brewInstall("elixir")
 		brewInstall("typescript")
-		brewInstall("r")
+		brewInstall("haskell-stack")
 		brewInstall("haskell-language-server")
 		brewInstall("stylish-haskell")
 	}
-
-	macLdBar.Stop()
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		checkPermission()
@@ -899,6 +917,8 @@ func macLanguage(runOpt string) {
 		addJavaHome("@11", "-11")
 		addJavaHome("@8", "-8")
 	}
+
+	macLdBar.Stop()
 }
 
 func macServer(runOpt string) {
@@ -931,8 +951,8 @@ func macDatabase(runOpt string) {
 		brewInstall("postgresql")
 		brewInstall("mysql")
 		brewInstall("redis")
+		brewRepository("mongodb/brew")
 		brewInstall("mongodb-community")
-		brewInstall("mongodb")
 	}
 
 	shrcAppend := "# SQLITE3\n" +
@@ -970,7 +990,6 @@ func macDevVM() {
 	asdfInstall("elixir", "latest")
 	asdfInstall("haskell", "latest")
 	asdfInstall("gleam", "latest")
-	//asdfInstall("r", "latest") // error
 
 	shrcAppend := "# ASDF VM\n" +
 		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
@@ -1002,8 +1021,6 @@ func macTerminal(runOpt string) {
 	makeDir(p10kCache)
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewInstall("bash")
-		brewInstall("zsh")
 		brewInstall("fzf")
 		brewInstall("tmux")
 		brewInstall("tmuxinator")
@@ -1015,7 +1032,9 @@ func macTerminal(runOpt string) {
 	p10kTerm()
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
-		profileAppend := "# POWERLEVEL10K\n" +
+		profileAppend := "# ZSH\n" +
+			"export SHELL=zsh\n\n" +
+			"# POWERLEVEL10K\n" +
 			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
 			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
@@ -1081,10 +1100,13 @@ func macCLIApp(runOpt string) {
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install CLI applications!\n"
 	macLdBar.Start()
 
+	brewInstall("unzip")
 	brewInstall("diffutils")
 	brewInstall("transmission-cli")
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		brewInstall("curl")
+		brewInstall("wget")
 		brewInstall("openssh")
 		brewInstall("mosh")
 		brewInstall("inetutils")
@@ -1099,9 +1121,14 @@ func macCLIApp(runOpt string) {
 		brewInstall("direnv")
 		brewInstall("jupyterlab")
 
-		profileAppend := "# DIRENV\n" +
+		shrcAppend := "# CURL\n" +
+			"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n" +
+			"# DIRENV\n" +
 			"eval \"$(direnv hook zsh)\"\n\n"
-		appendFile(profilePath, profileAppend)
+		appendFile(shrcPath, shrcAppend)
 	}
 
 	if runOpt == "6" || runOpt == "7" {
@@ -1138,7 +1165,6 @@ func macCLIApp(runOpt string) {
 
 func macGUIApp(runOpt string) {
 	macLdBar.Suffix = " Installing GUI applications... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
 	macLdBar.Start()
 
 	if runOpt != "7" {
@@ -1156,8 +1182,8 @@ func macGUIApp(runOpt string) {
 	brewCask("tor-browser", "Tor Browser")
 	brewCask("spotify", "Spotify")
 	brewCask("signal", "Signal")
-	brewCask("slack", "Slack")
 	brewCask("discord", "Discord")
+	brewCask("slack", "Slack")
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewCask("jetbrains-space", "JetBrains Space")
 	}
@@ -1169,9 +1195,9 @@ func macGUIApp(runOpt string) {
 		brewCask("zeplin", "Zeplin")
 		brewCask("blender", "Blender")
 		brewCask("obs", "OBS")
-		brewCaskSudo("loopback", "/Applications/Loopback.app")
+		brewCaskSudo("loopback", "Loopback", "/Applications/Loopback.app")
 		if runOpt == "3" {
-			brewCaskSudo("blackhole-64ch", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
+			brewCaskSudo("blackhole-64ch", "BlackHole (64ch)", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
 		}
 	}
 
@@ -1194,7 +1220,7 @@ func macGUIApp(runOpt string) {
 		brewCask("boop", "Boop")
 		brewCask("github", "Github")
 		brewCask("fork", "Fork")
-		brewCaskSudo("vmware-fusion", "/Applications/VMware Fusion.app")
+		brewCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app")
 		brewCask("docker", "Docker")
 		brewCask("firefox-developer-edition", "Firefox Developer Edition")
 		brewCask("staruml", "StarUML")
@@ -1213,8 +1239,8 @@ func macGUIApp(runOpt string) {
 	if runOpt == "7" {
 		brewCask("burp-suite", "Burp Suite Community Edition")
 		brewCask("burp-suite-professional", "Burp Suite Professional")
-		brewCaskSudo("wireshark", "/Applications/Wireshark.app")
-		brewCaskSudo("zenmap", "/Applications/Zenmap.app")
+		brewCaskSudo("wireshark", "Wireshark", "/Applications/Wireshark.app")
+		brewCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app")
 		brewCask("imazing", "iMazing")
 		brewCask("apparency", "Apparency")
 		brewCask("suspicious-package", "Suspicious Package")
@@ -1223,6 +1249,7 @@ func macGUIApp(runOpt string) {
 		// Hopper Disassembler
 	}
 
+	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
 	macLdBar.Stop()
 }
 
