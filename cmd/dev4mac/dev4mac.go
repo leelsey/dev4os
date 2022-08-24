@@ -76,7 +76,7 @@ func checkPermission() {
 	sudoPW.Stdin = os.Stdin
 	sudoPW.Stderr = os.Stderr
 	whoAmI, err := sudoPW.Output()
-	fmt.Print("\033[1;A\033[K")
+	clearLine(1)
 	checkError(err, "Failed to get sudo permission")
 
 	if string(whoAmI) != "root\n" {
@@ -154,8 +154,8 @@ func makeDir(dirPath string) {
 	checkError(err, "Failed to make directory")
 }
 
-func makeFile(filePath, fileContents string) {
-	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
+func makeFile(filePath, fileContents string, fileMode int) {
+	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(fileMode))
 	checkError(err, "Failed to get file information to make new file from \""+filePath+"\"")
 	defer func() {
 		err := targetFile.Close()
@@ -165,8 +165,8 @@ func makeFile(filePath, fileContents string) {
 	checkError(err, "Failed to fill in information to \""+filePath+"\"")
 }
 
-func appendFile(filePath, fileContents string) {
-	targetFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(0600))
+func appendFile(filePath, fileContents string, fileMode int) {
+	targetFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(fileMode))
 	checkError(err, "Failed to get file information to append contents from \""+filePath+"\"")
 	defer func() {
 		err := targetFile.Close()
@@ -190,7 +190,7 @@ func linkFile(srcPath, destPath string) {
 	checkCmdError(err, "Add failed to link file", srcPath+"->"+destPath)
 }
 
-func downloadFile(filePath, urlPath string) {
+func downloadFile(filePath, urlPath string, fileMode int) {
 	resp, err := http.Get(urlPath)
 	checkError(err, "Failed to connect "+urlPath)
 
@@ -202,60 +202,14 @@ func downloadFile(filePath, urlPath string) {
 	rawFile, err := io.ReadAll(resp.Body)
 	checkError(err, "Failed to read file information from "+urlPath)
 
-	makeFile(filePath, string(rawFile))
+	makeFile(filePath, string(rawFile), fileMode)
 }
 
-//func unzipFile(srcPath, destPath string) error {
-//	reader, err := zip.OpenReader(srcPath)
-//	checkError(err, "Failed to open zip file")
-//	defer func() {
-//		err := reader.Close()
-//		checkError(err, "Failed to close zip file")
-//	}()
-//
-//	errMkDir := os.MkdirAll(destPath, 0755)
-//	checkError(errMkDir, "Failed to make directory")
-//
-//	extractFile := func(srcFile *zip.File) error {
-//		rc, err := srcFile.Open()
-//		checkError(err, "Failed to open zip file")
-//		defer func() {
-//			err := rc.Close()
-//			checkError(err, "Failed to close zip file")
-//		}()
-//
-//		destPath := filepath.Join(destPath, srcFile.Name)
-//
-//		if !strings.HasPrefix(destPath, filepath.Clean(destPath)+string(os.PathSeparator)) {
-//			return fmt.Errorf("illegal file path: %s", destPath)
-//		}
-//
-//		if srcFile.FileInfo().IsDir() {
-//			errMkDest := os.MkdirAll(destPath, srcFile.Mode())
-//			checkError(errMkDest, "Failed to make directory")
-//		} else {
-//			errMkDest := os.MkdirAll(filepath.Dir(destPath), srcFile.Mode())
-//			checkError(errMkDest, "Failed to make directory")
-//			destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcFile.Mode())
-//			checkError(err, "Failed to open file")
-//			defer func() {
-//				err := destFile.Close()
-//				checkError(err, "Failed to close file")
-//			}()
-//
-//			_, err = io.Copy(destFile, rc)
-//			checkError(err, "Failed to copy zip file")
-//		}
-//		return nil
-//	}
-//
-//	for _, files := range reader.File {
-//		err := extractFile(files)
-//		checkError(err, "Failed to extract zip file")
-//	}
-//
-//	return nil
-//}
+func clearLine(line int) {
+	for clear := 0; clear < line; clear++ {
+		fmt.Printf("\033[1A\033[K")
+	}
+}
 
 func newZProfile() {
 	fileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
@@ -265,7 +219,7 @@ func newZProfile() {
 		"#    / /__| |    | | \\ \\| |__| | |     _| |_| |____| |____ \n" +
 		"#   /_____|_|    |_|  \\_\\\\____/|_|    |_____|______|______|\n#\n" +
 		"#  " + userName() + "’s zsh profile\n\n"
-	makeFile(profilePath, fileContents)
+	makeFile(profilePath, fileContents, 0600)
 }
 
 func newZshRC() {
@@ -276,7 +230,7 @@ func newZshRC() {
 		"#   / /__ ____) | |  | | | \\ \\| |____\n" +
 		"#  /_____|_____/|_|  |_|_|  \\_\\\\_____|\n#\n" +
 		"#  " + userName() + "’s zsh run commands\n\n"
-	makeFile(shrcPath, fileContents)
+	makeFile(shrcPath, fileContents, 0600)
 }
 
 func brewRepository(repo string) {
@@ -336,7 +290,7 @@ func brewCaskSudo(pkg, app, path string) {
 
 	fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew")
 	checkPermission()
-	fmt.Print("\033[3;A\033[K")
+	clearLine(3)
 
 	macLdBar.Start()
 
@@ -378,7 +332,7 @@ func addJavaHome(tgVer, lnVer string) {
 func confA4s() {
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
 
-	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
+	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh", 0600)
 
 	installA4s := exec.Command("/bin/sh", dlA4sPath)
 	if err := installA4s.Run(); err != nil {
@@ -420,7 +374,7 @@ func confG4s() {
 
 	ignorePath := ignoreDirPath + "gitignore_global"
 
-	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
+	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample", 0600)
 
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
 	errExcludesFile := setExcludesFile.Run()
@@ -437,46 +391,46 @@ func confG4s() {
 func p10kTerm() {
 	dlP10kTerm := p10kPath + "p10k-term.zsh"
 
-	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
+	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0600)
 }
 
 func p10kiTerm2() {
 	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
 
-	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
+	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0600)
 }
 
 func p10kTMUX() {
 	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
 
-	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
+	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0600)
 }
 
 func p10kEtc() {
 	dlP10kEtc := p10kPath + "p10k-etc.zsh"
 
-	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
+	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0600)
 }
 
 func iTerm2Conf() {
 	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
 
-	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
+	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0600)
 }
 
 func installBrew() {
-	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
+	insBrewPath := workingDir() + ".dev4mac-brew.sh"
 
-	downloadFile(dlBrewPath, "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
+	downloadFile(insBrewPath, "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", 0755)
 
-	installHomebrew := exec.Command("/bin/bash", "-c", dlBrewPath)
+	installHomebrew := exec.Command("/bin/bash", "-c", insBrewPath)
 	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
 
 	if err := installHomebrew.Run(); err != nil {
-		removeFile(dlBrewPath)
+		removeFile(insBrewPath)
 		checkError(err, "Failed to install Homebrew")
 	}
-	removeFile(dlBrewPath)
+	removeFile(insBrewPath)
 
 	if checkBrewExists() == false {
 		log.Fatalln(clrRed + "Error >>" + clrReset + " Installed brew failed, please check your system\n")
@@ -491,7 +445,7 @@ func macBegin() {
 	} else {
 		fmt.Println(clrYellow + "Check permission " + clrReset + "(sudo) for install Homebrew")
 		checkPermission()
-		fmt.Print("\033[1A\033[K")
+		clearLine(1)
 
 		macLdBar.Suffix = " Installing homebrew... "
 		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
@@ -522,7 +476,7 @@ func macEnv() {
 
 	profileAppend := "# HOMEBREW\n" +
 		"eval \"$(" + cmdPMS + " shellenv)\"\n"
-	appendFile(profilePath, profileAppend)
+	appendFile(profilePath, profileAppend, 0600)
 
 	macLdBar.Stop()
 }
@@ -582,7 +536,7 @@ func macDependency(runOpt string) {
 		"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@1.1/lib\"\n" +
 		"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@1.1/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@1.1/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(shrcPath, shrcAppend, 0600)
 
 	if runOpt != "2" && runOpt != "3" {
 		brewInstall("bash")
@@ -712,7 +666,7 @@ func macDependency(runOpt string) {
 			"export LDFLAGS=\"" + brewPrefix + "opt/libxslt/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/libxslt/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/libxslt/lib/pkgconfig\"\n\n"
-		appendFile(shrcPath, shrcAppend)
+		appendFile(shrcPath, shrcAppend, 0600)
 	}
 
 	macLdBar.Stop()
@@ -730,13 +684,13 @@ func macLanguage(runOpt string) {
 		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(shrcPath, shrcAppend, 0600)
 
 	if runOpt == "2" || runOpt == "3" {
 		shrcAppend := "# JAVA\n" +
 			"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
-		appendFile(shrcPath, shrcAppend)
+		appendFile(shrcPath, shrcAppend, 0600)
 	} else if runOpt == "4" || runOpt == "5" {
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
@@ -757,7 +711,7 @@ func macLanguage(runOpt string) {
 			"export PATH=\"$PYENV_ROOT/bin:$PATH\"\n" +
 			"eval \"$(pyenv init --path)\"\n" +
 			"eval \"$(pyenv init -)\"\n\n"
-		appendFile(shrcPath, shrcAppend)
+		appendFile(shrcPath, shrcAppend, 0600)
 
 		nvmIns := exec.Command("nvm", pmsIns, "--lts")
 		nvmIns.Stderr = os.Stderr
@@ -834,7 +788,7 @@ func macDatabase(runOpt string) {
 		"export LDFLAGS=\"" + brewPrefix + "opt/sqlite/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/sqlite/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/sqlite/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(shrcPath, shrcAppend, 0600)
 
 	macLdBar.Stop()
 }
@@ -869,7 +823,7 @@ func macDevVM() {
 		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
 		"source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n" +
 		"java_macos_integration_enable = yes\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(shrcPath, shrcAppend, 0600)
 
 	asdfReshim := exec.Command(cmdASDF, "reshim")
 	err := asdfReshim.Run()
@@ -890,7 +844,7 @@ func macTerminal(runOpt string) {
 	brewInstall("tree")
 	brewInstall("romkatv/powerlevel10k/powerlevel10k")
 
-	makeFile(homeDir()+".z", "")
+	makeFile(homeDir()+".z", "", 0644)
 	makeDir(p10kPath)
 	makeDir(p10kCache)
 
@@ -914,7 +868,7 @@ func macTerminal(runOpt string) {
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
 			"fi\n" +
 			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
-		appendFile(profilePath, profileAppend)
+		appendFile(profilePath, profileAppend, 0600)
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		p10kiTerm2()
 		p10kTMUX()
@@ -942,7 +896,7 @@ func macTerminal(runOpt string) {
 			"else\n" +
 			"  [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
 			"fi\n\n"
-		appendFile(profilePath, profileAppend)
+		appendFile(profilePath, profileAppend, 0600)
 	}
 
 	profileAppend := "# ZSH-COMPLETIONS\n" +
@@ -962,7 +916,7 @@ func macTerminal(runOpt string) {
 		"export EDITOR=/usr/bin/vi\n" +
 		"edit () { $EDITOR \"$@\" }\n" +
 		"#vi () { $EDITOR \"$@\" }\n\n"
-	appendFile(profilePath, profileAppend)
+	appendFile(profilePath, profileAppend, 0600)
 
 	confA4s()
 
@@ -1002,7 +956,7 @@ func macCLIApp(runOpt string) {
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n" +
 			"# DIRENV\n" +
 			"eval \"$(direnv hook zsh)\"\n\n"
-		appendFile(shrcPath, shrcAppend)
+		appendFile(shrcPath, shrcAppend, 0600)
 	}
 
 	if runOpt == "6" || runOpt == "7" {
@@ -1108,7 +1062,7 @@ func macGUIApp(runOpt string) {
 		"export PATH=$PATH:$ANDROID_HOME/tools\n" +
 		"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
 		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(shrcPath, shrcAppend, 0600)
 
 	if runOpt == "7" {
 		brewCask("burp-suite", "Burp Suite Community Edition")
@@ -1132,7 +1086,7 @@ func macEnd() {
 	brewRemoveCache()
 
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
-	appendFile(shrcPath, shrcAppend)
+	appendFile(shrcPath, shrcAppend, 0600)
 }
 
 func main() {
