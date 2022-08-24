@@ -372,27 +372,11 @@ func addJavaHome(tgVer, lnVer string) {
 
 	if _, errExist := os.Stat(brewPrefix + "Cellar/openjdk" + tgVer); errors.Is(errExist, os.ErrNotExist) {
 		linkFile(tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
-		//lnJavaHome := exec.Command(cmdRoot, "ln", "-sfn", tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
-		//lnJavaHome.Stderr = os.Stderr
-		//err := lnJavaHome.Run()
-		//checkCmdError(err, "Add failed to java home", "OpenJDK")
 	}
 }
 
 func confA4s() {
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
-
-	//resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
-	//checkError(err, "Alias4sh‘s URL is maybe changed, please check https://github.com/leelsey/Alias4sh")
-	//
-	//defer func() {
-	//	errBodyClose := resp.Body.Close()
-	//	checkError(errBodyClose, "Failed to close response body")
-	//}()
-	//rawFile, err := io.ReadAll(resp.Body)
-	//checkError(err, "Failed to read response body")
-	//
-	//makeFile(dlA4sPath, string(rawFile))
 
 	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh")
 
@@ -435,16 +419,6 @@ func confG4s() {
 	makeDir(ignoreDirPath)
 
 	ignorePath := ignoreDirPath + "gitignore_global"
-	//resp, err := http.Get("https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
-	//checkError(err, "Failed to download git ignore file, please check https://github.com/leelsey/Git4set\n")
-	//
-	//defer func() {
-	//	err := resp.Body.Close()
-	//	checkError(err, "Failed to close git ignore response body")
-	//}()
-	//rawFile, _ := ioutil.ReadAll(resp.Body)
-
-	//makeFile(ignorePath, string(rawFile))
 
 	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample")
 
@@ -463,46 +437,11 @@ func confG4s() {
 func p10kTerm() {
 	dlP10kTerm := p10kPath + "p10k-term.zsh"
 
-	//respP10kTerm, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
-	//checkError(err, "Failed to download p10k-term.zsh, please check https://github.com/leelsey/ConfStore")
-	//
-	//defer func() {
-	//	err := respP10kTerm.Body.Close()
-	//	checkError(err, "Failed to close p10k-term.zsh response body")
-	//}()
-	//rawFileP10kTerm, _ := ioutil.ReadAll(respP10kTerm.Body)
-	//
-	//confP10kTerm, err := os.OpenFile(dlP10kTerm, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	//checkError(err, "Failed to create p10k-term.zsh")
-	//defer func() {
-	//	err := confP10kTerm.Close()
-	//	checkError(err, "Failed to close p10k-term.zsh")
-	//}()
-	//_, err = confP10kTerm.Write(rawFileP10kTerm)
-	//checkError(err, "Failed to write p10k-term.zsh")
-
 	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh")
 }
 
 func p10kiTerm2() {
 	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
-
-	//respP10kiTerm2, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
-	//checkError(err, "Failed to download p10k-iterm2.zsh, please check https://github.com/leelsey/ConfStore")
-	//defer func() {
-	//	err := respP10kiTerm2.Body.Close()
-	//	checkError(err, "Failed to close p10ki-iterm2.zsh response body")
-	//}()
-	//rawFileP10kiTerm2, _ := ioutil.ReadAll(respP10kiTerm2.Body)
-	//
-	//confP10kiTerm2, err := os.OpenFile(dlP10kiTerm2, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	//checkError(err, "Failed to create p10ki-iterm2.zsh")
-	//defer func() {
-	//	err := confP10kiTerm2.Close()
-	//	checkError(err, "Failed to close p10ki-iterm2.zsh")
-	//}()
-	//_, err = confP10kiTerm2.Write(rawFileP10kiTerm2)
-	//checkError(err, "Failed to write p10ki-iterm2.zsh")
 
 	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh")
 }
@@ -510,45 +449,11 @@ func p10kiTerm2() {
 func p10kTMUX() {
 	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
 
-	//respP10kTMUX, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
-	//checkError(err, "Failed to download p10k-tumx.zsh, please check https://github.com/leelsey/ConfStore")
-	//defer func() {
-	//	err := respP10kTMUX.Body.Close()
-	//	checkError(err, "Failed to close p10k-tmux.zsh response body")
-	//}()
-	//rawFileP10kTMUX, _ := ioutil.ReadAll(respP10kTMUX.Body)
-	//
-	//confP10kTMUX, err := os.OpenFile(dlP10kTMUX, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	//checkError(err, "Failed to create p10k-tmux.zsh")
-	//defer func() {
-	//	err := confP10kTMUX.Close()
-	//	checkError(err, "Failed to close p10k-tmux.zsh")
-	//}()
-	//_, err = confP10kTMUX.Write(rawFileP10kTMUX)
-	//checkError(err, "Failed to write p10k-tmux.zsh")
-
 	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh")
 }
 
 func p10kEtc() {
 	dlP10kEtc := p10kPath + "p10k-etc.zsh"
-
-	//respP10kEtc, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
-	//checkError(err, "Failed to download p10k-etc.zsh, please check https://github.com/leelsey/ConfStore")
-	//defer func() {
-	//	err := respP10kEtc.Body.Close()
-	//	checkError(err, "Failed to close p10k-etc.zsh response body")
-	//}()
-	//rawFileP10kEtc, _ := ioutil.ReadAll(respP10kEtc.Body)
-	//
-	//confP10kEtc, err := os.OpenFile(dlP10kEtc, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0644))
-	//checkError(err, "Failed to create p10k-etc.zsh")
-	//defer func() {
-	//	err := confP10kEtc.Close()
-	//	checkError(err, "Failed to close p10k-etc.zsh")
-	//}()
-	//_, err = confP10kEtc.Write(rawFileP10kEtc)
-	//checkError(err, "Failed to write p10k-etc.zsh")
 
 	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh")
 }
@@ -556,45 +461,11 @@ func p10kEtc() {
 func iTerm2Conf() {
 	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
 
-	//respiTerm2Conf, err := http.Get("https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
-	//checkError(err, "Failed to download iTerm2 configure file, please check https://github.com/leelsey/ConfStore")
-	//defer func() {
-	//	err := respiTerm2Conf.Body.Close()
-	//	checkError(err, "Failed to close iTerm2.plist response body")
-	//}()
-	//rawFileiTerm2Conf, _ := ioutil.ReadAll(respiTerm2Conf.Body)
-	//
-	//confiTerm2Conf, err := os.OpenFile(dliTerm2Conf, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0600))
-	//checkError(err, "Failed to create iTerm2.plist")
-	//defer func() {
-	//	err := confiTerm2Conf.Close()
-	//	checkError(err, "Failed to close iTerm2.plist")
-	//}()
-	//_, err = confiTerm2Conf.Write(rawFileiTerm2Conf)
-	//checkError(err, "Failed to write iTerm2.plist")
-
 	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist")
 }
 
 func installBrew() {
 	dlBrewPath := workingDir() + ".dev4mac-brew.sh"
-
-	//resp, err := http.Get("https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
-	//checkError(err, "Failed to download Homebrew install file, please check https://github.com/Homebrew/install")
-	//defer func() {
-	//	err := resp.Body.Close()
-	//	checkError(err, "Failed to close Homebrew install.sh response body")
-	//}()
-	//rawFile, _ := ioutil.ReadAll(resp.Body)
-	//
-	//brewInstaller, err := os.OpenFile(dlBrewPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(0755))
-	//checkError(err, "Failed to create install.sh")
-	//defer func() {
-	//	err := brewInstaller.Close()
-	//	checkError(err, "Failed to close install.sh")
-	//}()
-	//_, err = brewInstaller.Write(rawFile)
-	//checkError(err, "Failed to write install.sh")
 
 	downloadFile(dlBrewPath, "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh")
 
@@ -915,7 +786,6 @@ func macLanguage(runOpt string) {
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		checkPermission()
-
 		addJavaHome("", "")
 		addJavaHome("@17", "-17")
 		addJavaHome("@11", "-11")
