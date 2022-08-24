@@ -48,25 +48,32 @@ var (
 	//clrBlack  = "\033[30m"
 )
 
+func messageError(handling, msg, code string) {
+	errOccurred := clrRed + "\nError occurred " + clrReset + "at "
+	errMsgFormat := "\n" + clrRed + "Error >> " + clrReset + msg + " (" + code + ")\n"
+	if handling == "fatal" || handling == "stop" {
+		fmt.Print(errors.New(lstDot + "Fatal error" + errOccurred))
+		log.Fatalln(errMsgFormat)
+	} else if handling == "print" || handling == "continue" {
+		log.Println(errMsgFormat)
+	} else if handling == "panic" || handling == "detail" {
+		fmt.Print(errors.New(lstDot + "Panic error" + errOccurred))
+		panic(errMsgFormat)
+	} else {
+		fmt.Print(errors.New(lstDot + "Unknown error" + errOccurred))
+		log.Fatalln(errMsgFormat)
+	}
+}
+
 func checkError(err error, msg string) {
-	defer func() {
-		if recv := recover(); recv != nil {
-			fmt.Println("\n"+lstDot, recv)
-		}
-	}()
 	if err != nil {
-		log.Fatalln(clrRed + "Error >> " + msg + " (" + err.Error() + ")\n")
+		messageError("fatal", msg, err.Error())
 	}
 }
 
 func checkCmdError(err error, msg, pkg string) {
-	defer func() {
-		if recv := recover(); recv != nil {
-			fmt.Println("\n"+lstDot, recv)
-		}
-	}()
 	if err != nil {
-		fmt.Println(fmt.Errorf(clrRed + "Error >> " + msg + " " + clrYellow + pkg + clrReset + " (" + err.Error() + ")"))
+		messageError("print", msg+" "+clrYellow+pkg+clrReset, err.Error())
 	}
 }
 
@@ -80,9 +87,10 @@ func checkPermission() {
 	checkError(err, "Failed to get sudo permission")
 
 	if string(whoAmI) != "root\n" {
-		log.Fatalln(clrRed + "Error >> " + clrReset + "Incorrect user, please check permission of sudo.\n" +
+		msg := "Incorrect user, please check permission of sudo.\n" +
 			lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
-			lstDot + "Working username: " + string(whoAmI))
+			lstDot + "Working username: " + string(whoAmI)
+		messageError("fatal", msg, "User")
 	}
 }
 
@@ -170,7 +178,7 @@ func appendFile(filePath, fileContents string, fileMode int) {
 	checkError(err, "Failed to get file information to append contents from \""+filePath+"\"")
 	defer func() {
 		err := targetFile.Close()
-		checkError(err, "Failed to finish append ceontents to \""+filePath+"\"")
+		checkError(err, "Failed to finish append contents to \""+filePath+"\"")
 	}()
 	_, err = targetFile.Write([]byte(fileContents))
 	checkError(err, "Failed to append contents to \""+filePath+"\"")
@@ -433,7 +441,7 @@ func installBrew() {
 	removeFile(insBrewPath)
 
 	if checkBrewExists() == false {
-		log.Fatalln(clrRed + "Error >>" + clrReset + " Installed brew failed, please check your system\n")
+		messageError("fatal", "Installed brew failed, please check your system", "Can't find Homebrew")
 	}
 }
 
