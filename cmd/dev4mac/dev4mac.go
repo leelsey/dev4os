@@ -1,7 +1,6 @@
 package main
 
 import (
-	"archive/zip"
 	"bufio"
 	"errors"
 	"fmt"
@@ -12,9 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -186,6 +183,13 @@ func removeFile(filePath string) {
 	}
 }
 
+func linkFile(srcPath, destPath string) {
+	lnFile := exec.Command(cmdRoot, "ln", "-sfn", srcPath, destPath)
+	lnFile.Stderr = os.Stderr
+	err := lnFile.Run()
+	checkCmdError(err, "Add failed to link file", srcPath+"->"+destPath)
+}
+
 func downloadFile(filePath, urlPath string) {
 	resp, err := http.Get(urlPath)
 	checkError(err, "Failed to connect "+urlPath)
@@ -201,57 +205,57 @@ func downloadFile(filePath, urlPath string) {
 	makeFile(filePath, string(rawFile))
 }
 
-func unzipFile(srcPath, destPath string) error {
-	reader, err := zip.OpenReader(srcPath)
-	checkError(err, "Failed to open zip file")
-	defer func() {
-		err := reader.Close()
-		checkError(err, "Failed to close zip file")
-	}()
-
-	errMkDir := os.MkdirAll(destPath, 0755)
-	checkError(errMkDir, "Failed to make directory")
-
-	extractFile := func(srcFile *zip.File) error {
-		rc, err := srcFile.Open()
-		checkError(err, "Failed to open zip file")
-		defer func() {
-			err := rc.Close()
-			checkError(err, "Failed to close zip file")
-		}()
-
-		destPath := filepath.Join(destPath, srcFile.Name)
-
-		if !strings.HasPrefix(destPath, filepath.Clean(destPath)+string(os.PathSeparator)) {
-			return fmt.Errorf("illegal file path: %s", destPath)
-		}
-
-		if srcFile.FileInfo().IsDir() {
-			errMkDest := os.MkdirAll(destPath, srcFile.Mode())
-			checkError(errMkDest, "Failed to make directory")
-		} else {
-			errMkDest := os.MkdirAll(filepath.Dir(destPath), srcFile.Mode())
-			checkError(errMkDest, "Failed to make directory")
-			destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcFile.Mode())
-			checkError(err, "Failed to open file")
-			defer func() {
-				err := destFile.Close()
-				checkError(err, "Failed to close file")
-			}()
-
-			_, err = io.Copy(destFile, rc)
-			checkError(err, "Failed to copy zip file")
-		}
-		return nil
-	}
-
-	for _, files := range reader.File {
-		err := extractFile(files)
-		checkError(err, "Failed to extract zip file")
-	}
-
-	return nil
-}
+//func unzipFile(srcPath, destPath string) error {
+//	reader, err := zip.OpenReader(srcPath)
+//	checkError(err, "Failed to open zip file")
+//	defer func() {
+//		err := reader.Close()
+//		checkError(err, "Failed to close zip file")
+//	}()
+//
+//	errMkDir := os.MkdirAll(destPath, 0755)
+//	checkError(errMkDir, "Failed to make directory")
+//
+//	extractFile := func(srcFile *zip.File) error {
+//		rc, err := srcFile.Open()
+//		checkError(err, "Failed to open zip file")
+//		defer func() {
+//			err := rc.Close()
+//			checkError(err, "Failed to close zip file")
+//		}()
+//
+//		destPath := filepath.Join(destPath, srcFile.Name)
+//
+//		if !strings.HasPrefix(destPath, filepath.Clean(destPath)+string(os.PathSeparator)) {
+//			return fmt.Errorf("illegal file path: %s", destPath)
+//		}
+//
+//		if srcFile.FileInfo().IsDir() {
+//			errMkDest := os.MkdirAll(destPath, srcFile.Mode())
+//			checkError(errMkDest, "Failed to make directory")
+//		} else {
+//			errMkDest := os.MkdirAll(filepath.Dir(destPath), srcFile.Mode())
+//			checkError(errMkDest, "Failed to make directory")
+//			destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcFile.Mode())
+//			checkError(err, "Failed to open file")
+//			defer func() {
+//				err := destFile.Close()
+//				checkError(err, "Failed to close file")
+//			}()
+//
+//			_, err = io.Copy(destFile, rc)
+//			checkError(err, "Failed to copy zip file")
+//		}
+//		return nil
+//	}
+//
+//	for _, files := range reader.File {
+//		err := extractFile(files)
+//		checkError(err, "Failed to extract zip file")
+//	}
+//
+//	return nil
+//}
 
 func newZProfile() {
 	fileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
@@ -367,10 +371,11 @@ func addJavaHome(tgVer, lnVer string) {
 	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
 
 	if _, errExist := os.Stat(brewPrefix + "Cellar/openjdk" + tgVer); errors.Is(errExist, os.ErrNotExist) {
-		lnJavaHome := exec.Command(cmdRoot, "ln", "-sfn", tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
-		lnJavaHome.Stderr = os.Stderr
-		err := lnJavaHome.Run()
-		checkCmdError(err, "Add failed to java home", "OpenJDK")
+		linkFile(tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
+		//lnJavaHome := exec.Command(cmdRoot, "ln", "-sfn", tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
+		//lnJavaHome.Stderr = os.Stderr
+		//err := lnJavaHome.Run()
+		//checkCmdError(err, "Add failed to java home", "OpenJDK")
 	}
 }
 
