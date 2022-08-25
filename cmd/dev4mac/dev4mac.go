@@ -155,30 +155,23 @@ func userName() string {
 }
 
 func makeDir(dirPath string) {
-	err := os.MkdirAll(dirPath, 0700)
-	checkError(err, "Failed to make directory")
+	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(dirPath, 0755)
+		checkError(err, "Failed to make directory")
+	}
 }
 
 func makeFile(filePath, fileContents string, fileMode int) {
 	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(fileMode))
 	checkError(err, "Failed to get file information to make new file from \""+filePath+"\"")
+
 	defer func() {
 		err := targetFile.Close()
 		checkError(err, "Failed to finish make file to \""+filePath+"\"")
 	}()
+
 	_, err = targetFile.Write([]byte(fileContents))
 	checkError(err, "Failed to fill in information to \""+filePath+"\"")
-}
-
-func appendFile(filePath, fileContents string, fileMode int) {
-	targetFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(fileMode))
-	checkError(err, "Failed to get file information to append contents from \""+filePath+"\"")
-	defer func() {
-		err := targetFile.Close()
-		checkError(err, "Failed to finish append contents to \""+filePath+"\"")
-	}()
-	_, err = targetFile.Write([]byte(fileContents))
-	checkError(err, "Failed to append contents to \""+filePath+"\"")
 }
 
 func removeFile(filePath string) {
@@ -210,32 +203,23 @@ func downloadFile(filePath, urlPath string, fileMode int) {
 	makeFile(filePath, string(rawFile), fileMode)
 }
 
+func appendContents(filePath, fileContents string, fileMode int) {
+	targetFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, os.FileMode(fileMode))
+	checkError(err, "Failed to get file information to append contents from \""+filePath+"\"")
+
+	defer func() {
+		err := targetFile.Close()
+		checkError(err, "Failed to finish append contents to \""+filePath+"\"")
+	}()
+
+	_, err = targetFile.Write([]byte(fileContents))
+	checkError(err, "Failed to append contents to \""+filePath+"\"")
+}
+
 func clearLine(line int) {
 	for clear := 0; clear < line; clear++ {
 		fmt.Printf("\033[1A\033[K")
 	}
-}
-
-func newZProfile() {
-	fileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
-		"#   |___  /  __ \\|  __ \\ / __ \\|  ____|_   _| |    |  ____|\n" +
-		"#      / /| |__) | |__) | |  | | |__    | | | |    | |__   \n" +
-		"#     / / |  ___/|  _  /| |  | |  __|   | | | |    |  __|  \n" +
-		"#    / /__| |    | | \\ \\| |__| | |     _| |_| |____| |____ \n" +
-		"#   /_____|_|    |_|  \\_\\\\____/|_|    |_____|______|______|\n#\n" +
-		"#  " + userName() + "’s zsh profile\n\n"
-	makeFile(profilePath, fileContents, 0600)
-}
-
-func newZshRC() {
-	fileContents := "#   ______ _____ _    _ _____   _____\n" +
-		"#  |___  // ____| |  | |  __ \\ / ____|\n" +
-		"#     / /| (___ | |__| | |__) | |\n" +
-		"#    / /  \\___ \\|  __  |  _  /| |\n" +
-		"#   / /__ ____) | |  | | | \\ \\| |____\n" +
-		"#  /_____|_____/|_|  |_|_|  \\_\\\\_____|\n#\n" +
-		"#  " + userName() + "’s zsh run commands\n\n"
-	makeFile(shrcPath, fileContents, 0600)
 }
 
 func brewRepository(repo string) {
@@ -344,9 +328,13 @@ func addJavaHome(tgVer, lnVer string) {
 }
 
 func confA4s() {
+	a4sPath := homeDir() + ".config/alias4sh"
+	makeDir(a4sPath)
+	makeFile(a4sPath+"/alias4.sh", "# ALIAS4SH", 0644)
+
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
 
-	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh", 0600)
+	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh", 0644)
 
 	installA4s := exec.Command("/bin/sh", dlA4sPath)
 	if err := installA4s.Run(); err != nil {
@@ -388,7 +376,7 @@ func confG4s() {
 
 	ignorePath := ignoreDirPath + "gitignore_global"
 
-	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample", 0600)
+	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample", 0644)
 
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
 	errExcludesFile := setExcludesFile.Run()
@@ -405,31 +393,31 @@ func confG4s() {
 func p10kTerm() {
 	dlP10kTerm := p10kPath + "p10k-term.zsh"
 
-	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0600)
+	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0644)
 }
 
 func p10kiTerm2() {
 	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
 
-	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0600)
+	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0644)
 }
 
 func p10kTMUX() {
 	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
 
-	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0600)
+	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0644)
 }
 
 func p10kEtc() {
 	dlP10kEtc := p10kPath + "p10k-etc.zsh"
 
-	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0600)
+	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0644)
 }
 
 func iTerm2Conf() {
 	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
 
-	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0600)
+	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
 }
 
 func installBrew() {
@@ -485,12 +473,28 @@ func macEnv() {
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
 	macLdBar.Start()
 
-	newZProfile()
-	newZshRC()
+	profileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
+		"#   |___  /  __ \\|  __ \\ / __ \\|  ____|_   _| |    |  ____|\n" +
+		"#      / /| |__) | |__) | |  | | |__    | | | |    | |__   \n" +
+		"#     / / |  ___/|  _  /| |  | |  __|   | | | |    |  __|  \n" +
+		"#    / /__| |    | | \\ \\| |__| | |     _| |_| |____| |____ \n" +
+		"#   /_____|_|    |_|  \\_\\\\____/|_|    |_____|______|______|\n#\n" +
+		"#  " + userName() + "’s zsh profile\n\n" +
+		"# HOMEBREW\n" +
+		"eval \"$(" + cmdPMS + " shellenv)\"\n\n"
+	makeFile(profilePath, profileContents, 0644)
 
-	profileAppend := "# HOMEBREW\n" +
-		"eval \"$(" + cmdPMS + " shellenv)\"\n"
-	appendFile(profilePath, profileAppend, 0600)
+	shrcContents := "#   ______ _____ _    _ _____   _____\n" +
+		"#  |___  // ____| |  | |  __ \\ / ____|\n" +
+		"#     / /| (___ | |__| | |__) | |\n" +
+		"#    / /  \\___ \\|  __  |  _  /| |\n" +
+		"#   / /__ ____) | |  | | | \\ \\| |____\n" +
+		"#  /_____|_____/|_|  |_|_|  \\_\\\\_____|\n#\n" +
+		"#  " + userName() + "’s zsh run commands\n\n"
+	makeFile(shrcPath, shrcContents, 0644)
+
+	makeDir(homeDir() + ".config")
+	makeDir(homeDir() + ".cache")
 
 	macLdBar.Stop()
 }
@@ -551,7 +555,7 @@ func macDependency(runOpt string) {
 		"export LDFLAGS=\"-L" + brewPrefix + "opt/openssl@1.1/lib\"\n" +
 		"export CPPFLAGS=\"-I" + brewPrefix + "opt/openssl@1.1/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/openssl@1.1/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend, 0600)
+	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt != "2" && runOpt != "3" {
 		brewInstall("ccache")
@@ -604,6 +608,7 @@ func macDependency(runOpt string) {
 		brewInstall("html-xml-utils")
 		brewInstall("shared-mime-info")
 		brewInstall("x265")
+		brewInstall("oniguruma")
 		brewInstall("zlib")
 		brewInstall("glib")
 		brewInstall("libgpg-error")
@@ -678,7 +683,7 @@ func macDependency(runOpt string) {
 			"export LDFLAGS=\"" + brewPrefix + "opt/libxslt/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/libxslt/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/libxslt/lib/pkgconfig\"\n\n"
-		appendFile(shrcPath, shrcAppend, 0600)
+		appendContents(shrcPath, shrcAppend, 0644)
 	}
 
 	macLdBar.Stop()
@@ -701,13 +706,13 @@ func macLanguage(runOpt string) {
 		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend, 0600)
+	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt == "2" || runOpt == "3" {
 		shrcAppend := "# JAVA\n" +
 			"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
-		appendFile(shrcPath, shrcAppend, 0600)
+		appendContents(shrcPath, shrcAppend, 0644)
 	} else if runOpt == "4" || runOpt == "5" {
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
@@ -728,7 +733,7 @@ func macLanguage(runOpt string) {
 			"export PATH=\"$PYENV_ROOT/bin:$PATH\"\n" +
 			"eval \"$(pyenv init --path)\"\n" +
 			"eval \"$(pyenv init -)\"\n\n"
-		appendFile(shrcPath, shrcAppend, 0600)
+		appendContents(shrcPath, shrcAppend, 0644)
 
 		nvmIns := exec.Command("nvm", pmsIns, "--lts")
 		nvmIns.Stderr = os.Stderr
@@ -808,7 +813,7 @@ func macDatabase(runOpt string) {
 		"export LDFLAGS=\"" + brewPrefix + "opt/sqlite/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/sqlite/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/sqlite/lib/pkgconfig\"\n\n"
-	appendFile(shrcPath, shrcAppend, 0600)
+	appendContents(shrcPath, shrcAppend, 0644)
 
 	macLdBar.Stop()
 }
@@ -819,6 +824,22 @@ func macDevVM() {
 	macLdBar.Start()
 
 	brewInstall("asdf")
+
+	shrcAppend := "# ASDF VM\n" +
+		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
+		"#source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n\n"
+	appendContents(shrcPath, shrcAppend, 0644)
+
+	asdfrcContents := "#              _____ _____  ______  __      ____  __ \n" +
+		"#       /\\    / ____|  __ \\|  ____| \\ \\    / /  \\/  |\n" +
+		"#      /  \\  | (___ | |  | | |__ ____\\ \\  / /| \\  / |\n" +
+		"#     / /\\ \\  \\___ \\| |  | |  __|_____\\ \\/ / | |\\/| |\n" +
+		"#    / ____ \\ ____) | |__| | |         \\  /  | |  | |\n" +
+		"#   /_/    \\_\\_____/|_____/|_|          \\/   |_|  |_|\n#\n" +
+		"#  " + userName() + "’s ASDF-VM run commands\n\n" +
+		"# JAVA\n" +
+		"java_macos_integration_enable = yes\n\n"
+	makeFile(homeDir()+".asdfrc", asdfrcContents, 0644)
 
 	asdfInstall("perl", "latest")
 	//asdfInstall("ruby", "latest")   // error
@@ -838,11 +859,6 @@ func macDevVM() {
 	asdfInstall("elixir", "latest")
 	//asdfInstall("haskell", "latest") // error
 	asdfInstall("gleam", "latest")
-
-	shrcAppend := "# ASDF VM\n" +
-		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
-		"#source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n\n"
-	appendFile(shrcPath, shrcAppend, 0600)
 
 	asdfReshim := exec.Command(cmdASDF, "reshim")
 	err := asdfReshim.Run()
@@ -877,6 +893,7 @@ func macTerminal(runOpt string) {
 		iTerm2Conf()
 	}
 
+	confA4s()
 	p10kTerm()
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
@@ -886,7 +903,7 @@ func macTerminal(runOpt string) {
 			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
 			"fi\n" +
 			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
-		appendFile(profilePath, profileAppend, 0600)
+		appendContents(profilePath, profileAppend, 0644)
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		p10kiTerm2()
 		p10kTMUX()
@@ -914,7 +931,7 @@ func macTerminal(runOpt string) {
 			"else\n" +
 			"  [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
 			"fi\n\n"
-		appendFile(profilePath, profileAppend, 0600)
+		appendContents(profilePath, profileAppend, 0644)
 	}
 
 	profileAppend := "# ZSH-COMPLETIONS\n" +
@@ -930,13 +947,13 @@ func macTerminal(runOpt string) {
 		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
 		"# Z\n" +
 		"source " + brewPrefix + "etc/profile.d/z.sh\n\n" +
+		"# ALIAS4SH\n" +
+		"source " + homeDir() + "/.config/alias4sh/alias4.sh\n\n" +
 		"# Edit\n" +
 		"export EDITOR=/usr/bin/vi\n" +
 		"edit () { $EDITOR \"$@\" }\n" +
 		"#vi () { $EDITOR \"$@\" }\n\n"
-	appendFile(profilePath, profileAppend, 0600)
-
-	confA4s()
+	appendContents(profilePath, profileAppend, 0644)
 
 	macLdBar.Stop()
 }
@@ -973,7 +990,7 @@ func macCLIApp(runOpt string) {
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n" +
 			"# DIRENV\n" +
 			"eval \"$(direnv hook zsh)\"\n\n"
-		appendFile(shrcPath, shrcAppend, 0600)
+		appendContents(shrcPath, shrcAppend, 0644)
 	}
 
 	if runOpt == "6" || runOpt == "7" {
@@ -1079,7 +1096,7 @@ func macGUIApp(runOpt string) {
 		"export PATH=$PATH:$ANDROID_HOME/tools\n" +
 		"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
 		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
-	appendFile(shrcPath, shrcAppend, 0600)
+	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt == "7" {
 		brewCask("burp-suite", "Burp Suite Community Edition")
@@ -1103,7 +1120,7 @@ func macEnd() {
 	brewRemoveCache()
 
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
-	appendFile(shrcPath, shrcAppend, 0600)
+	appendContents(shrcPath, shrcAppend, 0644)
 }
 
 func main() {
@@ -1145,10 +1162,10 @@ startOpt:
 				"Terminal/CLI applications with set basic preferences.")
 			macBegin()
 			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
+			//macDependency(beginOpt)
+			//macLanguage(beginOpt)
 			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
+			//macCLIApp(beginOpt)
 		} else if beginOpt == "3" {
 			fmt.Println(lstDot + "Select option " + clrBlue + "3\n" + clrReset + lstDot + clrBlue + "Creator" +
 				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
@@ -1188,7 +1205,7 @@ startOpt:
 			macGUIApp(beginOpt)
 		} else if beginOpt == "6" {
 			fmt.Println(lstDot + "Select option " + clrBlue + "6\n" + clrReset + lstDot + clrBlue + "Professional" +
-				clrReset + ": setup homebrew with configure shell, then install Dependencies, Danguages, Server" +
+				clrReset + ": setup homebrew with configure shell, then install Dependencies, Languages, Server" +
 				", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
 			macBegin()
 			macEnv()
