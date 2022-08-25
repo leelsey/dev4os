@@ -390,36 +390,6 @@ func confG4s() {
 	fmt.Println(string(contentGitConf))
 }
 
-func p10kTerm() {
-	dlP10kTerm := p10kPath + "p10k-term.zsh"
-
-	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0644)
-}
-
-func p10kiTerm2() {
-	dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
-
-	downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0644)
-}
-
-func p10kTMUX() {
-	dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
-
-	downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0644)
-}
-
-func p10kEtc() {
-	dlP10kEtc := p10kPath + "p10k-etc.zsh"
-
-	downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0644)
-}
-
-func iTerm2Conf() {
-	dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
-
-	downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
-}
-
 func installBrew() {
 	insBrewPath := workingDir() + ".dev4mac-brew.sh"
 
@@ -872,6 +842,7 @@ func macTerminal(runOpt string) {
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
 	macLdBar.Start()
 
+	confA4s()
 	brewInstall("zsh-completions")
 	brewInstall("zsh-syntax-highlighting")
 	brewInstall("zsh-autosuggestions")
@@ -890,11 +861,12 @@ func macTerminal(runOpt string) {
 		brewInstall("tmuxinator")
 		brewInstall("neofetch")
 
-		iTerm2Conf()
+		dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
+		downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
 	}
 
-	confA4s()
-	p10kTerm()
+	dlP10kTerm := p10kPath + "p10k-term.zsh"
+	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0644)
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
 		profileAppend := "# POWERLEVEL10K\n" +
@@ -905,9 +877,13 @@ func macTerminal(runOpt string) {
 			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
 		appendContents(profilePath, profileAppend, 0644)
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		p10kiTerm2()
-		p10kTMUX()
-		p10kEtc()
+		dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
+		dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
+		dlP10kEtc := p10kPath + "p10k-etc.zsh"
+
+		downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0644)
+		downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0644)
+		downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0644)
 
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
