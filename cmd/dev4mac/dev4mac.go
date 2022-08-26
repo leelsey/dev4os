@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/briandowns/spinner"
+	"golang.org/x/term"
 	"io"
 	"log"
 	"net/http"
@@ -23,7 +24,7 @@ var (
 	arm64Path   = "/opt/homebrew/"
 	amd64Path   = "/usr/local/"
 	brewPrefix  = checkBrewPrefix()
-	cmdRoot     = "sudo"
+	cmdAdmin    = "sudo"
 	cmdPMS      = checkBrewPath()
 	cmdGit      = "/usr/bin/git"
 	pmsIns      = "install"
@@ -35,6 +36,8 @@ var (
 	p10kPath  = homeDir() + ".config/p10k/"
 	p10kCache = homeDir() + ".cache/p10k-" + userName()
 	macLdBar  = spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	clrOn     = "\033[28m"
+	clrOff    = "\033[8m"
 	clrReset  = "\033[0m"
 	clrRed    = "\033[31m"
 	clrGreen  = "\033[32m"
@@ -74,21 +77,73 @@ func checkCmdError(err error, msg, pkg string) {
 	}
 }
 
-func checkPermission() {
-	sudoPW := exec.Command("sudo", "whoami")
-	sudoPW.Env = os.Environ()
-	sudoPW.Stdin = os.Stdin
-	sudoPW.Stderr = os.Stderr
-	whoAmI, err := sudoPW.Output()
-	clearLine(1)
+func checkPassword() (string, bool) {
+	try := 0
+	for try < 3 {
+		fmt.Print("Password:")
+		bytePW, _ := term.ReadPassword(0)
+		strPW := string(bytePW)
+		fmt.Println("\n - Checking password... ")
+		try++
+
+		inputPW := exec.Command("echo", strPW)
+		checkPW := exec.Command(cmdAdmin, "-Sv")
+		checkPW.Env = os.Environ()
+		checkPW.Stdout = os.Stdout
+
+		checkPW.Stdin, _ = inputPW.StdoutPipe()
+
+		_ = checkPW.Start()
+		_ = inputPW.Run()
+		errSudo := checkPW.Wait()
+		if errSudo != nil {
+			clearLine(1)
+			if try < 3 {
+				fmt.Println(lstDot + "Sorry, try again.")
+			} else if try >= 3 {
+				fmt.Println(lstDot + "3 incorrect password attempts.")
+				//os.Exit(0)
+			}
+		} else {
+			if try == 1 {
+				clearLine(try)
+			} else if try > 1 && try <= 3 {
+				try = try*2 - 1
+				clearLine(try)
+			}
+			return strPW, true // break
+		}
+	}
+	return "", false
+}
+
+func needPermission(strPW string) {
+	inputPW := exec.Command("echo", strPW)
+	checkPW := exec.Command(cmdAdmin, "-Sv")
+	checkPW.Env = os.Environ()
+	checkPW.Stdout = os.Stdout
+
+	checkPW.Stdin, _ = inputPW.StdoutPipe()
+	_ = checkPW.Start()
+	_ = inputPW.Run()
+	errSudo := checkPW.Wait()
+	checkError(errSudo, "Failed to run root permission")
+
+	runRoot := exec.Command(cmdAdmin, "whoami")
+	runRoot.Env = os.Environ()
+	//runRoot.Stdin = os.Stdin
+	//runRoot.Stderr = os.Stderr
+	whoAmI, err := runRoot.Output()
+	//clearLine(1)
 	checkError(err, "Failed to get sudo permission")
 
-	if string(whoAmI) != "root\n" {
-		msg := "Incorrect user, please check permission of sudo.\n" +
-			lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
-			lstDot + "Working username: " + string(whoAmI)
-		messageError("fatal", msg, "User")
-	}
+	fmt.Println(string(whoAmI))
+	//if string(whoAmI) != "root\n" {
+	//	msg := "Incorrect user, please check permission of sudo.\n" +
+	//		lstDot + "It need sudo command of \"" + clrRed + "root" + clrReset + "\" user's permission.\n" +
+	//		lstDot + "Working username: " + string(whoAmI)
+	//	messageError("fatal", msg, "User")
+	//}
 }
 
 func checkNetStatus() {
@@ -100,6 +155,14 @@ func checkNetStatus() {
 	_, err := client.Get("https://9.9.9.9")
 	if err != nil {
 		log.Fatalln(errors.New("\n" + lstDot + "Please check your internet connection and try again.\n"))
+	}
+}
+
+func checkExists(path string) bool {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		return true
+	} else {
+		return false
 	}
 }
 
@@ -182,7 +245,7 @@ func removeFile(filePath string) {
 }
 
 func linkFile(srcPath, destPath string) {
-	lnFile := exec.Command(cmdRoot, "ln", "-sfn", srcPath, destPath)
+	lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, destPath)
 	lnFile.Stderr = os.Stderr
 	err := lnFile.Run()
 	checkCmdError(err, "Add failed to link file", srcPath+"->"+destPath)
@@ -278,7 +341,7 @@ func brewCaskSudo(pkg, app, path string) {
 	macLdBar.Stop()
 
 	fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) for install " + clrBlue + app + clrReset)
-	checkPermission()
+	//needPermission()
 	clearLine(3)
 
 	macLdBar.Start()
@@ -313,7 +376,7 @@ func addJavaHome(tgVer, lnVer string) {
 	macLdBar.Stop()
 
 	fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) for add " + clrBlue + "Java_Home" + clrReset)
-	checkPermission()
+	//needPermission()
 	clearLine(3)
 
 	macLdBar.Start()
@@ -416,7 +479,7 @@ func macBegin() {
 		macLdBar.Start()
 	} else {
 		fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) for install " + clrBlue + "Homebrew" + clrReset)
-		checkPermission()
+		//needPermission()
 		clearLine(1)
 
 		macLdBar.Suffix = " Installing homebrew... "
@@ -547,6 +610,8 @@ func macDependency(runOpt string) {
 		brewInstall("nettle")
 		brewInstall("coreutils")
 		brewInstall("ldns")
+		brewInstall("isl")
+		brewInstall("npth")
 		brewInstall("gzip")
 		brewInstall("bzip2")
 		brewInstall("fop")
@@ -559,7 +624,6 @@ func macDependency(runOpt string) {
 		brewInstall("webp")
 		brewInstall("rtmpdump")
 		brewInstall("aom")
-		brewInstall("npth")
 		brewInstall("screenresolution")
 		brewInstall("gnu-getopt")
 		brewInstall("brotli")
@@ -586,6 +650,7 @@ func macDependency(runOpt string) {
 		brewInstall("libunistring")
 		brewInstall("libatomic_ops")
 		brewInstall("libiconv")
+		brewInstall("libmpc")
 		brewInstall("libidn")
 		brewInstall("libidn2")
 		brewInstall("libssh2")
@@ -683,12 +748,15 @@ func macLanguage(runOpt string) {
 			"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
 		appendContents(shrcPath, shrcAppend, 0644)
-	} else if runOpt == "4" || runOpt == "5" {
+	} else {
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
 		brewInstall("openjdk@17")
 		brewInstall("go")
 		brewInstall("php")
+	}
+
+	if runOpt == "4" || runOpt == "5" {
 		brewInstall("nvm")
 		brewInstall("pyenv")
 		brewInstall("pyenv-virtualenv")
@@ -710,14 +778,11 @@ func macLanguage(runOpt string) {
 		err := nvmIns.Run()
 		checkCmdError(err, "NVM failed to install", "LTS")
 	} else if runOpt == "6" || runOpt == "7" {
-		brewInstall("openjdk@8")
-		brewInstall("openjdk@11")
-		brewInstall("openjdk@17")
-		brewInstall("go")
+		brewInstall("llvm")
+		brewInstall("gcc") // fortran
 		brewInstall("rust")
 		brewInstall("node")
 		brewInstall("lua")
-		brewInstall("php")
 		brewInstall("groovy")
 		brewInstall("kotlin")
 		brewInstall("scala")
@@ -734,7 +799,7 @@ func macLanguage(runOpt string) {
 	}
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		checkPermission()
+		//needPermission()
 		addJavaHome("", "")
 		addJavaHome("@17", "-17")
 		addJavaHome("@11", "-11")
@@ -1138,10 +1203,10 @@ startOpt:
 				"Terminal/CLI applications with set basic preferences.")
 			macBegin()
 			macEnv()
-			//macDependency(beginOpt)
-			//macLanguage(beginOpt)
+			macDependency(beginOpt)
+			macLanguage(beginOpt)
 			macTerminal(beginOpt)
-			//macCLIApp(beginOpt)
+			macCLIApp(beginOpt)
 		} else if beginOpt == "3" {
 			fmt.Println(lstDot + "Select option " + clrBlue + "3\n" + clrReset + lstDot + clrBlue + "Creator" +
 				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
@@ -1207,6 +1272,15 @@ startOpt:
 			macTerminal(beginOpt)
 			macCLIApp(beginOpt)
 			macGUIApp(beginOpt)
+		} else if beginOpt == "8" { // test
+
+			if adminCode, ok := checkPassword(); ok == true {
+				fmt.Println("Password: " + adminCode)
+				needPermission(adminCode)
+			} else {
+				fmt.Println(lstDot + "It need root password for install Homebrew and some applications.")
+			}
+
 		} else if beginOpt == "0" || beginOpt == "q" || beginOpt == "e" || beginOpt == "quit" || beginOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
 			os.Exit(0)
