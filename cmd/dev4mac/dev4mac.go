@@ -741,22 +741,24 @@ func macLanguage(runOpt string) {
 		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
+	//"# JAVA\n" +
+	//"#export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
+	//"#export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
-	if runOpt == "2" || runOpt == "3" {
-		shrcAppend := "# JAVA\n" +
-			"export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
-		appendContents(shrcPath, shrcAppend, 0644)
-	} else {
+	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		brewInstall("php")
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
 		brewInstall("openjdk@17")
-		brewInstall("go")
-		brewInstall("php")
+		//needPermission()
+		addJavaHome("", "")
+		addJavaHome("@17", "-17")
+		addJavaHome("@11", "-11")
+		addJavaHome("@8", "-8")
 	}
 
-	if runOpt == "4" || runOpt == "5" {
+	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
 		brewInstall("nvm")
 		brewInstall("pyenv")
 		brewInstall("pyenv-virtualenv")
@@ -780,6 +782,7 @@ func macLanguage(runOpt string) {
 	} else if runOpt == "6" || runOpt == "7" {
 		brewInstall("llvm")
 		brewInstall("gcc") // fortran
+		brewInstall("go")
 		brewInstall("rust")
 		brewInstall("node")
 		brewInstall("lua")
@@ -798,14 +801,6 @@ func macLanguage(runOpt string) {
 		checkCmdError(err, "Stack(haskell) failed to install", "cabal")
 	}
 
-	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		//needPermission()
-		addJavaHome("", "")
-		addJavaHome("@17", "-17")
-		addJavaHome("@11", "-11")
-		addJavaHome("@8", "-8")
-	}
-
 	macLdBar.Stop()
 }
 
@@ -814,10 +809,6 @@ func macServer(runOpt string) {
 	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install servers!\n"
 	macLdBar.Start()
 
-	if runOpt == "3" {
-	} else {
-		brewInstall("httpd")
-	}
 	brewInstall("httpd")
 	brewInstall("tomcat")
 	brewInstall("nginx")
@@ -1097,9 +1088,10 @@ func macGUIApp(runOpt string) {
 		brewCask("blender", "Blender")
 		brewCask("obs", "OBS")
 		brewCaskSudo("loopback", "Loopback", "/Applications/Loopback.app")
-		if runOpt == "3" {
-			brewCaskSudo("blackhole-64ch", "BlackHole (64ch)", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
-		}
+	}
+
+	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
+		brewCaskSudo("blackhole-64ch", "BlackHole (64ch)", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver")
 	}
 
 	if runOpt == "3" || runOpt == "4" {
@@ -1164,14 +1156,160 @@ func macEnd() {
 	appendContents(shrcPath, shrcAppend, 0644)
 }
 
+func macMain(runOpt, runType, brewSts string) {
+	var g4sOpt string
+	runExplain := lstDot + "Select option " + clrBlue + runOpt + "\n  " + clrReset + runType + clrBlue + runType + clrReset + ": " + brewSts + " homebrew with configure shell"
+
+	if runOpt == "1" {
+		runType = "Minimal"
+		//fmt.Println(lstDot + "Select option " + clrBlue + runOpt + "\n" + clrReset + lstDot + clrBlue + "Minimal" +
+		//	clrReset + ": " + brewSts + " homebrew with configure shell.")
+		fmt.Println(runExplain + ".")
+		macBegin()
+		macEnv()
+	} else if runOpt == "2" {
+		fmt.Println(lstDot + "Select option " + clrBlue + "\n" + clrReset + lstDot + clrBlue + "Basic" +
+			clrReset + ": " + brewSts + " Homebrew with configure Shell, then install Dependencies, Languages and " +
+			"Terminal/CLI applications with set basic preferences.")
+		macBegin()
+		macEnv()
+		macDependency(runOpt)
+		macLanguage(runOpt)
+		macTerminal(runOpt)
+		macCLIApp(runOpt)
+	} else if runOpt == "3" {
+		fmt.Println(lstDot + "Select option " + clrBlue + runOpt + "\n" + clrReset + lstDot + clrBlue + "Creator" +
+			clrReset + ": " + brewSts + " Homebrew with configure Shell, then install Dependencies, Languages and " +
+			"Terminal/CLI/GUI applications with set basic preferences.")
+		macBegin()
+		macEnv()
+		macDependency(runOpt)
+		macLanguage(runOpt)
+		macTerminal(runOpt)
+		macCLIApp(runOpt)
+		macGUIApp(runOpt)
+	} else if runOpt == "4" {
+		fmt.Println(lstDot + "Select option " + clrBlue + runOpt + "\n" + clrReset + lstDot + clrBlue + "Beginner" +
+			clrReset + ": " + brewSts + " Homebrew with configure Shell, then install Dependencies, Languages and " +
+			"Terminal/CLI/GUI applications with set basic preferences.")
+		macBegin()
+		macEnv()
+		macDependency(runOpt)
+		macLanguage(runOpt)
+		macServer(runOpt)
+		macDatabase(runOpt)
+		macTerminal(runOpt)
+		macCLIApp(runOpt)
+		macGUIApp(runOpt)
+	} else if runOpt == "5" {
+		fmt.Println(lstDot + "Select option " + clrBlue + runOpt + "\n" + clrReset + lstDot + clrBlue + "Developer" +
+			clrReset + ": " + brewSts + " Homebrew with configure Shell, then install Dependencies, Languages, Server" +
+			", Database and Terminal/CLI/GUI applications with set basic preferences.")
+		macBegin()
+		macEnv()
+		macDependency(runOpt)
+		macLanguage(runOpt)
+		macServer(runOpt)
+		macDatabase(runOpt)
+		macTerminal(runOpt)
+		macCLIApp(runOpt)
+		macGUIApp(runOpt)
+	} else if runOpt == "6" {
+		fmt.Println(lstDot + "Select option " + clrBlue + runOpt + "\n" + clrReset + lstDot + clrBlue + "Professional" +
+			clrReset + ": " + brewSts + " homebrew with configure shell, then install Dependencies, Languages, Server" +
+			", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
+		macBegin()
+		macEnv()
+		macDependency(runOpt)
+		macLanguage(runOpt)
+		macServer(runOpt)
+		macDatabase(runOpt)
+		macDevVM()
+		macTerminal(runOpt)
+		macCLIApp(runOpt)
+		macGUIApp(runOpt)
+	} else if runOpt == "7" {
+		fmt.Println(lstDot + "Select option " + clrBlue + runOpt + "\n" + clrReset + lstDot + clrBlue + "Specialist" +
+			clrReset + ": " + brewSts + " Homebrew with configure Shell, then install Dependencies, Languages, Server" +
+			", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
+		macBegin()
+		macEnv()
+		macDependency(runOpt)
+		macLanguage(runOpt)
+		macServer(runOpt)
+		macDatabase(runOpt)
+		macDevVM()
+		macTerminal(runOpt)
+		macCLIApp(runOpt)
+		macGUIApp(runOpt)
+	}
+	macEnd()
+
+	fmt.Printf(clrCyan + "\nFinished to setup!" + clrReset +
+		"\nEnter [Y] to set git global configuration, or enter any key to exit. ")
+	_, errEndOpt := fmt.Scanln(&g4sOpt)
+	if errEndOpt != nil {
+		g4sOpt = "Enter"
+	}
+
+	if g4sOpt == "y" || g4sOpt == "Y" || g4sOpt == "yes" || g4sOpt == "Yes" || g4sOpt == "YES" {
+		fmt.Println(g4sOpt + " pressed, so running Git4sh.")
+		confG4s()
+	} else {
+		fmt.Println(g4sOpt + " pressed, so finishing Dev4mac.")
+	}
+}
+
+func needPassword(runOpt, brewStatus string) {
+	//if adminCode, adminStatus := checkPassword(); adminStatus == true {
+	//	return adminCode
+	//} else {
+	//	fmt.Println(lstDot + "It needs root password to install Homebrew and some applications.")
+	//	return adminCode
+	//}
+
+	var needPW string
+	if runOpt == "1" || runOpt == "2" {
+		if brewStatus == "install" {
+			fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) to install " + clrBlue + "Homebrew")
+		}
+	} else {
+		if brewStatus == "install" {
+			needPW = clrYellow + "Need permission " + clrReset + "(sudo) to install " + clrBlue + "Homebrew" + clrReset + ", " + clrBlue + "Applications" + clrReset + ": "
+		} else if brewStatus == "update" {
+			needPW = clrYellow + "Need permission " + clrReset + "(sudo) to install " + clrBlue + "Applications" + clrReset + ": "
+		}
+
+		if runOpt == "3" {
+			fmt.Println(needPW + "Loopback and BlackHole")
+		} else if runOpt == "4" {
+			fmt.Println(needPW + "Java and BlackHole")
+		} else if runOpt == "5" {
+			fmt.Println(needPW + "Java, BlackHole and VMware Fusion")
+		} else if runOpt == "6" {
+			fmt.Println(needPW + "Java, Loopback and VMware Fusion")
+		} else if runOpt == "7" {
+			fmt.Println(needPW + "Java, Loopback, VMware Fusion, Wireshark and Zenmap")
+		}
+		fmt.Println(needPW)
+	}
+}
+
 func main() {
 	var (
 		beginOpt string
-		endOpt   string
+		brewSts  string
+		runType  string
 	)
 
 	fmt.Println(clrPurple + "\nDev4mac " + clrGrey + "v" + appVer + clrReset)
 	checkNetStatus()
+
+	if checkExists(cmdPMS) == true {
+		brewSts = "update"
+	} else {
+		brewSts = "install"
+	}
 
 	fmt.Println("\nChoose an installation option. " + clrGrey + "(Recommend option is 5)\n" + clrReset +
 		"For a detailed explanation of each option and a list of installations, " +
@@ -1184,103 +1322,29 @@ func main() {
 		"\t6. Professional\n" +
 		"\t7. Specialist\n" +
 		"\t0. Exit\n")
+
 startOpt:
 	for {
 		fmt.Printf("Select command: ")
-		_, errBeginOpt := fmt.Scanln(&beginOpt)
-		if errBeginOpt != nil {
+		_, err := fmt.Scanln(&beginOpt)
+		if err != nil {
 			beginOpt = "Null"
 		}
 
 		if beginOpt == "1" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "1\n" + clrReset + lstDot + clrBlue + "Minimal" +
-				clrReset + ": setup homebrew with configure shell.")
-			macBegin()
-			macEnv()
+			runType = "Minimal"
 		} else if beginOpt == "2" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "2\n" + clrReset + lstDot + clrBlue + "Basic" +
-				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
-				"Terminal/CLI applications with set basic preferences.")
-			macBegin()
-			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
-			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
+			runType = "Basic"
 		} else if beginOpt == "3" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "3\n" + clrReset + lstDot + clrBlue + "Creator" +
-				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
-				"Terminal/CLI/GUI applications with set basic preferences.")
-			macBegin()
-			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
-			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
-			macGUIApp(beginOpt)
+			runType = "Creator"
 		} else if beginOpt == "4" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "4\n" + clrReset + lstDot + clrBlue + "Beginner" +
-				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages and " +
-				"Terminal/CLI/GUI applications with set basic preferences.")
-			macBegin()
-			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
-			macServer(beginOpt)
-			macDatabase(beginOpt)
-			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
-			macGUIApp(beginOpt)
+			runType = "Beginner"
 		} else if beginOpt == "5" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "5\n" + clrReset + lstDot + clrBlue + "Developer" +
-				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages, Server" +
-				", Database and Terminal/CLI/GUI applications with set basic preferences.")
-			macBegin()
-			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
-			macServer(beginOpt)
-			macDatabase(beginOpt)
-			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
-			macGUIApp(beginOpt)
+			runType = "Developer"
 		} else if beginOpt == "6" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "6\n" + clrReset + lstDot + clrBlue + "Professional" +
-				clrReset + ": setup homebrew with configure shell, then install Dependencies, Languages, Server" +
-				", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
-			macBegin()
-			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
-			macServer(beginOpt)
-			macDatabase(beginOpt)
-			macDevVM()
-			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
-			macGUIApp(beginOpt)
+			runType = "Developer"
 		} else if beginOpt == "7" {
-			fmt.Println(lstDot + "Select option " + clrBlue + "7\n" + clrReset + lstDot + clrBlue + "Specialist" +
-				clrReset + ": setup Homebrew with configure Shell, then install Dependencies, Languages, Server" +
-				", Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
-			macBegin()
-			macEnv()
-			macDependency(beginOpt)
-			macLanguage(beginOpt)
-			macServer(beginOpt)
-			macDatabase(beginOpt)
-			macDevVM()
-			macTerminal(beginOpt)
-			macCLIApp(beginOpt)
-			macGUIApp(beginOpt)
-		} else if beginOpt == "8" { // test
-
-			if adminCode, ok := checkPassword(); ok == true {
-				fmt.Println("Password: " + adminCode)
-				needPermission(adminCode)
-			} else {
-				fmt.Println(lstDot + "It need root password for install Homebrew and some applications.")
-			}
-
+			runType = "Specialist"
 		} else if beginOpt == "0" || beginOpt == "q" || beginOpt == "e" || beginOpt == "quit" || beginOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
 			os.Exit(0)
@@ -1291,23 +1355,9 @@ startOpt:
 		}
 		break
 	}
-	macEnd()
+	macMain(beginOpt, runType, brewSts)
 
-	fmt.Printf(clrCyan + "\nFinished to setup!" + clrReset +
-		"\nEnter [Y] to set git global configuration, or enter any key to exit. ")
-	_, errEndOpt := fmt.Scanln(&endOpt)
-	if errEndOpt != nil {
-		endOpt = "Enter"
-	}
-
-	if endOpt == "y" || endOpt == "Y" || endOpt == "yes" || endOpt == "Yes" || endOpt == "YES" {
-		fmt.Println(endOpt + " pressed, so running Git4sh.")
-		confG4s()
-	} else {
-		fmt.Println(endOpt + " pressed, so finishing Dev4mac.")
-	}
-
-	fmt.Println(clrGrey + "\n----------Finished!----------\n" + clrReset +
+	fmt.Println("\n----------Finished!----------\n" +
 		"Please" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
 		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
 		lstDot + "Or restart the Terminal.app by yourself.\n")
