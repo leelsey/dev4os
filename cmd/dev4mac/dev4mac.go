@@ -35,7 +35,9 @@ var (
 	cmdASDF   = checkASDFPath()
 	p10kPath  = homeDir() + ".config/p10k/"
 	p10kCache = homeDir() + ".cache/p10k-" + userName()
+	tryLoop   = 0
 	macLdBar  = spinner.New(spinner.CharSets[16], 50*time.Millisecond)
+	runLdBar  = spinner.New(spinner.CharSets[11], 50*time.Millisecond)
 	clrReset  = "\033[0m"
 	clrRed    = "\033[31m"
 	clrGreen  = "\033[32m"
@@ -75,7 +77,7 @@ func checkCmdError(err error, msg, pkg string) {
 	}
 }
 
-func checkNetStatus() {
+func checkNetStatus() bool {
 	getTimeout := 10000 * time.Millisecond
 	client := http.Client{
 		Timeout: getTimeout,
@@ -83,8 +85,9 @@ func checkNetStatus() {
 
 	_, err := client.Get("https://9.9.9.9")
 	if err != nil {
-		log.Fatalln(errors.New("\n" + lstDot + "Please check your internet connection and try again.\n"))
+		return false
 	}
+	return true
 }
 
 func checkExists(path string) bool {
@@ -129,14 +132,16 @@ func checkBrewExists() bool {
 }
 
 func checkPassword() (string, bool) {
-	try := 0
-	for try < 3 {
+	for tryLoop < 3 {
 		fmt.Print("Password:")
 		bytePw, _ := term.ReadPassword(0)
-		strPw := string(bytePw)
-		fmt.Println("\n - Checking password... ")
-		try++
 
+		runLdBar.Suffix = " Checking password... "
+		runLdBar.Start()
+		//fmt.Println("\n - Checking password... ")
+
+		tryLoop++
+		strPw := string(bytePw)
 		inputPw := exec.Command("echo", strPw)
 		checkPw := exec.Command(cmdAdmin, "-Sv")
 		checkPw.Env = os.Environ()
@@ -148,36 +153,44 @@ func checkPassword() (string, bool) {
 		_ = inputPw.Run()
 		errSudo := checkPw.Wait()
 		if errSudo != nil {
-			clearLine(1)
-			if try < 3 {
-				fmt.Println(lstDot + "Sorry, try again.")
-			} else if try >= 3 {
-				fmt.Println(lstDot + "3 incorrect password attempts.")
+			//clearLine(1)
+			runLdBar.FinalMSG = clrRed + "Password check failed" + clrReset + "\n"
+			runLdBar.Stop()
+			if tryLoop < 3 {
+				fmt.Println(errors.New(lstDot + "Sorry, try again."))
+			} else if tryLoop >= 3 {
+				fmt.Println(errors.New(lstDot + "3 incorrect password attempts."))
 			}
 		} else {
-			try = 1 + try*2
-			clearLine(try)
-			return strPw, true // break
+			runLdBar.Stop()
+			if tryLoop == 1 {
+				clearLine(tryLoop)
+			} else {
+				clearLine(tryLoop * 2)
+			}
+			return strPw, true
 		}
 	}
 	return "", false
 }
 
 func checkPermission(runOpt, brewStatus string) bool {
+	var expHeadMsg string
 	var expMsg string
 
+	expHeadMsg = clrYellow + "Need ROOT permission " + clrReset + "to " + clrYellow + "install " + clrPurple
 	if runOpt == "1" || runOpt == "2" {
 		if brewStatus == "Install" {
-			fmt.Println(clrYellow + "Need permission " + clrReset + "(sudo) to install " + clrBlue + "Homebrew")
+			fmt.Println(expHeadMsg + "Homebrew")
 			return true
 		} else {
 			return false
 		}
 	} else {
 		if brewStatus == "Install" {
-			expMsg = clrYellow + "Need permission " + clrReset + "(sudo) to install " + clrBlue + "Homebrew" + clrReset + ", " + clrBlue + "Applications" + clrReset + ": "
+			expMsg = expHeadMsg + "Homebrew " + clrReset + "and " + clrPurple + "Applications" + clrReset + ": "
 		} else if brewStatus == "Update" {
-			expMsg = clrYellow + "Need permission " + clrReset + "(sudo) to install " + clrBlue + "Applications" + clrReset + ": "
+			expMsg = expHeadMsg + "Applications" + clrReset + ": "
 		}
 
 		if runOpt == "3" {
@@ -238,17 +251,20 @@ func userName() string {
 }
 
 func rebootOS(adminCode string) {
-	rebootLdBar := spinner.New(spinner.CharSets[11], 20*time.Millisecond)
-	rebootLdBar.Suffix = " Restarting macOS now, wait a moment ... "
-	rebootLdBar.Start()
+	runLdBar.Suffix = " Restarting macOS, please wait a moment ... "
+	runLdBar.Start()
+	time.Sleep(time.Second * 3)
 
 	needPermission(adminCode)
 	reboot := exec.Command(cmdAdmin, "shutdown", "-r", "now")
 	if err := reboot.Run(); err != nil {
-		rebootLdBar.FinalMSG = clrRed + "Error: " + clrReset
-		rebootLdBar.Stop()
+		runLdBar.FinalMSG = clrRed + "Error: " + clrReset
+		runLdBar.Stop()
 		fmt.Println(errors.New("failed to reboot macOS"))
 	}
+
+	runLdBar.FinalMSG = "⣾ Restarting macOS, please wait a moment ... "
+	runLdBar.Stop()
 }
 
 func makeDir(dirPath string) {
@@ -405,13 +421,6 @@ func asdfInstall(plugin, version string) {
 }
 
 func addJavaHome(tgVer, lnVer string) {
-	macLdBar.FinalMSG = "  Installing computer programming language... \n"
-	macLdBar.Stop()
-
-	clearLine(3)
-
-	macLdBar.Start()
-
 	tgHead := brewPrefix + "opt/openjdk"
 	tgTail := " /libexec/openjdk.jdk"
 	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
@@ -440,19 +449,19 @@ func confA4s() {
 }
 
 func confG4s() {
-	fmt.Println("\nGit global configuration")
+	fmt.Println(clrCyan + "Git global configuration" + clrReset)
 
 	setBranchMain := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
 	errBranchMain := setBranchMain.Run()
 	checkError(errBranchMain, "Failed to change branch default name (master -> main)")
 	fmt.Println(lstDot + "Main git branch default name changed master -> main")
 
-	fmt.Println("\nAdd your information to the global git config")
+	fmt.Println(lstDot + "Add user information to the global git config")
 	consoleReader := bufio.NewScanner(os.Stdin)
-	fmt.Printf(" " + lstDot + "User name: ")
+	fmt.Print("  - User name: ")
 	consoleReader.Scan()
 	gitName := consoleReader.Text()
-	fmt.Printf(" " + lstDot + "User email: ")
+	fmt.Print("  - User email: ")
 	consoleReader.Scan()
 	gitEmail := consoleReader.Text()
 
@@ -462,7 +471,7 @@ func confG4s() {
 	setUserEmail := exec.Command(cmdGit, "config", "--global", "user.email", gitEmail)
 	errUserEmail := setUserEmail.Run()
 	checkError(errUserEmail, "Failed to set git user email")
-	clearLine(4)
+	clearLine(3)
 	fmt.Println(lstDot + "Saved git user name and email")
 
 	ignoreDirPath := homeDir() + ".config/git/"
@@ -475,7 +484,7 @@ func confG4s() {
 	errExcludesFile := setExcludesFile.Run()
 	checkError(errExcludesFile, "Failed to set git global ignore file")
 
-	fmt.Println("Complete setup \"gitignore_global\" in " + ignoreDirPath)
+	fmt.Println(lstDot + "Complete setup \"gitignore_global\" in " + ignoreDirPath)
 }
 
 func installBrew() {
@@ -500,14 +509,14 @@ func installBrew() {
 func macBegin(adminCode string) {
 	if checkBrewExists() == true {
 		macLdBar.Suffix = " Updating homebrew... "
-		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
+		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
 		macLdBar.Start()
 	} else {
 		needPermission(adminCode)
 		clearLine(1)
 
 		macLdBar.Suffix = " Installing homebrew... "
-		macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
+		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
 		macLdBar.Start()
 
 		installBrew()
@@ -527,7 +536,7 @@ func macBegin(adminCode string) {
 
 func macEnv() {
 	macLdBar.Suffix = " Setting basic environment... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
 	macLdBar.Start()
 
 	profileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
@@ -558,7 +567,7 @@ func macEnv() {
 
 func macDependency(runOpt string) {
 	macLdBar.Suffix = " Installing dependencies... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install dependencies!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install dependencies!\n"
 	macLdBar.Start()
 
 	brewInstall("pkg-config")
@@ -750,7 +759,7 @@ func macDependency(runOpt string) {
 
 func macLanguage(runOpt, adminCode string) {
 	macLdBar.Suffix = " Installing computer programming language... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install languages!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install languages!\n"
 	macLdBar.Start()
 
 	shrcAppend := "# CCACHE\n" +
@@ -765,9 +774,6 @@ func macLanguage(runOpt, adminCode string) {
 		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
 		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
 		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
-	//"# JAVA\n" +
-	//"#export PATH=\"" + brewPrefix + "opt/openjdk/bin:$PATH\"\n" +
-	//"#export CPPFLAGS=\"" + brewPrefix + "opt/openjdk/include\"\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
@@ -830,7 +836,7 @@ func macLanguage(runOpt, adminCode string) {
 
 func macServer() {
 	macLdBar.Suffix = " Installing developing tools for server... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install servers!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install servers!\n"
 	macLdBar.Start()
 
 	brewInstall("httpd")
@@ -842,8 +848,7 @@ func macServer() {
 
 func macDatabase() {
 	macLdBar.Suffix = " Installing developing tools for database... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install databases!\n"
-	macLdBar.FinalMSG = " - Installed databases for !\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install databases!\n"
 	macLdBar.Start()
 
 	shrcAppend := "# SQLITE3\n" +
@@ -865,7 +870,7 @@ func macDatabase() {
 
 func macDevVM() {
 	macLdBar.Suffix = " Installing developer tools version management tool with plugin... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install ASDF-VM with languages!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install ASDF-VM with languages!\n"
 	macLdBar.Start()
 
 	brewInstall("asdf")
@@ -914,7 +919,7 @@ func macDevVM() {
 
 func macTerminal(runOpt string) {
 	macLdBar.Suffix = " Installing zsh with useful tools... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
 	macLdBar.Start()
 
 	confA4s()
@@ -1011,7 +1016,7 @@ func macTerminal(runOpt string) {
 
 func macCLIApp(runOpt string) {
 	macLdBar.Suffix = " Installing CLI applications... "
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install CLI applications!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install CLI applications!\n"
 	macLdBar.Start()
 
 	brewInstall("unzip")
@@ -1163,20 +1168,20 @@ func macGUIApp(runOpt, adminCode string) {
 		brewCask("suspicious-package", "Suspicious Package")
 	}
 
-	macLdBar.FinalMSG = " - " + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
 	macLdBar.Stop()
 }
 
 func macEnd() {
-	brewCleanup()
-	brewRemoveCache()
-
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
+
+	brewCleanup()
+	brewRemoveCache()
 }
 
 func macMain(runOpt, runType, brewSts, adminCode string) {
-	runEx := lstDot + "Run " + clrBlue + runType + clrReset + " installation\n" +
+	runEx := lstDot + "Run " + clrPurple + runType + clrReset + " installation\n" +
 		lstDot + brewSts + " homebrew with configure shell"
 
 	if runOpt == "1" {
@@ -1260,13 +1265,12 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 func macExtend(runOpt, adminCode string) {
 	if runOpt != "1" {
 		var g4sOpt string
-		fmt.Printf(clrCyan + "\nFinished to setup!\n" + clrReset +
-			"Enter [Y] to set git global configuration, or enter any key to exit. ")
+		fmt.Println(clrCyan + "\nConfigure git global easily" + clrReset)
+		fmt.Print("Enter [Y] to set git global configuration, or enter any key to exit. ")
 		_, errEndOpt := fmt.Scanln(&g4sOpt)
 		if errEndOpt != nil {
 			g4sOpt = "Enter"
 		}
-
 		if g4sOpt == "y" || g4sOpt == "Y" || g4sOpt == "yes" || g4sOpt == "Yes" || g4sOpt == "YES" {
 			clearLine(2)
 			confG4s()
@@ -1277,15 +1281,14 @@ func macExtend(runOpt, adminCode string) {
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
 		var rebootOpt string
-		fmt.Printf(clrYellow + "\nYou need restart macOS\n" + clrReset +
-			"Enter [Y] to restart macOS, or enter any key to exit. ")
+		fmt.Println(clrCyan + "Restart macOS to apply the changes" + clrReset)
+		fmt.Print("Enter [Y] to restart macOS, or enter any key to exit. ")
 		_, errEndOpt := fmt.Scanln(&rebootOpt)
 		if errEndOpt != nil {
 			rebootOpt = "Enter"
 		}
-
 		if rebootOpt == "y" || rebootOpt == "Y" || rebootOpt == "yes" || rebootOpt == "Yes" || rebootOpt == "YES" {
-			clearLine(2)
+			clearLine(1)
 			rebootOS(adminCode)
 		} else {
 			clearLine(2)
@@ -1294,6 +1297,11 @@ func macExtend(runOpt, adminCode string) {
 }
 
 func main() {
+	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
+
+	runLdBar.Suffix = " Checking network status... "
+	runLdBar.Start()
+
 	var (
 		brewSts string
 		runOpt  string
@@ -1301,17 +1309,22 @@ func main() {
 		endMsg  string
 	)
 
-	fmt.Println(clrPurple + "\nDev4mac " + clrGrey + "v" + appVer + clrReset)
-	checkNetStatus()
-
 	if checkExists(cmdPMS) == true {
 		brewSts = "Update"
 	} else {
 		brewSts = "Install"
 	}
 
-	try := 0
-	fmt.Println("\nThe Development tools of Essential and Various for macOS\n" +
+	if checkNetStatus() != true {
+		runLdBar.FinalMSG = clrRed + "Network connect failed" + clrReset + "\n"
+		runLdBar.Stop()
+		fmt.Println(errors.New(lstDot + "Please check your internet connection.\n"))
+		goto exitOpt
+	}
+
+	runLdBar.Stop()
+
+	fmt.Println(clrCyan + "The Development tools of Essential and Various for macOS\n" + clrReset +
 		lstDot + "Choose an installation option.\n" +
 		lstDot + "If you need help, visit https://github.com/leelsey/Dev4os.\n" +
 		"\t1. Minimal\n" +
@@ -1325,12 +1338,11 @@ func main() {
 
 insOpt:
 	for {
-		fmt.Printf("Select command: ")
+		fmt.Print("Select command: ")
 		_, err := fmt.Scanln(&runOpt)
 		if err != nil {
 			runOpt = "Null"
 		}
-
 		if runOpt == "1" {
 			runType = "Minimal"
 		} else if runOpt == "2" {
@@ -1347,16 +1359,16 @@ insOpt:
 			runType = "Specialist"
 		} else if runOpt == "0" || runOpt == "q" || runOpt == "e" || runOpt == "quit" || runOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
-			goto exitOpt //os.Exit(0)
+			goto exitOpt
 		} else {
 			fmt.Println(fmt.Errorf(lstDot + clrYellow + runOpt + clrReset +
 				" is invalid option. Please choose number " + clrRed + "0-7" + clrReset + "."))
-			try++
+			tryLoop++
 			goto insOpt
 		}
 		break
 	}
-	clearLine(13 + try*2)
+	clearLine(12 + tryLoop*2)
 
 	if checkPermission(runOpt, brewSts) == true {
 		if adminCode, adminStatus := checkPassword(); adminStatus == true {
@@ -1365,7 +1377,7 @@ insOpt:
 			macMain(runOpt, runType, brewSts, adminCode)
 			macExtend(runOpt, adminCode)
 		} else {
-			goto exitOpt //os.Exit(0)
+			goto exitOpt
 		}
 	} else {
 		macMain(runOpt, runType, brewSts, "")
@@ -1383,5 +1395,5 @@ insOpt:
 	}
 
 exitOpt:
-	return //os.Exit(0)
+	return
 }
