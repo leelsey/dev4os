@@ -123,14 +123,6 @@ func checkASDFPath() string {
 	return arm64Path + asdfPath
 }
 
-func checkBrewExists() bool {
-	if _, err := os.Stat(cmdPMS); !os.IsNotExist(err) {
-		return true
-	} else {
-		return false
-	}
-}
-
 func checkPassword() (string, bool) {
 	for tryLoop < 3 {
 		fmt.Print("Password:")
@@ -138,7 +130,6 @@ func checkPassword() (string, bool) {
 
 		runLdBar.Suffix = " Checking password... "
 		runLdBar.Start()
-		//fmt.Println("\n - Checking password... ")
 
 		tryLoop++
 		strPw := string(bytePw)
@@ -153,7 +144,6 @@ func checkPassword() (string, bool) {
 		_ = inputPw.Run()
 		errSudo := checkPw.Wait()
 		if errSudo != nil {
-			//clearLine(1)
 			runLdBar.FinalMSG = clrRed + "Password check failed" + clrReset + "\n"
 			runLdBar.Stop()
 			if tryLoop < 3 {
@@ -268,7 +258,7 @@ func rebootOS(adminCode string) {
 }
 
 func makeDir(dirPath string) {
-	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
+	if checkExists(dirPath) != true {
 		err := os.MkdirAll(dirPath, 0755)
 		checkError(err, "Failed to make directory")
 	}
@@ -288,17 +278,50 @@ func makeFile(filePath, fileContents string, fileMode int) {
 }
 
 func removeFile(filePath string) {
-	if _, errExist := os.Stat(filePath); !os.IsNotExist(errExist) {
+	if checkExists(filePath) == true {
 		err := os.Remove(filePath)
 		checkError(err, "Failed to remove file \""+filePath+"\"")
 	}
 }
 
-func linkFile(srcPath, destPath string) {
-	lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, destPath)
-	lnFile.Stderr = os.Stderr
-	err := lnFile.Run()
-	checkCmdError(err, "Add failed to link file", srcPath+"->"+destPath)
+func linkFile(srcPath, destPath, linkType, permission, adminCode string) {
+	if linkType == "hard" {
+		if permission == "root" || permission == "sudo" || permission == "admin" {
+			needPermission(adminCode)
+			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, destPath)
+			lnFile.Stderr = os.Stderr
+			err := lnFile.Run()
+			checkCmdError(err, "Add failed to hard link file", "\""+srcPath+"\"->\""+destPath+"\"")
+		} else {
+			if checkExists(srcPath) == true {
+				if checkExists(destPath) == true {
+					removeFile(destPath)
+				}
+				errHardlink := os.Link(srcPath, destPath)
+				checkCmdError(errHardlink, "Add failed to hard link", "\""+srcPath+"\"->\""+destPath+"\"")
+			}
+		}
+	} else if linkType == "symbolic" {
+		if permission == "root" || permission == "sudo" || permission == "admin" {
+			needPermission(adminCode)
+			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, destPath)
+			lnFile.Stderr = os.Stderr
+			err := lnFile.Run()
+			checkCmdError(err, "Add failed to symbolic link", "\""+srcPath+"\"->\""+destPath+"\"")
+		} else {
+			if checkExists(srcPath) == true {
+				if checkExists(destPath) == true {
+					removeFile(destPath)
+				}
+				errSymlink := os.Symlink(srcPath, destPath)
+				checkCmdError(errSymlink, "Add failed to symbolic link\"", srcPath+"\"->\""+destPath+"\"")
+				errLinkOwn := os.Lchown(destPath, os.Getuid(), os.Getgid())
+				checkError(errLinkOwn, "Failed to change ownership of symlink \""+destPath+"\"")
+			}
+		}
+	} else {
+		messageError("fatal", "Invalid link type", "Link file")
+	}
 }
 
 func downloadFile(filePath, urlPath string, fileMode int) {
@@ -335,12 +358,6 @@ func clearLine(line int) {
 	}
 }
 
-func brewRepository(repo string) {
-	brewRepo := exec.Command(cmdPMS, pmsRepo, repo)
-	err := brewRepo.Run()
-	checkCmdError(err, "Brew failed to add ", repo)
-}
-
 func brewUpdate() {
 	updateHomebrew := exec.Command(cmdPMS, "update", "--auto-update")
 	err := updateHomebrew.Run()
@@ -348,9 +365,16 @@ func brewUpdate() {
 }
 
 func brewUpgrade() {
+	brewUpdate()
 	upgradeHomebrew := exec.Command(cmdPMS, "upgrade", "--greedy")
 	err := upgradeHomebrew.Run()
 	checkCmdError(err, "Brew failed to", "upgrade packages")
+}
+
+func brewRepository(repo string) {
+	brewRepo := exec.Command(cmdPMS, pmsRepo, repo)
+	err := brewRepo.Run()
+	checkCmdError(err, "Brew failed to add ", repo)
 }
 
 func brewCleanup() {
@@ -366,7 +390,7 @@ func brewRemoveCache() {
 }
 
 func brewInstall(pkg string) {
-	if _, errExist := os.Stat(brewPrefix + "Cellar/" + pkg); errors.Is(errExist, os.ErrNotExist) {
+	if checkExists(brewPrefix+"Cellar/"+pkg) != true {
 		brewUpdate()
 
 		brewIns := exec.Command(cmdPMS, pmsIns, pkg)
@@ -377,7 +401,7 @@ func brewInstall(pkg string) {
 }
 
 func brewCask(pkg, appName string) {
-	if _, errExist := os.Stat("/Applications/" + appName + ".app"); errors.Is(errExist, os.ErrNotExist) {
+	if checkExists("/Applications/"+appName+".app") != true {
 		brewUpdate()
 
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
@@ -387,15 +411,8 @@ func brewCask(pkg, appName string) {
 }
 
 func brewCaskSudo(pkg, appName, appPath, adminCode string) {
-	macLdBar.FinalMSG = "  Installing GUI applications... \n"
-	macLdBar.Stop()
-
-	needPermission(adminCode)
-	clearLine(3)
-
-	macLdBar.Start()
-
-	if _, errExist := os.Stat(appPath); errors.Is(errExist, os.ErrNotExist) {
+	if checkExists(appPath) != true {
+		needPermission(adminCode)
 		brewUpdate()
 
 		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
@@ -405,7 +422,7 @@ func brewCaskSudo(pkg, appName, appPath, adminCode string) {
 }
 
 func asdfInstall(plugin, version string) {
-	if _, errExist := os.Stat(homeDir() + ".asdf/plugins/" + plugin); errors.Is(errExist, os.ErrNotExist) {
+	if checkExists(homeDir()+".asdf/plugins/"+plugin) != true {
 		asdfPlugin := exec.Command(cmdASDF, "plugin", "add", plugin)
 		err := asdfPlugin.Run()
 		checkCmdError(err, "ASDF-VM failed to add", plugin)
@@ -420,13 +437,13 @@ func asdfInstall(plugin, version string) {
 	checkCmdError(errConf, "ASDF-VM failed to install", plugin)
 }
 
-func addJavaHome(tgVer, lnVer string) {
+func addJavaHome(tgVer, destVer, adminCode string) {
 	tgHead := brewPrefix + "opt/openjdk"
 	tgTail := " /libexec/openjdk.jdk"
 	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
 
-	if _, errExist := os.Stat(brewPrefix + "Cellar/openjdk" + tgVer); errors.Is(errExist, os.ErrNotExist) {
-		linkFile(tgHead+tgVer+tgTail, lnDir+lnVer+".jdk")
+	if checkExists(brewPrefix+"Cellar/openjdk"+tgVer) == true {
+		linkFile(tgHead+tgVer+tgTail, lnDir+destVer+".jdk", "symbolic", "root", adminCode)
 	}
 }
 
@@ -501,19 +518,18 @@ func installBrew() {
 	}
 	removeFile(insBrewPath)
 
-	if checkBrewExists() == false {
+	if checkExists(cmdPMS) == false {
 		messageError("fatal", "Installed brew failed, please check your system", "Can't find Homebrew")
 	}
 }
 
 func macBegin(adminCode string) {
-	if checkBrewExists() == true {
+	if checkExists(cmdPMS) == true {
 		macLdBar.Suffix = " Updating homebrew... "
 		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
 		macLdBar.Start()
 	} else {
 		needPermission(adminCode)
-		clearLine(1)
 
 		macLdBar.Suffix = " Installing homebrew... "
 		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
@@ -781,11 +797,10 @@ func macLanguage(runOpt, adminCode string) {
 		brewInstall("openjdk@8")
 		brewInstall("openjdk@11")
 		brewInstall("openjdk@17")
-		needPermission(adminCode)
-		addJavaHome("", "")
-		addJavaHome("@17", "-17")
-		addJavaHome("@11", "-11")
-		addJavaHome("@8", "-8")
+		addJavaHome("", "", adminCode)
+		addJavaHome("@17", "-17", adminCode)
+		addJavaHome("@11", "-11", adminCode)
+		addJavaHome("@8", "-8", adminCode)
 	}
 
 	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
@@ -1357,6 +1372,8 @@ insOpt:
 			runType = "Developer"
 		} else if runOpt == "7" {
 			runType = "Specialist"
+			//} else if runOpt == "8" {
+			//
 		} else if runOpt == "0" || runOpt == "q" || runOpt == "e" || runOpt == "quit" || runOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
 			goto exitOpt
