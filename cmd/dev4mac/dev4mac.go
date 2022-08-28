@@ -178,7 +178,7 @@ func checkPermission(runOpt, brewStatus string) bool {
 		}
 	} else {
 		if brewStatus == "Install" {
-			expMsg = expHeadMsg + "Homebrew " + clrReset + "and " + clrPurple + "Applications" + clrReset + ": "
+			expMsg = expHeadMsg + "homebrew " + clrReset + "and " + clrPurple + "Applications" + clrReset + ": "
 		} else if brewStatus == "Update" {
 			expMsg = expHeadMsg + "Applications" + clrReset + ": "
 		}
@@ -284,37 +284,37 @@ func removeFile(filePath string) {
 	}
 }
 
-func linkFile(srcPath, destPath, linkType, permission, adminCode string) {
+func linkFile(tgPath, destPath, linkType, permission, adminCode string) {
 	if linkType == "hard" {
 		if permission == "root" || permission == "sudo" || permission == "admin" {
 			needPermission(adminCode)
-			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, destPath)
+			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", tgPath, destPath)
 			lnFile.Stderr = os.Stderr
 			err := lnFile.Run()
-			checkCmdError(err, "Add failed to hard link file", "\""+srcPath+"\"->\""+destPath+"\"")
+			checkCmdError(err, "Add failed to hard link file", "\""+tgPath+"\"->\""+destPath+"\"")
 		} else {
-			if checkExists(srcPath) == true {
+			if checkExists(tgPath) == true {
 				if checkExists(destPath) == true {
 					removeFile(destPath)
 				}
-				errHardlink := os.Link(srcPath, destPath)
-				checkCmdError(errHardlink, "Add failed to hard link", "\""+srcPath+"\"->\""+destPath+"\"")
+				errHardlink := os.Link(tgPath, destPath)
+				checkCmdError(errHardlink, "Add failed to hard link", "\""+tgPath+"\"->\""+destPath+"\"")
 			}
 		}
 	} else if linkType == "symbolic" {
 		if permission == "root" || permission == "sudo" || permission == "admin" {
 			needPermission(adminCode)
-			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, destPath)
+			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", tgPath, destPath)
 			lnFile.Stderr = os.Stderr
 			err := lnFile.Run()
-			checkCmdError(err, "Add failed to symbolic link", "\""+srcPath+"\"->\""+destPath+"\"")
+			checkCmdError(err, "Add failed to symbolic link", "\""+tgPath+"\"->\""+destPath+"\"")
 		} else {
-			if checkExists(srcPath) == true {
+			if checkExists(tgPath) == true {
 				if checkExists(destPath) == true {
 					removeFile(destPath)
 				}
-				errSymlink := os.Symlink(srcPath, destPath)
-				checkCmdError(errSymlink, "Add failed to symbolic link\"", srcPath+"\"->\""+destPath+"\"")
+				errSymlink := os.Symlink(tgPath, destPath)
+				checkCmdError(errSymlink, "Add failed to symbolic link\"", tgPath+"\"->\""+destPath+"\"")
 				errLinkOwn := os.Lchown(destPath, os.Getuid(), os.Getgid())
 				checkError(errLinkOwn, "Failed to change ownership of symlink \""+destPath+"\"")
 			}
@@ -1007,7 +1007,6 @@ func macTerminal(runOpt string) {
 
 	profileAppend := "# ZSH-COMPLETIONS\n" +
 		"if type brew &>/dev/null; then\n" +
-		"  mv () { command mv \"$@\" ; }\n" +
 		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
 		"  autoload -Uz compinit\n" +
 		"  compinit\n" +
@@ -1047,10 +1046,11 @@ func macCLIApp(runOpt string) {
 		brewInstall("git")
 		brewInstall("git-lfs")
 		brewInstall("gh")
-		brewInstall("tldr")
-		brewInstall("diffr")
-		brewInstall("bat")
 		brewInstall("tig")
+		brewInstall("exa")
+		brewInstall("bat")
+		brewInstall("diffr")
+		brewInstall("tldr")
 		brewInstall("watchman")
 		brewInstall("direnv")
 
@@ -1134,28 +1134,48 @@ func macGUIApp(runOpt, adminCode string) {
 	}
 
 	if runOpt == "3" || runOpt == "4" {
-		brewCask("visual-studio-code", "Visual Studio Code")
-		brewCask("atom", "Atom")
 		brewCask("eclipse-ide", "Eclipse")
 		brewCask("intellij-idea-ce", "IntelliJ IDEA CE")
 		brewCask("android-studio", "Android Studio")
-		brewCask("fork", "Fork")
-	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewCask("iterm2", "iTerm")
 		brewCask("visual-studio-code", "Visual Studio Code")
 		brewCask("atom", "Atom")
+		brewCask("fork", "Fork")
+		brewCask("postman", "Postman")
+		brewCask("drawio", "draw.io")
+		brewCask("httpie", "HTTPie")
+		brewCaskSudo("xampp-vm", "xampp-osx-*", "/Applications/Loopback.app", adminCode)
+	} else if runOpt == "5" {
+		brewCask("iterm2", "iTerm")
 		brewCask("intellij-idea", "IntelliJ IDEA")
+		brewCask("visual-studio-code", "Visual Studio Code")
+		brewCask("atom", "Atom")
+		brewCask("neovide", "Neovide")
+		brewCask("github", "Github")
+		brewCask("fork", "Fork")
+		brewCask("docker", "Docker")
+		brewCask("tableplus", "TablePlus")
+		brewCask("postman", "Postman")
+		brewCask("httpie", "HTTPie")
+		brewCask("boop", "Boop")
+		brewCask("drawio", "draw.io")
+	} else if runOpt == "6" || runOpt == "7" {
+		brewCask("iterm2", "iTerm")
+		brewCask("intellij-idea", "IntelliJ IDEA")
+		brewCask("visual-studio-code", "Visual Studio Code")
+		brewCask("atom", "Atom")
+		brewCask("neovide", "Neovide")
+		brewCask("github", "Github")
+		brewCask("fork", "Fork")
+		brewCask("docker", "Docker")
+		brewCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app", adminCode)
 		brewCask("tableplus", "TablePlus")
 		brewCask("proxyman", "Proxyman")
 		brewCask("postman", "Postman")
 		brewCask("paw", "Paw")
 		brewCask("httpie", "HTTPie")
 		brewCask("boop", "Boop")
-		brewCask("github", "Github")
-		brewCask("fork", "Fork")
-		brewCask("docker", "Docker")
-		brewCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app", adminCode)
 		brewCask("cmake", "CMake")
+		brewCask("drawio", "draw.io")
 		brewCask("staruml", "StarUML")
 		brewCask("vnc-viewer", "VNC Viewer")
 		brewCask("forklift", "ForkLift")
@@ -1188,16 +1208,23 @@ func macGUIApp(runOpt, adminCode string) {
 }
 
 func macEnd() {
+	macLdBar.Suffix = " Finishing... "
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "clean up homebrew's cache!\n"
+	macLdBar.Start()
+
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
+	brewUpgrade()
 	brewCleanup()
 	brewRemoveCache()
+
+	macLdBar.Stop()
 }
 
 func macMain(runOpt, runType, brewSts, adminCode string) {
 	runEx := lstDot + "Run " + clrPurple + runType + clrReset + " installation\n" +
-		lstDot + brewSts + " homebrew with configure shell"
+		lstDot + brewSts + " Homebrew with configure shell"
 
 	if runOpt == "1" {
 		fmt.Println(runEx + ".")
@@ -1372,8 +1399,6 @@ insOpt:
 			runType = "Developer"
 		} else if runOpt == "7" {
 			runType = "Specialist"
-			//} else if runOpt == "8" {
-			//
 		} else if runOpt == "0" || runOpt == "q" || runOpt == "e" || runOpt == "quit" || runOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
 			goto exitOpt
