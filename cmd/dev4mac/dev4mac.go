@@ -98,29 +98,37 @@ func checkExists(path string) bool {
 	}
 }
 
-func checkBrewPath() string {
+func checkArchitecture() bool {
 	switch runtime.GOARCH {
-	case "amd64":
-		return amd64Path + "bin/brew"
+	case "arm64":
+		return true
 	}
-	return arm64Path + "bin/brew"
+	return false
 }
 
 func checkBrewPrefix() string {
-	switch runtime.GOARCH {
-	case "amd64":
+	if checkArchitecture() == true {
+		return arm64Path
+	} else {
 		return amd64Path
 	}
-	return arm64Path
+}
+
+func checkBrewPath() string {
+	if checkArchitecture() == true {
+		return arm64Path + "bin/brew"
+	} else {
+		return amd64Path + "bin/brew"
+	}
 }
 
 func checkASDFPath() string {
 	asdfPath := "opt/asdf/libexec/bin/asdf"
-	switch runtime.GOARCH {
-	case "amd64":
+	if checkArchitecture() == true {
+		return arm64Path + asdfPath
+	} else {
 		return amd64Path + asdfPath
 	}
-	return arm64Path + asdfPath
 }
 
 func checkPassword() (string, bool) {
@@ -356,6 +364,34 @@ func clearLine(line int) {
 	for clear := 0; clear < line; clear++ {
 		fmt.Printf("\033[1A\033[K")
 	}
+}
+
+func changeAppIcon(appName, icnName, adminCode string) {
+	chicnPath := workingDir() + ".dev4mac-chicn.sh"
+	appPath := "/Applications/" + appName + ".app"
+	srcIcn := workingDir() + ".dev4mac-app-icn.icns"
+	cvtIcn := workingDir() + ".dev4mac-app-icn.rsrc"
+
+	downloadFile(srcIcn, "https://raw.githubusercontent.com/leelsey/ConfStore/main/icns/"+icnName, 0755)
+
+	chIcnSrc := "sudo rm -rf \"" + appPath + "\"$'/Icon\\r'\n" +
+		"sips -i " + srcIcn + " > /dev/null\n" +
+		"DeRez -only icns " + srcIcn + " > " + cvtIcn + "\n" +
+		"sudo Rez -append " + cvtIcn + " -o " + appPath + "$'/Icon\\r'\n" +
+		"sudo SetFile -a C " + appPath + "\n" +
+		"sudo SetFile -a V " + appPath + "$'/Icon\\r'"
+	makeFile(chicnPath, chIcnSrc, 0644)
+
+	needPermission(adminCode)
+	chicn := exec.Command("sh", chicnPath)
+	chicn.Env = os.Environ()
+	chicn.Stderr = os.Stderr
+	err := chicn.Run()
+	checkCmdError(err, "Failed change icon of", appName+".app")
+
+	removeFile(srcIcn)
+	removeFile(cvtIcn)
+	removeFile(chicnPath)
 }
 
 func brewUpdate() {
@@ -913,22 +949,22 @@ func macDevVM() {
 	makeFile(homeDir()+".asdfrc", asdfrcContents, 0644)
 
 	asdfInstall("perl", "latest")
-	//asdfInstall("ruby", "latest")   // error
-	//asdfInstall("python", "latest") // error
+	//asdfInstall("ruby", "latest")   // TODO: fix this
+	//asdfInstall("python", "latest") // TODO: fix this
 	asdfInstall("java", "openjdk-11.0.2") // JDK LTS 11
 	asdfInstall("java", "openjdk-17.0.2") // JDK LTS 17
 	asdfInstall("rust", "latest")
 	asdfInstall("golang", "latest")
 	asdfInstall("nodejs", "latest")
 	asdfInstall("lua", "latest")
-	//asdfInstall("php", "latest") // error
+	//asdfInstall("php", "latest") // TODO: fix this
 	asdfInstall("groovy", "latest")
 	asdfInstall("kotlin", "latest")
 	asdfInstall("scala", "latest")
 	asdfInstall("clojure", "latest")
-	//asdfInstall("erlang", "latest") // error
+	//asdfInstall("erlang", "latest") // TODO: fix this
 	asdfInstall("elixir", "latest")
-	//asdfInstall("haskell", "latest") // error
+	//asdfInstall("haskell", "latest") // TODO: fix this
 	asdfInstall("gleam", "latest")
 
 	asdfReshim := exec.Command(cmdASDF, "reshim")
@@ -1107,6 +1143,7 @@ func macGUIApp(runOpt, adminCode string) {
 
 	if runOpt != "7" {
 		brewInstallCask("appcleaner", "AppCleaner")
+		changeAppIcon("AppCleaner", "AppCleaner.icns", adminCode)
 	} else if runOpt == "7" {
 		brewInstallCask("sensei", "Sensei")
 	}
@@ -1114,16 +1151,21 @@ func macGUIApp(runOpt, adminCode string) {
 	brewInstallCask("keka", "Keka")
 	brewInstallCask("iina", "IINA")
 	brewInstallCask("transmission", "Transmission")
+	changeAppIcon("Transmission", "Transmission.icns", adminCode)
 	brewInstallCask("rectangle", "Rectangle")
 	brewInstallCask("google-chrome", "Google Chrome")
 	brewInstallCask("firefox", "Firefox")
+	changeAppIcon("Firefox", "Firefox.icns", adminCode)
 	brewInstallCask("tor-browser", "Tor Browser")
+	changeAppIcon("", ".icns", adminCode)
 	brewInstallCask("spotify", "Spotify")
+	changeAppIcon("Spotify", "Spotify.icns", adminCode)
 	brewInstallCask("signal", "Signal")
 	brewInstallCask("discord", "Discord")
 	brewInstallCask("slack", "Slack")
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewInstallCask("jetbrains-space", "JetBrains Space")
+		changeAppIcon("JetBrains Space", "JetBrains Space.icns", adminCode)
 	}
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
@@ -1132,6 +1174,7 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("sketch", "Sketch")
 		brewInstallCask("zeplin", "Zeplin")
 		brewInstallCask("blender", "Blender")
+		changeAppIcon("Blender", "Blender.icns", adminCode)
 		brewInstallCask("obs", "OBS")
 		brewInstallCaskSudo("loopback", "Loopback", "/Applications/Loopback.app", adminCode)
 	}
@@ -1142,21 +1185,27 @@ func macGUIApp(runOpt, adminCode string) {
 
 	if runOpt == "3" || runOpt == "4" {
 		brewInstallCask("eclipse-ide", "Eclipse")
+		changeAppIcon("Eclipse", ".icns", adminCode)
 		brewInstallCask("intellij-idea-ce", "IntelliJ IDEA CE")
+		changeAppIcon("IntelliJ IDEA CE", "IntelliJ IDEA CE.icns", adminCode)
 		brewInstallCask("android-studio", "Android Studio")
+		changeAppIcon("Android Studio", "Android Studio.icns", adminCode)
 		brewInstallCask("visual-studio-code", "Visual Studio Code")
 		brewInstallCask("atom", "Atom")
 		brewInstallCask("fork", "Fork")
 		brewInstallCask("postman", "Postman")
 		brewInstallCask("drawio", "draw.io")
 		brewInstallCask("httpie", "HTTPie")
-		brewInstallCaskSudo("xampp-vm", "xampp-osx-*", "/Applications/Loopback.app", adminCode)
+		brewInstallCaskSudo("xampp-vm", "xampp-osx-*", "/Applications/Loopback.app", adminCode) // TODO: Fix this
+		//changeAppIcon("xampp-os-*", "XAMPP.icns", adminCode) // TODO: Fix this
 	} else if runOpt == "5" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
+		changeAppIcon("IntelliJ IDE", ".icns", adminCode)
 		brewInstallCask("visual-studio-code", "Visual Studio Code")
 		brewInstallCask("atom", "Atom")
 		brewInstallCask("neovide", "Neovide")
+		changeAppIcon("Neovide", "Neovide.icns", adminCode)
 		brewInstallCask("github", "Github")
 		brewInstallCask("fork", "Fork")
 		brewInstallCask("docker", "Docker")
@@ -1168,13 +1217,16 @@ func macGUIApp(runOpt, adminCode string) {
 	} else if runOpt == "6" || runOpt == "7" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
+		changeAppIcon("IntelliJ IDEA", "IntelliJ IDEA.icns", adminCode)
 		brewInstallCask("visual-studio-code", "Visual Studio Code")
 		brewInstallCask("atom", "Atom")
 		brewInstallCask("neovide", "Neovide")
+		changeAppIcon("Neovide", "Neovide.icns", adminCode)
 		brewInstallCask("github", "Github")
 		brewInstallCask("fork", "Fork")
 		brewInstallCask("docker", "Docker")
 		brewInstallCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app", adminCode)
+		changeAppIcon("VMware Fusion", "VMware Fusion.icns", adminCode)
 		brewInstallCask("tableplus", "TablePlus")
 		brewInstallCask("proxyman", "Proxyman")
 		brewInstallCask("postman", "Postman")
@@ -1183,9 +1235,12 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("boop", "Boop")
 		brewInstallCask("drawio", "draw.io")
 		brewInstallCask("staruml", "StarUML")
+		changeAppIcon("StarUML", "StarUML.icns", adminCode)
 		brewInstallCask("vnc-viewer", "VNC Viewer")
+		changeAppIcon("VNC Viewer", "VNC Viewer.icns", adminCode)
 		brewInstallCask("forklift", "ForkLift")
-		brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
+		//brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
+		//changeAppIcon("Firefox Developer Edition", "Firefox Developer Edition.icns", adminCode)
 	}
 
 	shrcAppend := "# ANDROID STUDIO\n" +
@@ -1200,11 +1255,19 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("burp-suite", "Burp Suite Community Edition")
 		brewInstallCask("burp-suite-professional", "Burp Suite Professional")
 		brewInstallCaskSudo("wireshark", "Wireshark", "/Applications/Wireshark.app", adminCode)
+		changeAppIcon("", ".icns", adminCode)
 		brewInstallCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app", adminCode)
-		// Will add Hopper Disassembler
+		changeAppIcon("", ".icns", adminCode)
+		// Will add Hopper Disassembler // TODO: Fix this
+		if checkArchitecture() == true {
+			// changeAppIcon("Hopper Disassembler", "Hopper Disassembler ARM64.icns", adminCode)
+		} else {
+			// changeAppIcon("Hopper Disassembler", "Hopper Disassembler AMD64.icns", adminCode)
+		}
 		brewInstallCask("cutter", "Cutter")
-		// Will add Ghidra
+		// Will add Ghidra // TODO: Fix this
 		brewInstallCask("imazing", "iMazing")
+		changeAppIcon("iMazing", "iMazing.icns", adminCode)
 		brewInstallCask("apparency", "Apparency")
 		brewInstallCask("suspicious-package", "Suspicious Package")
 	}
