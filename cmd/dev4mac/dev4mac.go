@@ -1323,8 +1323,10 @@ func macExtend(runOpt, adminCode string) {
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
 		var rebootOpt string
-		fmt.Println(clrCyan + "Restart macOS to apply the changes" + clrReset)
-		fmt.Print("Enter [Y] to restart macOS, or enter any key to exit. ")
+		fmt.Println(clrCyan + "\nRestart macOS to apply the changes" + clrReset)
+		fmt.Print(clrYellow + "ALLOW all application " + clrReset + "on System Preference > Security " +
+			"& Privacy > General. (You can restart through the system preference message)\n" +
+			"Enter [Y] to restart macOS, or enter any key to exit. ")
 		_, errEndOpt := fmt.Scanln(&rebootOpt)
 		if errEndOpt != nil {
 			rebootOpt = "Enter"
@@ -1339,17 +1341,18 @@ func macExtend(runOpt, adminCode string) {
 }
 
 func main() {
-	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
-
-	runLdBar.Suffix = " Checking network status... "
-	runLdBar.Start()
-
 	var (
 		brewSts string
 		runOpt  string
 		runType string
+		endDiv  string
 		endMsg  string
 	)
+
+	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
+
+	runLdBar.Suffix = " Checking network status... "
+	runLdBar.Start()
 
 	if checkExists(cmdPMS) == true {
 		brewSts = "Update"
@@ -1426,14 +1429,16 @@ insOpt:
 		macExtend(runOpt, "")
 	}
 
-	endMsg = "\n----------Finished!----------\n" +
-		"Please" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
+	endDiv = "\n----------Finished!----------\n"
+	endMsg = "Please" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
 		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
 		lstDot + "Or restart the Terminal.app by yourself.\n"
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		fmt.Println(endMsg + lstDot + "You need " + clrRed + "RESTART macOS " + clrReset + " to apply the changes.\n")
+		fmt.Println(endDiv + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " +
+			"the changes after" + clrYellow + "ALLOW all application " + clrReset + "on System Preference " +
+			"> Security & Privacy > General\n" + endMsg)
 	} else {
-		fmt.Println(endMsg)
+		fmt.Println(endDiv + endMsg)
 	}
 
 exitOpt:
