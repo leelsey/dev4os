@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"os/user"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -314,6 +315,15 @@ func makeDirectory(dirPath string) {
 	}
 }
 
+func copyDirectory(srcPath, dstPath string) {
+	if checkExists(dstPath) != true {
+		cpDir := exec.Command("cp", "-rf", srcPath, dstPath)
+		cpDir.Stderr = os.Stderr
+		err := cpDir.Run()
+		checkError(err, "Failed to copy directory from \""+srcPath+"\" to \""+dstPath+"\"")
+	}
+}
+
 func makeFile(filePath, fileContents string, fileMode int) {
 	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(fileMode))
 	checkError(err, "Failed to get file information to make new file from \""+filePath+"\"")
@@ -325,6 +335,28 @@ func makeFile(filePath, fileContents string, fileMode int) {
 
 	_, err = targetFile.Write([]byte(fileContents))
 	checkError(err, "Failed to fill in information to \""+filePath+"\"")
+}
+
+func copyFile(srcPath, dstPath string) {
+	srcFile, err := os.Open(srcPath)
+	checkError(err, "Failed to get file information to copy from \""+srcPath+"\"")
+
+	dstFile, err := os.Create(dstPath)
+	checkError(err, "Failed to get file information to copy to \""+dstPath+"\"")
+
+	defer func() {
+		errSrcFileClose := srcFile.Close()
+		checkError(errSrcFileClose, "Failed to finish copy file from \""+srcPath+"\"")
+
+		errDstFileClose := dstFile.Close()
+		checkError(errDstFileClose, "Failed to finish copy file to \""+dstPath+"\"")
+	}()
+
+	_, errCopy := io.Copy(dstFile, srcFile)
+	checkError(errCopy, "Failed to copy file from \""+srcPath+"\" to \""+dstPath+"\"")
+
+	errSync := dstFile.Sync()
+	checkError(errSync, "Failed to sync file from \""+srcPath+"\" to \""+dstPath+"\"")
 }
 
 func removeFile(filePath string) {
@@ -604,6 +636,34 @@ func installBrew() {
 
 	if checkExists(cmdPMS) == false {
 		messageError("fatal", "Installed brew failed, please check your system", "Can't find Homebrew")
+	}
+}
+
+func installHopper(adminCode string) {
+	dlHopperPath := workingDir() + ".Hopper.dmg"
+	appName := "Hopper Disassembler v4.app"
+
+	hopperRSS := strings.Split(netHTTP("https://www.hopperapp.com/rss/html_changelog.php"), " ")
+	hopperVer := strings.Join(hopperRSS[1:2], "")
+
+	downloadFile(dlHopperPath, "https://d2ap6ypl1xbe4k.cloudfront.net/Hopper-"+hopperVer+"-demo.dmg", 0755)
+
+	mountHopper := exec.Command("hdiutil", "attach", dlHopperPath)
+	errMount := mountHopper.Run()
+	checkError(errMount, "Failed to mount "+clrYellow+"Hopper.dmg"+clrReset)
+
+	removeFile(dlHopperPath)
+
+	copyDirectory("/Volumes/Hopper Disassembler/"+appName, "/Applications/"+appName)
+
+	unmountDmg := exec.Command("hdiutil", "unmount", "/Volumes/Hopper Disassembler")
+	errUnmount := unmountDmg.Run()
+	checkError(errUnmount, "Failed to unmount "+clrYellow+"Hopper Disassembler"+clrReset)
+
+	if checkArchitecture() == true {
+		changeAppIcon(appName, "Hopper Disassembler ARM64.icns", adminCode)
+	} else {
+		changeAppIcon(appName, "Hopper Disassembler AMD64.icns", adminCode)
 	}
 }
 
@@ -1304,6 +1364,7 @@ func macGUIApp(runOpt, adminCode string) {
 		changeAppIcon("", ".icns", adminCode)
 		brewInstallCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app", adminCode)
 		changeAppIcon("", ".icns", adminCode)
+		installHopper(adminCode)
 		brewInstallCask("cutter", "Cutter")
 		// Will add Ghidra // TODO: Fix this
 		brewInstallCask("imazing", "iMazing")
