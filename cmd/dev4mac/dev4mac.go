@@ -30,7 +30,7 @@ var (
 	cmdPMS      = checkBrewPath()
 	cmdGit      = "/usr/bin/git"
 	pmsIns      = "install"
-	//pmsReIn     = "reinstall"
+	pmsReIn     = "reinstall"
 	//pmsRm       = "remove"
 	pmsAlt    = "--cask"
 	pmsRepo   = "tap"
@@ -516,21 +516,29 @@ func brewInstallQuiet(pkg string) {
 
 func brewInstallCask(pkg, appName string) {
 	if checkExists(brewPrefix+"Caskroom/"+pkg) != true {
+		brewUpdate()
 		if checkExists("/Applications/"+appName+".app") != true {
-			brewUpdate()
 			brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
 			err := brewIns.Run()
 			checkCmdError(err, "Brew failed to install cask", pkg)
+		} else {
+			brewIns := exec.Command(cmdPMS, pmsReIn, pmsAlt, pkg)
+			err := brewIns.Run()
+			checkCmdError(err, "Brew failed to reinstall cask", pkg)
 		}
 	}
 }
 
 func brewInstallCaskSudo(pkg, appName, appPath, adminCode string) {
 	if checkExists(brewPrefix+"Caskroom/"+pkg) != true {
+		brewUpdate()
+		needPermission(adminCode)
 		if checkExists(appPath) != true {
-			needPermission(adminCode)
-			brewUpdate()
 			brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+			err := brewIns.Run()
+			checkCmdError(err, "Brew failed to install cask", appName)
+		} else {
+			brewIns := exec.Command(cmdPMS, pmsReIn, pmsAlt, pkg)
 			err := brewIns.Run()
 			checkCmdError(err, "Brew failed to install cask", appName)
 		}
@@ -639,6 +647,12 @@ func installBrew() {
 	}
 }
 
+func installXAMPP(adminCode string) {
+	xamppVer := netJSON("https://formulae.brew.sh/api/cask/xampp-vm.json", "version")
+	brewInstallCaskSudo("xampp-vm", "xampp-osx-"+xamppVer+"-vm", "/Applications/Loopback.app", adminCode)
+	changeAppIcon("xampp-osx-"+xamppVer+"-vm", "XAMPP.icns", adminCode)
+}
+
 func installHopper(adminCode string) {
 	dlHopperPath := workingDir() + ".Hopper.dmg"
 	appName := "Hopper Disassembler v4.app"
@@ -698,6 +712,13 @@ func macEnv() {
 	macLdBar.Suffix = " Setting basic environment... "
 	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
 	macLdBar.Start()
+
+	if checkExists(profilePath) == true {
+		copyFile(profilePath, homeDir()+".zprofile.bck")
+	}
+	if checkExists(shrcPath) == true {
+		copyFile(shrcPath, homeDir()+".zshrc.bck")
+	}
 
 	profileContents := "#    ___________  _____   ____  ______ _____ _      ______ \n" +
 		"#   |___  /  __ \\|  __ \\ / __ \\|  ____|_   _| |    |  ____|\n" +
@@ -1300,9 +1321,7 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("postman", "Postman")
 		brewInstallCask("drawio", "draw.io")
 		brewInstallCask("httpie", "HTTPie")
-		xamppVer := netJSON("https://formulae.brew.sh/api/cask/xampp-vm.json", "version")
-		brewInstallCaskSudo("xampp-vm", "xampp-osx-"+xamppVer+"-vm", "/Applications/Loopback.app", adminCode)
-		changeAppIcon("xampp-osx-"+xamppVer+"-vm", "XAMPP.icns", adminCode)
+		installXAMPP(adminCode)
 	} else if runOpt == "5" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
@@ -1319,6 +1338,8 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("httpie", "HTTPie")
 		brewInstallCask("boop", "Boop")
 		brewInstallCask("drawio", "draw.io")
+		brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
+		changeAppIcon("Firefox Developer Edition", "Firefox Developer Edition.icns", adminCode)
 	} else if runOpt == "6" || runOpt == "7" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
@@ -1344,8 +1365,6 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("vnc-viewer", "VNC Viewer")
 		changeAppIcon("VNC Viewer", "VNC Viewer.icns", adminCode)
 		brewInstallCask("forklift", "ForkLift")
-		//brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
-		//changeAppIcon("Firefox Developer Edition", "Firefox Developer Edition.icns", adminCode)
 	}
 
 	shrcAppend := "# ANDROID STUDIO\n" +
