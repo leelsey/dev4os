@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/briandowns/spinner"
@@ -230,6 +231,47 @@ func needPermission(strPw string) {
 	}
 }
 
+func clearLine(line int) {
+	for clear := 0; clear < line; clear++ {
+		fmt.Printf("\033[1A\033[K")
+	}
+}
+
+func netHTTP(urlPath string) string {
+	resp, err := http.Get(urlPath)
+	checkError(err, "Failed to connect "+urlPath)
+
+	defer func() {
+		errBodyClose := resp.Body.Close()
+		checkError(errBodyClose, "Failed to download from "+urlPath)
+	}()
+
+	rawFile, err := io.ReadAll(resp.Body)
+	checkError(err, "Failed to read file information from "+urlPath)
+
+	return string(rawFile)
+}
+
+func netJSON(urlPath, key string) string {
+	var res map[string]interface{}
+
+	resp, err := http.Get(urlPath)
+	checkError(err, "Failed to connect "+urlPath)
+
+	defer func() {
+		errBodyClose := resp.Body.Close()
+		checkError(errBodyClose, "Failed to download from "+urlPath)
+	}()
+
+	jsonFile, err := io.ReadAll(resp.Body)
+	checkError(err, "Failed to read file information from "+urlPath)
+
+	errMarshal := json.Unmarshal(jsonFile, &res)
+	checkError(errMarshal, "Failed to parse JSON file from "+urlPath)
+
+	return res[key].(string)
+}
+
 func homeDir() string {
 	homeDirPath, err := os.UserHomeDir()
 	checkError(err, "Failed to get home directory")
@@ -265,7 +307,7 @@ func rebootOS(adminCode string) {
 	runLdBar.Stop()
 }
 
-func makeDir(dirPath string) {
+func makeDirectory(dirPath string) {
 	if checkExists(dirPath) != true {
 		err := os.MkdirAll(dirPath, 0755)
 		checkError(err, "Failed to make directory")
@@ -292,59 +334,44 @@ func removeFile(filePath string) {
 	}
 }
 
-func linkFile(tgPath, destPath, linkType, permission, adminCode string) {
+func linkFile(srcPath, dstPath, linkType, permission, adminCode string) {
 	if linkType == "hard" {
 		if permission == "root" || permission == "sudo" || permission == "admin" {
 			needPermission(adminCode)
-			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", tgPath, destPath)
+			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, dstPath)
 			lnFile.Stderr = os.Stderr
 			err := lnFile.Run()
-			checkCmdError(err, "Add failed to hard link file", "\""+tgPath+"\"->\""+destPath+"\"")
+			checkCmdError(err, "Add failed to hard link file", "\""+srcPath+"\"->\""+dstPath+"\"")
 		} else {
-			if checkExists(tgPath) == true {
-				if checkExists(destPath) == true {
-					removeFile(destPath)
+			if checkExists(srcPath) == true {
+				if checkExists(dstPath) == true {
+					removeFile(dstPath)
 				}
-				errHardlink := os.Link(tgPath, destPath)
-				checkCmdError(errHardlink, "Add failed to hard link", "\""+tgPath+"\"->\""+destPath+"\"")
+				errHardlink := os.Link(srcPath, dstPath)
+				checkCmdError(errHardlink, "Add failed to hard link", "\""+srcPath+"\"->\""+dstPath+"\"")
 			}
 		}
 	} else if linkType == "symbolic" {
 		if permission == "root" || permission == "sudo" || permission == "admin" {
 			needPermission(adminCode)
-			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", tgPath, destPath)
+			lnFile := exec.Command(cmdAdmin, "ln", "-sfn", srcPath, dstPath)
 			lnFile.Stderr = os.Stderr
 			err := lnFile.Run()
-			checkCmdError(err, "Add failed to symbolic link", "\""+tgPath+"\"->\""+destPath+"\"")
+			checkCmdError(err, "Add failed to symbolic link", "\""+srcPath+"\"->\""+dstPath+"\"")
 		} else {
-			if checkExists(tgPath) == true {
-				if checkExists(destPath) == true {
-					removeFile(destPath)
+			if checkExists(srcPath) == true {
+				if checkExists(dstPath) == true {
+					removeFile(dstPath)
 				}
-				errSymlink := os.Symlink(tgPath, destPath)
-				checkCmdError(errSymlink, "Add failed to symbolic link\"", tgPath+"\"->\""+destPath+"\"")
-				errLinkOwn := os.Lchown(destPath, os.Getuid(), os.Getgid())
-				checkError(errLinkOwn, "Failed to change ownership of symlink \""+destPath+"\"")
+				errSymlink := os.Symlink(srcPath, dstPath)
+				checkCmdError(errSymlink, "Add failed to symbolic link\"", srcPath+"\"->\""+dstPath+"\"")
+				errLinkOwn := os.Lchown(dstPath, os.Getuid(), os.Getgid())
+				checkError(errLinkOwn, "Failed to change ownership of symlink \""+dstPath+"\"")
 			}
 		}
 	} else {
 		messageError("fatal", "Invalid link type", "Link file")
 	}
-}
-
-func downloadFile(filePath, urlPath string, fileMode int) {
-	resp, err := http.Get(urlPath)
-	checkError(err, "Failed to connect "+urlPath)
-
-	defer func() {
-		errBodyClose := resp.Body.Close()
-		checkError(errBodyClose, "Failed to download from "+urlPath)
-	}()
-
-	rawFile, err := io.ReadAll(resp.Body)
-	checkError(err, "Failed to read file information from "+urlPath)
-
-	makeFile(filePath, string(rawFile), fileMode)
 }
 
 func appendContents(filePath, fileContents string, fileMode int) {
@@ -360,10 +387,21 @@ func appendContents(filePath, fileContents string, fileMode int) {
 	checkError(err, "Failed to append contents to \""+filePath+"\"")
 }
 
-func clearLine(line int) {
-	for clear := 0; clear < line; clear++ {
-		fmt.Printf("\033[1A\033[K")
-	}
+func downloadFile(filePath, urlPath string, fileMode int) {
+	//resp, err := http.Get(urlPath)
+	//checkError(err, "Failed to connect "+urlPath)
+	//
+	//defer func() {
+	//	errBodyClose := resp.Body.Close()
+	//	checkError(errBodyClose, "Failed to download from "+urlPath)
+	//}()
+	//
+	//rawFile, err := io.ReadAll(resp.Body)
+	//checkError(err, "Failed to read file information from "+urlPath)
+
+	//makeFile(filePath, string(rawFile), fileMode)
+
+	makeFile(filePath, netHTTP(urlPath), fileMode)
 }
 
 func changeAppIcon(appName, icnName, adminCode string) {
@@ -445,21 +483,25 @@ func brewInstallQuiet(pkg string) {
 }
 
 func brewInstallCask(pkg, appName string) {
-	if checkExists("/Applications/"+appName+".app") != true {
-		brewUpdate()
-		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
-		err := brewIns.Run()
-		checkCmdError(err, "Brew failed to install cask", pkg)
+	if checkExists(brewPrefix+"Caskroom/"+pkg) != true {
+		if checkExists("/Applications/"+appName+".app") != true {
+			brewUpdate()
+			brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+			err := brewIns.Run()
+			checkCmdError(err, "Brew failed to install cask", pkg)
+		}
 	}
 }
 
 func brewInstallCaskSudo(pkg, appName, appPath, adminCode string) {
-	if checkExists(appPath) != true {
-		needPermission(adminCode)
-		brewUpdate()
-		brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
-		err := brewIns.Run()
-		checkCmdError(err, "Brew failed to install cask", appName)
+	if checkExists(brewPrefix+"Caskroom/"+pkg) != true {
+		if checkExists(appPath) != true {
+			needPermission(adminCode)
+			brewUpdate()
+			brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+			err := brewIns.Run()
+			checkCmdError(err, "Brew failed to install cask", appName)
+		}
 	}
 }
 
@@ -479,19 +521,19 @@ func asdfInstall(plugin, version string) {
 	checkCmdError(errConf, "ASDF-VM failed to install", plugin)
 }
 
-func addJavaHome(tgVer, destVer, adminCode string) {
-	tgHead := brewPrefix + "opt/openjdk"
-	tgTail := " /libexec/openjdk.jdk"
+func addJavaHome(srcVer, dstVer, adminCode string) {
+	srcHead := brewPrefix + "opt/openjdk"
+	srcTail := " /libexec/openjdk.jdk"
 	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
 
-	if checkExists(brewPrefix+"Cellar/openjdk"+tgVer) == true {
-		linkFile(tgHead+tgVer+tgTail, lnDir+destVer+".jdk", "symbolic", "root", adminCode)
+	if checkExists(brewPrefix+"Cellar/openjdk"+srcVer) == true {
+		linkFile(srcHead+srcVer+srcTail, lnDir+dstVer+".jdk", "symbolic", "root", adminCode)
 	}
 }
 
 func confA4s() {
 	a4sPath := homeDir() + ".config/alias4sh"
-	makeDir(a4sPath)
+	makeDirectory(a4sPath)
 	makeFile(a4sPath+"/alias4.sh", "# ALIAS4SH", 0644)
 
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
@@ -536,7 +578,7 @@ func confG4s() {
 	ignoreDirPath := homeDir() + ".config/git/"
 	ignorePath := ignoreDirPath + "gitignore_global"
 
-	makeDir(ignoreDirPath)
+	makeDirectory(ignoreDirPath)
 	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample", 0644)
 
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
@@ -617,8 +659,8 @@ func macEnv() {
 		"#  " + userName() + "’s zsh run commands\n\n"
 	makeFile(shrcPath, shrcContents, 0644)
 
-	makeDir(homeDir() + ".config")
-	makeDir(homeDir() + ".cache")
+	makeDirectory(homeDir() + ".config")
+	makeDirectory(homeDir() + ".cache")
 
 	macLdBar.Stop()
 }
@@ -989,8 +1031,8 @@ func macTerminal(runOpt string) {
 	brewInstall("romkatv/powerlevel10k/powerlevel10k")
 
 	makeFile(homeDir()+".z", "", 0644)
-	makeDir(p10kPath)
-	makeDir(p10kCache)
+	makeDirectory(p10kPath)
+	makeDirectory(p10kCache)
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewInstall("fzf")
@@ -1088,6 +1130,7 @@ func macCLIApp(runOpt string) {
 		brewInstall("git")
 		brewInstall("git-lfs")
 		brewInstall("gh")
+		brewInstall("hub")
 		brewInstall("tig")
 		brewInstall("exa")
 		brewInstall("bat")
@@ -1122,6 +1165,7 @@ func macCLIApp(runOpt string) {
 		brewInstall("yq")
 		brewInstall("dasel")
 		brewInstall("asciinema")
+		//brewInstall("opencv")
 	}
 
 	if runOpt == "7" {
@@ -1196,8 +1240,9 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("postman", "Postman")
 		brewInstallCask("drawio", "draw.io")
 		brewInstallCask("httpie", "HTTPie")
-		brewInstallCaskSudo("xampp-vm", "xampp-osx-*", "/Applications/Loopback.app", adminCode) // TODO: Fix this
-		//changeAppIcon("xampp-os-*", "XAMPP.icns", adminCode) // TODO: Fix this
+		xamppVer := netJSON("https://formulae.brew.sh/api/cask/xampp-vm.json", "version")
+		brewInstallCaskSudo("xampp-vm", "xampp-osx-"+xamppVer+"-vm", "/Applications/Loopback.app", adminCode)
+		changeAppIcon("xampp-osx-"+xamppVer+"-vm", "XAMPP.icns", adminCode)
 	} else if runOpt == "5" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
@@ -1252,18 +1297,13 @@ func macGUIApp(runOpt, adminCode string) {
 	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt == "7" {
+		brewInstallCaskSudo("codeql", "CodeQL", brewPrefix+"Caskroom/Codeql", adminCode)
 		brewInstallCask("burp-suite", "Burp Suite Community Edition")
 		brewInstallCask("burp-suite-professional", "Burp Suite Professional")
 		brewInstallCaskSudo("wireshark", "Wireshark", "/Applications/Wireshark.app", adminCode)
 		changeAppIcon("", ".icns", adminCode)
 		brewInstallCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app", adminCode)
 		changeAppIcon("", ".icns", adminCode)
-		// Will add Hopper Disassembler // TODO: Fix this
-		if checkArchitecture() == true {
-			// changeAppIcon("Hopper Disassembler", "Hopper Disassembler ARM64.icns", adminCode)
-		} else {
-			// changeAppIcon("Hopper Disassembler", "Hopper Disassembler AMD64.icns", adminCode)
-		}
 		brewInstallCask("cutter", "Cutter")
 		// Will add Ghidra // TODO: Fix this
 		brewInstallCask("imazing", "iMazing")
