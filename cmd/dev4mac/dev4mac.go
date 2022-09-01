@@ -297,6 +297,13 @@ func rebootOS(adminCode string) {
 	time.Sleep(time.Second * 3)
 
 	needPermission(adminCode)
+	macOSUpdate := exec.Command("softwareupdate", "--all", "--install", "--force")
+	//macOSUpdate.Env = os.Environ()
+	//macOSUpdate.Stdout = os.Stdout
+	//macOSUpdate.Stderr = os.Stderr
+	errmacOSUpdate := macOSUpdate.Run()
+	checkError(errmacOSUpdate, "Failed to update macOS")
+
 	reboot := exec.Command(cmdAdmin, "shutdown", "-r", "now")
 	if err := reboot.Run(); err != nil {
 		runLdBar.FinalMSG = clrRed + "Error: " + clrReset
@@ -437,8 +444,9 @@ func downloadFile(filePath, urlPath string, fileMode int) {
 }
 
 func changeAppIcon(appName, icnName, adminCode string) {
+	appSrc := strings.Replace(appName, " ", "\\ ", -1)
+	appPath := "/Applications/" + appSrc + ".app"
 	chicnPath := workingDir() + ".dev4mac-chicn.sh"
-	appPath := "/Applications/" + appName + ".app"
 	srcIcn := workingDir() + ".dev4mac-app-icn.icns"
 	cvtIcn := workingDir() + ".dev4mac-app-icn.rsrc"
 
@@ -552,13 +560,22 @@ func asdfInstall(plugin, version string) {
 		checkCmdError(err, "ASDF-VM failed to add", plugin)
 	}
 
+	asdfReshim()
 	asdfIns := exec.Command(cmdASDF, pmsIns, plugin, version)
+	asdfIns.Env = os.Environ()
 	errIns := asdfIns.Run()
 	checkCmdError(errIns, "ASDF-VM", plugin)
 
 	asdfGlobal := exec.Command(cmdASDF, "global", plugin, version)
+	asdfGlobal.Env = os.Environ()
 	errConf := asdfGlobal.Run()
 	checkCmdError(errConf, "ASDF-VM failed to install", plugin)
+}
+
+func asdfReshim() {
+	reshim := exec.Command(cmdASDF, "reshim")
+	err := reshim.Run()
+	checkCmdError(err, "ASDF failed to", "reshim")
 }
 
 func addJavaHome(srcVer, dstVer, adminCode string) {
@@ -645,6 +662,12 @@ func installBrew() {
 	if checkExists(cmdPMS) == false {
 		messageError("fatal", "Installed brew failed, please check your system", "Can't find Homebrew")
 	}
+}
+
+func installCabal() {
+	stackIns := exec.Command("stack", pmsIns, "cabal-install")
+	err := stackIns.Run()
+	checkCmdError(err, "Stack(haskell) failed to install", "cabal")
 }
 
 func installXAMPP(adminCode string) {
@@ -823,6 +846,7 @@ func macDependency(runOpt string) {
 		brewInstall("libsodium")
 		brewInstall("nettle")
 		brewInstall("coreutils")
+		brewInstall("gnu-getopt")
 		brewInstall("ldns")
 		brewInstall("isl")
 		brewInstall("npth")
@@ -839,7 +863,6 @@ func macDependency(runOpt string) {
 		brewInstall("rtmpdump")
 		brewInstall("aom")
 		brewInstall("screenresolution")
-		brewInstall("gnu-getopt")
 		brewInstall("brotli")
 		brewInstall("bison")
 		brewInstall("swig")
@@ -857,8 +880,6 @@ func macDependency(runOpt string) {
 		brewInstall("shared-mime-info")
 		brewInstall("x265")
 		brewInstall("oniguruma")
-		brewInstall("zlib")
-		brewInstall("glib")
 		brewInstall("libgpg-error")
 		brewInstall("libgcrypt")
 		brewInstall("libunistring")
@@ -888,6 +909,10 @@ func macDependency(runOpt string) {
 		brewInstall("imagemagick")
 		brewInstall("pinentry")
 		brewInstall("gnupg")
+		brewInstall("curl")
+		brewInstall("wget")
+		brewInstall("glib")
+		brewInstall("zlib")
 
 		shrcAppend := "# KRB5\n" +
 			"export PATH=\"" + brewPrefix + "opt/krb5/bin:$PATH\"\n" +
@@ -896,13 +921,18 @@ func macDependency(runOpt string) {
 			"export CPPFLAGS=\"" + brewPrefix + "opt/krb5/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/krb5/lib/pkgconfig\"\n\n" +
 			"# COREUTILS\n" +
-			"export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
+			"#export PATH=\"" + brewPrefix + "opt/coreutils/libexec/gnubin:$PATH\"\n\n" +
+			"# GNU GETOPT\n" +
 			"export PATH=\"" + brewPrefix + "opt/gnu-getopt/bin:$PATH\"\n\n" +
+			"# TCL-TK\n" +
+			"export PATH=\"" + brewPrefix + "opt/tcl-tk/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/tcl-tk/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/tcl-tk/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/tcl-tk/lib/pkgconfig\"\n\n" +
 			"# BZIP2\n" +
 			"export PATH=\"" + brewPrefix + "opt/bzip2/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/bzip2/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/bzip2/include\"\n\n" +
-			"# GNU GETOPT\n" +
 			"# BISON\n" +
 			"export PATH=\"" + brewPrefix + "opt/bison/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/bison/lib\"\n\n" +
@@ -914,10 +944,6 @@ func macDependency(runOpt string) {
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n" +
 			"# DOCBOOK" +
 			"export XML_CATALOG_FILES=\"" + brewPrefix + "etc/xml/catalog\"\n\n" +
-			"# ZLIB\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n" +
 			"# LIBICONV\n" +
 			"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/libiconv/lib\"\n" +
@@ -931,7 +957,16 @@ func macDependency(runOpt string) {
 			"export PATH=\"" + brewPrefix + "opt/libxslt/bin:$PATH\"\n" +
 			"export LDFLAGS=\"" + brewPrefix + "opt/libxslt/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/libxslt/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/libxslt/lib/pkgconfig\"\n\n"
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/libxslt/lib/pkgconfig\"\n\n" +
+			"# CURL\n" +
+			"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n" +
+			"# ZLIB\n" +
+			"export LDFLAGS=\"" + brewPrefix + "opt/zlib/lib\"\n" +
+			"export CPPFLAGS=\"" + brewPrefix + "opt/zlib/include\"\n" +
+			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/zlib/lib/pkgconfig\"\n\n"
 		appendContents(shrcPath, shrcAppend, 0644)
 	}
 
@@ -945,16 +980,11 @@ func macLanguage(runOpt, adminCode string) {
 
 	shrcAppend := "# CCACHE\n" +
 		"export PATH=\"" + brewPrefix + "opt/ccache/libexec:$PATH\"\n\n" +
-		"# TCL-TK\n" +
-		"export PATH=\"" + brewPrefix + "opt/tcl-tk/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + brewPrefix + "opt/tcl-tk/lib\"\n" +
-		"export CPPFLAGS=\"" + brewPrefix + "opt/tcl-tk/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/tcl-tk/lib/pkgconfig\"\n\n" +
 		"# RUBY\n" +
 		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
-		"export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
-		"export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
-		"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
+		"#export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
+		"#export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
+		"#export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
@@ -1006,9 +1036,7 @@ func macLanguage(runOpt, adminCode string) {
 		brewInstall("haskell-stack")
 		brewInstall("haskell-language-server")
 		brewInstall("stylish-haskell")
-		stackIns := exec.Command("stack", pmsIns, "cabal-install")
-		err := stackIns.Run()
-		checkCmdError(err, "Stack(haskell) failed to install", "cabal")
+		installCabal()
 	}
 
 	macLdBar.Stop()
@@ -1057,7 +1085,8 @@ func macDevVM() {
 
 	shrcAppend := "# ASDF VM\n" +
 		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
-		"#source " + homeDir() + ".asdf/plugins/java/set-java-home.zsh\n\n"
+		"export RUBY_CONFIGURE_OPTS=\"--with-openssl-dir=$(brew --prefix openssl@1.1)\"\n" +
+		"#export KERL_CONFIGURE_OPTIONS=\"--without-javac --with-ssl=$(brew --prefix openssl@1.1)\"\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
 	asdfrcContents := "#              _____ _____  ______  __      ____  __ \n" +
@@ -1067,32 +1096,33 @@ func macDevVM() {
 		"#    / ____ \\ ____) | |__| | |         \\  /  | |  | |\n" +
 		"#   /_/    \\_\\_____/|_____/|_|          \\/   |_|  |_|\n#\n" +
 		"#  " + userName() + "’s ASDF-VM run commands\n\n" +
-		"# JAVA\n" +
-		"java_macos_integration_enable = yes\n\n"
+		"legacy_version_file = yes\n" +
+		"use_release_candidates = no\n" +
+		"always_keep_download = no\n" +
+		"plugin_repository_last_check_duration = 0\n" +
+		"disable_plugin_short_name_repository = no\n" +
+		"java_macos_integration_enable = yes\n"
 	makeFile(homeDir()+".asdfrc", asdfrcContents, 0644)
 
 	asdfInstall("perl", "latest")
-	//asdfInstall("ruby", "latest")   // TODO: fix this
-	//asdfInstall("python", "latest") // TODO: fix this
+	asdfInstall("ruby", "latest")
+	asdfInstall("python", "latest")
 	asdfInstall("java", "openjdk-11.0.2") // JDK LTS 11
 	asdfInstall("java", "openjdk-17.0.2") // JDK LTS 17
 	asdfInstall("rust", "latest")
 	asdfInstall("golang", "latest")
 	asdfInstall("nodejs", "latest")
 	asdfInstall("lua", "latest")
-	//asdfInstall("php", "latest") // TODO: fix this
+	asdfInstall("php", "latest")
 	asdfInstall("groovy", "latest")
 	asdfInstall("kotlin", "latest")
 	asdfInstall("scala", "latest")
 	asdfInstall("clojure", "latest")
-	//asdfInstall("erlang", "latest") // TODO: fix this
+	asdfInstall("erlang", "latest")
 	asdfInstall("elixir", "latest")
-	//asdfInstall("haskell", "latest") // TODO: fix this
+	//asdfInstall("haskell", "latest") // TODO: fix error
 	asdfInstall("gleam", "latest")
-
-	asdfReshim := exec.Command(cmdASDF, "reshim")
-	err := asdfReshim.Run()
-	checkCmdError(err, "ASDF failed to", "reshim")
+	asdfReshim()
 
 	macLdBar.Stop()
 }
@@ -1203,8 +1233,6 @@ func macCLIApp(runOpt string) {
 	brewInstall("transmission-cli")
 
 	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewInstall("curl")
-		brewInstall("wget")
 		brewInstall("openssh")
 		brewInstall("mosh")
 		brewInstall("inetutils")
@@ -1220,12 +1248,7 @@ func macCLIApp(runOpt string) {
 		brewInstall("watchman")
 		brewInstall("direnv")
 
-		shrcAppend := "# CURL\n" +
-			"export PATH=\"" + brewPrefix + "opt/curl/bin:$PATH\"\n" +
-			"export LDFLAGS=\"" + brewPrefix + "opt/curl/lib\"\n" +
-			"export CPPFLAGS=\"" + brewPrefix + "opt/curl/include\"\n" +
-			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/curl/lib/pkgconfig\"\n\n" +
-			"# DIRENV\n" +
+		shrcAppend := "# DIRENV\n" +
 			"eval \"$(direnv hook zsh)\"\n\n"
 		appendContents(shrcPath, shrcAppend, 0644)
 	}
@@ -1282,7 +1305,7 @@ func macGUIApp(runOpt, adminCode string) {
 	brewInstallCask("firefox", "Firefox")
 	changeAppIcon("Firefox", "Firefox.icns", adminCode)
 	brewInstallCask("tor-browser", "Tor Browser")
-	changeAppIcon("", ".icns", adminCode)
+	changeAppIcon("Tor Browser", "Tor Browser.icns", adminCode)
 	brewInstallCask("spotify", "Spotify")
 	changeAppIcon("Spotify", "Spotify.icns", adminCode)
 	brewInstallCask("signal", "Signal")
@@ -1310,7 +1333,7 @@ func macGUIApp(runOpt, adminCode string) {
 
 	if runOpt == "3" || runOpt == "4" {
 		brewInstallCask("eclipse-ide", "Eclipse")
-		changeAppIcon("Eclipse", ".icns", adminCode)
+		changeAppIcon("Eclipse", "Eclipse.icns", adminCode)
 		brewInstallCask("intellij-idea-ce", "IntelliJ IDEA CE")
 		changeAppIcon("IntelliJ IDEA CE", "IntelliJ IDEA CE.icns", adminCode)
 		brewInstallCask("android-studio", "Android Studio")
@@ -1325,7 +1348,7 @@ func macGUIApp(runOpt, adminCode string) {
 	} else if runOpt == "5" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
-		changeAppIcon("IntelliJ IDE", ".icns", adminCode)
+		changeAppIcon("IntelliJ IDE", "IntelliJ IDE.icns", adminCode)
 		brewInstallCask("visual-studio-code", "Visual Studio Code")
 		brewInstallCask("atom", "Atom")
 		brewInstallCask("neovide", "Neovide")
@@ -1377,19 +1400,26 @@ func macGUIApp(runOpt, adminCode string) {
 
 	if runOpt == "7" {
 		brewInstallCaskSudo("codeql", "CodeQL", brewPrefix+"Caskroom/Codeql", adminCode)
-		brewInstallCask("burp-suite", "Burp Suite Community Edition")
+		brewInstallCask("little-snitch", "Little Snitch")
+		changeAppIcon("Little Snitch", "Little Snitch.icns", adminCode)
+		brewInstallCask("micro-snitch", "Micro Snitch")
+		changeAppIcon("Micro Snitch", "Micro Snitch.icns", adminCode)
+		brewInstallCask("fsmonitor", "FSMonitor")
+		changeAppIcon("FSMonitor", "FSMonitor.icns", adminCode)
 		brewInstallCask("burp-suite-professional", "Burp Suite Professional")
+		brewInstallCask("burp-suite", "Burp Suite Community Edition")
+		brewInstallCask("owasp-zap", "OWASP ZAP")
+		changeAppIcon("OWASP ZAP", "OWASP ZAP.icns", adminCode)
 		brewInstallCaskSudo("wireshark", "Wireshark", "/Applications/Wireshark.app", adminCode)
-		changeAppIcon("", ".icns", adminCode)
+		changeAppIcon("Wireshark", "Wireshark.icns", adminCode)
 		brewInstallCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app", adminCode)
-		changeAppIcon("", ".icns", adminCode)
+		changeAppIcon("Zenmap", "Zenmap.icns", adminCode)
 		installHopper(adminCode)
 		brewInstallCask("cutter", "Cutter")
 		// Will add Ghidra // TODO: Fix this
 		brewInstallCask("imazing", "iMazing")
 		changeAppIcon("iMazing", "iMazing.icns", adminCode)
 		brewInstallCask("apparency", "Apparency")
-		brewInstallCask("suspicious-package", "Suspicious Package")
 	}
 
 	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
