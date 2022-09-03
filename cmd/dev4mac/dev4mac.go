@@ -298,9 +298,6 @@ func rebootOS(adminCode string) {
 
 	needPermission(adminCode)
 	macOSUpdate := exec.Command("softwareupdate", "--all", "--install", "--force")
-	//macOSUpdate.Env = os.Environ()
-	//macOSUpdate.Stdout = os.Stdout
-	//macOSUpdate.Stderr = os.Stderr
 	errmacOSUpdate := macOSUpdate.Run()
 	checkError(errmacOSUpdate, "Failed to update macOS")
 
@@ -665,6 +662,7 @@ func installBrew() {
 }
 
 func installCabal() {
+	brewInstall("haskell-stack")
 	stackIns := exec.Command("stack", pmsIns, "cabal-install")
 	err := stackIns.Run()
 	checkCmdError(err, "Stack(haskell) failed to install", "cabal")
@@ -838,7 +836,6 @@ func macDependency(runOpt string) {
 		brewInstall("python@3.10")
 		brewInstall("openjdk")
 		brewInstall("ghc")
-		brewInstall("cabal-install")
 	}
 
 	if runOpt == "6" || runOpt == "7" {
@@ -942,7 +939,7 @@ func macDependency(runOpt string) {
 			"export LDFLAGS=\"" + brewPrefix + "opt/icu4c/lib\"\n" +
 			"export CPPFLAGS=\"" + brewPrefix + "opt/icu4c/include\"\n" +
 			"export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/icu4c/lib/pkgconfig\"\n\n" +
-			"# DOCBOOK" +
+			"# DOCBOOK\n" +
 			"export XML_CATALOG_FILES=\"" + brewPrefix + "etc/xml/catalog\"\n\n" +
 			"# LIBICONV\n" +
 			"export PATH=\"" + brewPrefix + "opt/libiconv/bin:$PATH\"\n" +
@@ -981,10 +978,7 @@ func macLanguage(runOpt, adminCode string) {
 	shrcAppend := "# CCACHE\n" +
 		"export PATH=\"" + brewPrefix + "opt/ccache/libexec:$PATH\"\n\n" +
 		"# RUBY\n" +
-		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n" +
-		"#export LDFLAGS=\"" + brewPrefix + "opt/ruby/lib\"\n" +
-		"#export CPPFLAGS=\"" + brewPrefix + "opt/ruby/include\"\n" +
-		"#export PKG_CONFIG_PATH=\"" + brewPrefix + "opt/ruby/lib/pkgconfig\"\n\n"
+		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
@@ -999,6 +993,7 @@ func macLanguage(runOpt, adminCode string) {
 	}
 
 	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
+		installCabal()
 		brewInstall("nvm")
 		brewInstall("pyenv")
 		brewInstall("pyenv-virtualenv")
@@ -1033,10 +1028,9 @@ func macLanguage(runOpt, adminCode string) {
 		brewInstall("erlang")
 		brewInstall("elixir")
 		brewInstall("typescript")
-		brewInstall("haskell-stack")
+		brewInstall("cabal-install")
 		brewInstall("haskell-language-server")
 		brewInstall("stylish-haskell")
-		installCabal()
 	}
 
 	macLdBar.Stop()
@@ -1085,8 +1079,7 @@ func macDevVM() {
 
 	shrcAppend := "# ASDF VM\n" +
 		"source " + brewPrefix + "opt/asdf/libexec/asdf.sh\n" +
-		"export RUBY_CONFIGURE_OPTS=\"--with-openssl-dir=$(brew --prefix openssl@1.1)\"\n" +
-		"#export KERL_CONFIGURE_OPTIONS=\"--without-javac --with-ssl=$(brew --prefix openssl@1.1)\"\n\n"
+		"export RUBY_CONFIGURE_OPTS=\"--with-openssl-dir=$(brew --prefix openssl@1.1)\"\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
 	asdfrcContents := "#              _____ _____  ______  __      ____  __ \n" +
@@ -1120,8 +1113,8 @@ func macDevVM() {
 	asdfInstall("clojure", "latest")
 	asdfInstall("erlang", "latest")
 	asdfInstall("elixir", "latest")
-	//asdfInstall("haskell", "latest") // TODO: fix error
 	asdfInstall("gleam", "latest")
+	asdfInstall("haskell", "latest")
 	asdfReshim()
 
 	macLdBar.Stop()
