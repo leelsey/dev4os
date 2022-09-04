@@ -424,19 +424,6 @@ func appendContents(filePath, fileContents string, fileMode int) {
 }
 
 func downloadFile(filePath, urlPath string, fileMode int) {
-	//resp, err := http.Get(urlPath)
-	//checkError(err, "Failed to connect "+urlPath)
-	//
-	//defer func() {
-	//	errBodyClose := resp.Body.Close()
-	//	checkError(errBodyClose, "Failed to download from "+urlPath)
-	//}()
-	//
-	//rawFile, err := io.ReadAll(resp.Body)
-	//checkError(err, "Failed to read file information from "+urlPath)
-
-	//makeFile(filePath, string(rawFile), fileMode)
-
 	makeFile(filePath, netHTTP(urlPath), fileMode)
 }
 
@@ -695,11 +682,11 @@ func installHopper(adminCode string) {
 	errUnmount := unmountDmg.Run()
 	checkError(errUnmount, "Failed to unmount "+clrYellow+"Hopper Disassembler"+clrReset)
 
-	if checkArchitecture() == true {
-		changeAppIcon(appName, "Hopper Disassembler ARM64.icns", adminCode)
-	} else {
-		changeAppIcon(appName, "Hopper Disassembler AMD64.icns", adminCode)
-	}
+	//if checkArchitecture() == true {
+	//	changeAppIcon(appName, "Hopper Disassembler ARM64.icns", adminCode)
+	//} else {
+	//	changeAppIcon(appName, "Hopper Disassembler AMD64.icns", adminCode)
+	//}
 }
 
 func macBegin(adminCode string) {
