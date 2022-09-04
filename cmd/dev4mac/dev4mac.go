@@ -663,7 +663,7 @@ func installXAMPP(adminCode string) {
 
 func installHopper(adminCode string) {
 	dlHopperPath := workingDir() + ".Hopper.dmg"
-	appName := "Hopper Disassembler v4.app"
+	appName := "Hopper Disassembler v4"
 
 	hopperRSS := strings.Split(netHTTP("https://www.hopperapp.com/rss/html_changelog.php"), " ")
 	hopperVer := strings.Join(hopperRSS[1:2], "")
@@ -676,17 +676,17 @@ func installHopper(adminCode string) {
 
 	removeFile(dlHopperPath)
 
-	copyDirectory("/Volumes/Hopper Disassembler/"+appName, "/Applications/"+appName)
+	copyDirectory("/Volumes/Hopper Disassembler/"+appName+".app", "/Applications/"+appName+".app")
 
 	unmountDmg := exec.Command("hdiutil", "unmount", "/Volumes/Hopper Disassembler")
 	errUnmount := unmountDmg.Run()
 	checkError(errUnmount, "Failed to unmount "+clrYellow+"Hopper Disassembler"+clrReset)
 
-	//if checkArchitecture() == true {
-	//	changeAppIcon(appName, "Hopper Disassembler ARM64.icns", adminCode)
-	//} else {
-	//	changeAppIcon(appName, "Hopper Disassembler AMD64.icns", adminCode)
-	//}
+	if checkArchitecture() == true {
+		changeAppIcon(appName, "Hopper Disassembler ARM64.icns", adminCode)
+	} else {
+		changeAppIcon(appName, "Hopper Disassembler AMD64.icns", adminCode)
+	}
 }
 
 func macBegin(adminCode string) {
