@@ -593,28 +593,38 @@ func confA4s() {
 func confG4s() {
 	fmt.Println(clrCyan + "Git global configuration" + clrReset)
 
-	setBranchMain := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
-	errBranchMain := setBranchMain.Run()
-	checkError(errBranchMain, "Failed to change branch default name (master -> main)")
+	setGitBranch := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
+	errGitBranch := setGitBranch.Run()
+	checkError(errGitBranch, "Failed to change branch default name (master -> main)")
 	fmt.Println(lstDot + "Main git branch default name changed master -> main")
+
+	setGitColor := exec.Command(cmdGit, "config", "--global", "color.ui", "true")
+	errGitColor := setGitColor.Run()
+	checkError(errGitColor, "Failed to setup colourising")
+	fmt.Println(lstDot + "Colourising enabled")
+
+	setGitEditor := exec.Command(cmdGit, "config", "--global", "core.editor", "vi")
+	errGitEditor := setGitEditor.Run()
+	checkError(errGitEditor, "Failed to setup editor vi (vim)")
+	fmt.Println(lstDot + "Editor set to vi (vim)")
 
 	fmt.Println(lstDot + "Add user information to the global git config")
 	consoleReader := bufio.NewScanner(os.Stdin)
 	fmt.Print("  - User name: ")
 	consoleReader.Scan()
-	gitName := consoleReader.Text()
+	gitUserName := consoleReader.Text()
 	fmt.Print("  - User email: ")
 	consoleReader.Scan()
-	gitEmail := consoleReader.Text()
+	gitUserEmail := consoleReader.Text()
 
-	setUserName := exec.Command(cmdGit, "config", "--global", "user.name", gitName)
-	errUserName := setUserName.Run()
-	checkError(errUserName, "Failed to set git user name")
-	setUserEmail := exec.Command(cmdGit, "config", "--global", "user.email", gitEmail)
-	errUserEmail := setUserEmail.Run()
-	checkError(errUserEmail, "Failed to set git user email")
+	setGitUserName := exec.Command(cmdGit, "config", "--global", "user.name", gitUserName)
+	errGitUserName := setGitUserName.Run()
+	checkError(errGitUserName, "Failed to set git user name")
+	setGitUserEmail := exec.Command(cmdGit, "config", "--global", "user.email", gitUserEmail)
+	errGitUserEmail := setGitUserEmail.Run()
+	checkError(errGitUserEmail, "Failed to set git user email")
 	clearLine(3)
-	fmt.Println(lstDot + "Saved git user name and email")
+	fmt.Println(lstDot + "Saved user name(" + gitUserName + ") and email(" + gitUserEmail + ")")
 
 	ignoreDirPath := homeDir() + ".config/git/"
 	ignorePath := ignoreDirPath + "gitignore_global"
