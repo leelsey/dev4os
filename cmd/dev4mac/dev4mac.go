@@ -37,6 +37,7 @@ var (
 	//optRm      = "remove"
 	optAlt    = "--cask"
 	optRepo   = "tap"
+	fontPath  = homeDir() + "Library/Fonts/"
 	p10kPath  = homeDir() + ".config/p10k/"
 	p10kCache = homeDir() + ".cache/p10k-" + userName()
 	tryLoop   = 0
@@ -992,10 +993,14 @@ func macTerminal(runOpt string) {
 		downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
 	}
 
+	downloadFile(fontPath+"MesloLGS NF Bold Italic.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Bold%20Italic.ttf", 0644)
+	downloadFile(fontPath+"MesloLGS NF Bold.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Bold.ttf", 0644)
+	downloadFile(fontPath+"MesloLGS NF Italic.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Italic.ttf", 0644)
+	downloadFile(fontPath+"MesloLGS NF Regular.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Regular.ttf", 0644)
+
 	brewRepository("romkatv/powerlevel10k")
 	brewInstall("romkatv/powerlevel10k/powerlevel10k")
-	dlP10kTerm := p10kPath + "p10k-term.zsh"
-	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0644)
+	downloadFile(p10kPath+"p10k-term.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-minimalism.zsh", 0644)
 
 	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
 		profileAppend := "# POWERLEVEL10K\n" +
@@ -1006,12 +1011,10 @@ func macTerminal(runOpt string) {
 			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
 		appendContents(prfPath, profileAppend, 0644)
 	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
-		downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0644)
-		dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
-		downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0644)
-		dlP10kEtc := p10kPath + "p10k-etc.zsh"
-		downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0644)
+		downloadFile(p10kPath+"p10k-iterm2.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-atelier.zsh", 0644)
+		downloadFile(p10kPath+"p10k-tmux.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-seeking.zsh", 0644)
+		downloadFile(p10kPath+"p10k-ops.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-operations.zsh", 0644)
+		downloadFile(p10kPath+"p10k-etc.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-engineering.zsh", 0644)
 
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
