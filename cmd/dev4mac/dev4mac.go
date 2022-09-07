@@ -57,15 +57,15 @@ func messageError(handling, msg, code string) {
 	errOccurred := clrRed + "\nError occurred " + clrReset + "at "
 	errMsgFormat := "\n" + clrRed + "Error >> " + clrReset + msg + " (" + code + ")\n"
 	if handling == "fatal" || handling == "stop" {
-		fmt.Print(errors.New(lstDot + "Fatal error" + errOccurred))
+		fmt.Print(errors.New("\n" + lstDot + "Fatal error" + errOccurred))
 		log.Fatalln(errMsgFormat)
 	} else if handling == "print" || handling == "continue" {
 		log.Println(errMsgFormat)
 	} else if handling == "panic" || handling == "detail" {
-		fmt.Print(errors.New(lstDot + "Panic error" + errOccurred))
+		fmt.Print(errors.New("\n" + lstDot + "Panic error" + errOccurred))
 		panic(errMsgFormat)
 	} else {
-		fmt.Print(errors.New(lstDot + "Unknown error" + errOccurred))
+		fmt.Print(errors.New("\n" + lstDot + "Unknown error" + errOccurred))
 		log.Fatalln(errMsgFormat)
 	}
 }
@@ -293,21 +293,29 @@ func userName() string {
 	return workingUser.Username
 }
 
-func rebootOS(adminCode string) {
+func systemUpdate() {
+	runLdBar.Suffix = " Updating OS, please wait a moment ... "
+	runLdBar.Start()
+
+	osUpdate := exec.Command("softwareupdate", "--all", "--install", "--force")
+	errOSUpdate := osUpdate.Run()
+	checkError(errOSUpdate, "Failed to update Operating System")
+
+	runLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "update OS!\n"
+	runLdBar.Stop()
+}
+
+func systemReboot(adminCode string) {
 	runLdBar.Suffix = " Restarting OS, please wait a moment ... "
 	runLdBar.Start()
-	time.Sleep(time.Second * 3)
 
 	needPermission(adminCode)
-	macOSUpdate := exec.Command("softwareupdate", "--all", "--install", "--force")
-	errmacOSUpdate := macOSUpdate.Run()
-	checkError(errmacOSUpdate, "Failed to update macOS")
-
 	reboot := exec.Command(cmdAdmin, "shutdown", "-r", "now")
+	time.Sleep(time.Second * 3)
 	if err := reboot.Run(); err != nil {
 		runLdBar.FinalMSG = clrRed + "Error: " + clrReset
 		runLdBar.Stop()
-		fmt.Println(errors.New("failed to reboot macOS"))
+		fmt.Println(errors.New("failed to reboot Operating System"))
 	}
 
 	runLdBar.FinalMSG = "⣾ Restarting OS, please wait a moment ... "
@@ -429,6 +437,12 @@ func downloadFile(filePath, urlPath string, fileMode int) {
 	makeFile(filePath, netHTTP(urlPath), fileMode)
 }
 
+func runApplication(appName string) {
+	runApp := exec.Command("open", "/Applications/"+appName+".app")
+	err := runApp.Run()
+	checkCmdError(err, "ASDF-VM failed to add", appName)
+}
+
 func changeAppIcon(appName, icnName, adminCode string) {
 	appSrc := strings.Replace(appName, " ", "\\ ", -1)
 	appPath := "/Applications/" + appSrc + ".app"
@@ -447,7 +461,7 @@ func changeAppIcon(appName, icnName, adminCode string) {
 	makeFile(chicnPath, chIcnSrc, 0644)
 
 	needPermission(adminCode)
-	chicn := exec.Command("sh", chicnPath)
+	chicn := exec.Command(cmdSh, chicnPath)
 	chicn.Env = os.Environ()
 	chicn.Stderr = os.Stderr
 	err := chicn.Run()
@@ -583,7 +597,7 @@ func confA4s() {
 
 	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh", 0644)
 
-	installA4s := exec.Command("/bin/sh", dlA4sPath)
+	installA4s := exec.Command("sh", dlA4sPath)
 	if err := installA4s.Run(); err != nil {
 		removeFile(dlA4sPath)
 		checkError(err, "Failed to install Alias4sh")
@@ -611,22 +625,22 @@ func confG4s() {
 	errGitUserEmail := setGitUserEmail.Run()
 	checkError(errGitUserEmail, "Failed to set git user email")
 	clearLine(3)
-	fmt.Println(lstDot + "Saved user name(" + gitUserName + ") and email(" + gitUserEmail + ")")
+	fmt.Println(lstDot + "Saved user name(" + gitUserName + ") and email(" + gitUserEmail + ").")
 
 	setGitBranch := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
 	errGitBranch := setGitBranch.Run()
 	checkError(errGitBranch, "Failed to change branch default name (master -> main)")
-	fmt.Println(lstDot + "Main git branch default name changed master -> main")
+	fmt.Println(lstDot + "Main git branch default name changed master -> main.")
 
 	setGitColor := exec.Command(cmdGit, "config", "--global", "color.ui", "true")
 	errGitColor := setGitColor.Run()
 	checkError(errGitColor, "Failed to setup colourising")
-	fmt.Println(lstDot + "Colourising enabled")
+	fmt.Println(lstDot + "Colourising enabled.")
 
 	setGitEditor := exec.Command(cmdGit, "config", "--global", "core.editor", "vi")
 	errGitEditor := setGitEditor.Run()
 	checkError(errGitEditor, "Failed to setup editor vi (vim)")
-	fmt.Println(lstDot + "Editor set to vi (vim)")
+	fmt.Println(lstDot + "Default editor set to vi (vim).")
 
 	ignoreDirPath := homeDir() + ".config/git/"
 	ignorePath := ignoreDirPath + "gitignore_global"
@@ -636,7 +650,7 @@ func confG4s() {
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
 	errExcludesFile := setExcludesFile.Run()
 	checkError(errExcludesFile, "Failed to set git global ignore file")
-	fmt.Println(lstDot + "Ignore list set in \"" + ignoreDirPath + "gitignore_global\"")
+	fmt.Println(lstDot + "Ignore list set in \"" + ignoreDirPath + "gitignore_global\".")
 }
 
 func installBrew() {
@@ -644,7 +658,7 @@ func installBrew() {
 
 	downloadFile(insBrewPath, "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", 0755)
 
-	installHomebrew := exec.Command("/bin/bash", "-c", insBrewPath)
+	installHomebrew := exec.Command(cmdSh, "-c", insBrewPath)
 	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
 
 	if err := installHomebrew.Run(); err != nil {
@@ -667,7 +681,8 @@ func installCabal() {
 
 func installXAMPP(adminCode string) {
 	xamppVer := netJSON("https://formulae.brew.sh/api/cask/xampp-vm.json", "version")
-	brewInstallCaskSudo("xampp-vm", "xampp-osx-"+xamppVer+"-vm", "/Applications/Loopback.app", adminCode)
+	xamppName := "xampp-osx-" + xamppVer + "-vm"
+	brewInstallCaskSudo("xampp-vm", xamppName, "/Applications/"+xamppName+".app", adminCode)
 	changeAppIcon("xampp-osx-"+xamppVer+"-vm", "XAMPP.icns", adminCode)
 }
 
@@ -993,11 +1008,6 @@ func macTerminal(runOpt string) {
 		downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
 	}
 
-	downloadFile(fontPath+"MesloLGS NF Bold Italic.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Bold%20Italic.ttf", 0644)
-	downloadFile(fontPath+"MesloLGS NF Bold.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Bold.ttf", 0644)
-	downloadFile(fontPath+"MesloLGS NF Italic.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Italic.ttf", 0644)
-	downloadFile(fontPath+"MesloLGS NF Regular.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Regular.ttf", 0644)
-
 	brewRepository("romkatv/powerlevel10k")
 	brewInstall("romkatv/powerlevel10k/powerlevel10k")
 	downloadFile(p10kPath+"p10k-term.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-minimalism.zsh", 0644)
@@ -1015,6 +1025,10 @@ func macTerminal(runOpt string) {
 		downloadFile(p10kPath+"p10k-tmux.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-seeking.zsh", 0644)
 		downloadFile(p10kPath+"p10k-ops.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-operations.zsh", 0644)
 		downloadFile(p10kPath+"p10k-etc.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-engineering.zsh", 0644)
+		downloadFile(fontPath+"MesloLGS NF Bold Italic.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Bold%20Italic.ttf", 0644)
+		downloadFile(fontPath+"MesloLGS NF Bold.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Bold.ttf", 0644)
+		downloadFile(fontPath+"MesloLGS NF Italic.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Italic.ttf", 0644)
+		downloadFile(fontPath+"MesloLGS NF Regular.ttf", "https://raw.githubusercontent.com/romkatv/dotfiles-public/master/.local/share/fonts/NerdFonts/MesloLGS%20NF%20Regular.ttf", 0644)
 
 		profileAppend := "# ZSH\n" +
 			"export SHELL=zsh\n\n" +
@@ -1316,6 +1330,7 @@ func macGUIApp(runOpt, adminCode string) {
 		changeAppIcon("Blender", "Blender.icns", adminCode)
 		brewInstallCask("obs", "OBS")
 		brewInstallCaskSudo("loopback", "Loopback", "/Applications/Loopback.app", adminCode)
+		runApplication("Loopback")
 	}
 
 	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
@@ -1518,8 +1533,8 @@ func macExtend(runOpt, adminCode string) {
 		var g4sOpt string
 		fmt.Println(clrCyan + "\nConfigure git global easily" + clrReset)
 		fmt.Print("Enter [Y] to set git global configuration, or enter any key to exit. ")
-		_, errEndOpt := fmt.Scanln(&g4sOpt)
-		if errEndOpt != nil {
+		_, errG4sOpt := fmt.Scanln(&g4sOpt)
+		if errG4sOpt != nil {
 			g4sOpt = "Enter"
 		}
 		if g4sOpt == "y" || g4sOpt == "Y" || g4sOpt == "yes" || g4sOpt == "Yes" || g4sOpt == "YES" {
@@ -1528,21 +1543,34 @@ func macExtend(runOpt, adminCode string) {
 		} else {
 			clearLine(2)
 		}
+
+		var updateOpt string
+		fmt.Println(clrCyan + "\nmacOS software update" + clrReset)
+		fmt.Print("Enter [Y] to update macOS system, or enter any key to exit. ")
+		_, errUpdateOpt := fmt.Scanln(&updateOpt)
+		if errUpdateOpt != nil {
+			updateOpt = "Enter"
+		}
+		if updateOpt == "y" || updateOpt == "Y" || updateOpt == "yes" || updateOpt == "Yes" || updateOpt == "YES" {
+			clearLine(2)
+			systemUpdate()
+		} else {
+			clearLine(2)
+		}
+
 	}
 
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
 		var rebootOpt string
 		fmt.Println(clrCyan + "\nRestart macOS to apply the changes" + clrReset)
-		fmt.Print(clrYellow + "ALLOW all application " + clrReset + "on System Preference > Security " +
-			"& Privacy > General. (You can restart through the system preference message)\n" +
-			"Enter [Y] to restart macOS, or enter any key to exit. ")
-		_, errEndOpt := fmt.Scanln(&rebootOpt)
-		if errEndOpt != nil {
+		fmt.Print("Enter [Y] to restart macOS, or enter any key to exit. ")
+		_, errRebootOpt := fmt.Scanln(&rebootOpt)
+		if errRebootOpt != nil {
 			rebootOpt = "Enter"
 		}
 		if rebootOpt == "y" || rebootOpt == "Y" || rebootOpt == "yes" || rebootOpt == "Yes" || rebootOpt == "YES" {
 			clearLine(1)
-			rebootOS(adminCode)
+			systemReboot(adminCode)
 		} else {
 			clearLine(2)
 		}
@@ -1551,11 +1579,12 @@ func macExtend(runOpt, adminCode string) {
 
 func main() {
 	var (
-		brewSts string
-		runOpt  string
-		runType string
-		endDiv  string
-		endMsg  string
+		brewSts   string
+		runOpt    string
+		runType   string
+		endDiv    string
+		endMsg    string
+		adminCode string
 	)
 
 	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
@@ -1628,24 +1657,21 @@ insOpt:
 		if adminCode, adminStatus := checkPassword(); adminStatus == true {
 			clearLine(1)
 			needPermission(adminCode)
-			macMain(runOpt, runType, brewSts, adminCode)
-			macExtend(runOpt, adminCode)
 		} else {
 			goto exitOpt
 		}
 	} else {
-		macMain(runOpt, runType, brewSts, "")
-		macExtend(runOpt, "")
+		adminCode = ""
 	}
+	macMain(runOpt, runType, brewSts, adminCode)
+	macExtend(runOpt, adminCode)
 
 	endDiv = "\n----------Finished!----------\n"
 	endMsg = "Please" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
 		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
 		lstDot + "Or restart the Terminal.app by yourself.\n"
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		fmt.Println(endDiv + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " +
-			"the changes after" + clrYellow + "ALLOW all application " + clrReset + "on System Preference " +
-			"> Security & Privacy > General\n" + endMsg)
+		fmt.Println(endDiv + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " + "the changes.\n" + endMsg)
 	} else {
 		fmt.Println(endDiv + endMsg)
 	}
