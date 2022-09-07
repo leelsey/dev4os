@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	appVer     = "0.3"
+	appVer     = "0.4"
 	lstDot     = " • "
 	shrcPath   = homeDir() + ".zshrc"
 	prfPath    = homeDir() + ".zprofile"
@@ -149,9 +149,7 @@ func checkPassword() (string, bool) {
 		checkPw := exec.Command(cmdAdmin, "-Sv")
 		checkPw.Env = os.Environ()
 		checkPw.Stdout = os.Stdout
-
 		checkPw.Stdin, _ = inputPw.StdoutPipe()
-
 		_ = checkPw.Start()
 		_ = inputPw.Run()
 		errSudo := checkPw.Wait()
@@ -251,13 +249,10 @@ func netHTTP(urlPath string) string {
 
 	rawFile, err := io.ReadAll(resp.Body)
 	checkError(err, "Failed to read file information from "+urlPath)
-
 	return string(rawFile)
 }
 
 func netJSON(urlPath, key string) string {
-	var res map[string]interface{}
-
 	resp, err := http.Get(urlPath)
 	checkError(err, "Failed to connect "+urlPath)
 
@@ -269,9 +264,9 @@ func netJSON(urlPath, key string) string {
 	jsonFile, err := io.ReadAll(resp.Body)
 	checkError(err, "Failed to read file information from "+urlPath)
 
+	var res map[string]interface{}
 	errMarshal := json.Unmarshal(jsonFile, &res)
 	checkError(errMarshal, "Failed to parse JSON file from "+urlPath)
-
 	return res[key].(string)
 }
 
@@ -354,21 +349,18 @@ func makeFile(filePath, fileContents string, fileMode int) {
 func copyFile(srcPath, dstPath string) {
 	srcFile, err := os.Open(srcPath)
 	checkError(err, "Failed to get file information to copy from \""+srcPath+"\"")
-
 	dstFile, err := os.Create(dstPath)
 	checkError(err, "Failed to get file information to copy to \""+dstPath+"\"")
 
 	defer func() {
 		errSrcFileClose := srcFile.Close()
 		checkError(errSrcFileClose, "Failed to finish copy file from \""+srcPath+"\"")
-
 		errDstFileClose := dstFile.Close()
 		checkError(errDstFileClose, "Failed to finish copy file to \""+dstPath+"\"")
 	}()
 
 	_, errCopy := io.Copy(dstFile, srcFile)
 	checkError(errCopy, "Failed to copy file from \""+srcPath+"\" to \""+dstPath+"\"")
-
 	errSync := dstFile.Sync()
 	checkError(errSync, "Failed to sync file from \""+srcPath+"\" to \""+dstPath+"\"")
 }
@@ -444,14 +436,13 @@ func runApplication(appName string) {
 }
 
 func changeAppIcon(appName, icnName, adminCode string) {
+	srcIcn := workingDir() + ".dev4mac-app-icn.icns"
+	downloadFile(srcIcn, "https://raw.githubusercontent.com/leelsey/ConfStore/main/icns/"+icnName, 0755)
+
 	appSrc := strings.Replace(appName, " ", "\\ ", -1)
 	appPath := "/Applications/" + appSrc + ".app"
 	chicnPath := workingDir() + ".dev4mac-chicn.sh"
-	srcIcn := workingDir() + ".dev4mac-app-icn.icns"
 	cvtIcn := workingDir() + ".dev4mac-app-icn.rsrc"
-
-	downloadFile(srcIcn, "https://raw.githubusercontent.com/leelsey/ConfStore/main/icns/"+icnName, 0755)
-
 	chIcnSrc := "sudo rm -rf \"" + appPath + "\"$'/Icon\\r'\n" +
 		"sips -i " + srcIcn + " > /dev/null\n" +
 		"DeRez -only icns " + srcIcn + " > " + cvtIcn + "\n" +
@@ -583,12 +574,8 @@ func asdfReshim() {
 }
 
 func addJavaHome(srcVer, dstVer, adminCode string) {
-	srcHead := brewPrefix + "opt/openjdk"
-	srcTail := " /libexec/openjdk.jdk"
-	lnDir := "/Library/Java/JavaVirtualMachines/openjdk"
-
 	if checkExists(brewPrefix+"Cellar/openjdk"+srcVer) == true {
-		linkFile(srcHead+srcVer+srcTail, lnDir+dstVer+".jdk", "symbolic", "root", adminCode)
+		linkFile(brewPrefix+"opt/openjdk"+srcVer+" /libexec/openjdk.jdk", "/Library/Java/JavaVirtualMachines/openjdk"+dstVer+".jdk", "symbolic", "root", adminCode)
 	}
 }
 
@@ -598,7 +585,6 @@ func confA4s() {
 	makeFile(a4sPath+"/alias4.sh", "# ALIAS4SH", 0644)
 
 	dlA4sPath := workingDir() + ".dev4mac-alias4sh.sh"
-
 	downloadFile(dlA4sPath, "https://raw.githubusercontent.com/leelsey/Alias4sh/main/install.sh", 0644)
 
 	installA4s := exec.Command("sh", dlA4sPath)
@@ -648,7 +634,6 @@ func confG4s() {
 
 	ignoreDirPath := homeDir() + ".config/git/"
 	ignorePath := ignoreDirPath + "gitignore_global"
-
 	makeDirectory(ignoreDirPath)
 	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample", 0644)
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
@@ -657,14 +642,13 @@ func confG4s() {
 	fmt.Println(lstDot + "Ignore list set in \"" + ignoreDirPath + "gitignore_global\".")
 }
 
-func installBrew() {
+func installBrew(adminCode string) {
 	insBrewPath := workingDir() + ".dev4mac-brew.sh"
-
 	downloadFile(insBrewPath, "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh", 0755)
 
+	needPermission(adminCode)
 	installHomebrew := exec.Command(cmdSh, "-c", insBrewPath)
 	installHomebrew.Env = append(os.Environ(), "NONINTERACTIVE=1")
-
 	if err := installHomebrew.Run(); err != nil {
 		removeFile(insBrewPath)
 		checkError(err, "Failed to install Homebrew")
@@ -691,20 +675,18 @@ func installXAMPP(adminCode string) {
 }
 
 func installHopper(adminCode string) {
-	dlHopperPath := workingDir() + ".Hopper.dmg"
-	appName := "Hopper Disassembler v4"
-
 	hopperRSS := strings.Split(netHTTP("https://www.hopperapp.com/rss/html_changelog.php"), " ")
 	hopperVer := strings.Join(hopperRSS[1:2], "")
 
+	dlHopperPath := workingDir() + ".Hopper.dmg"
 	downloadFile(dlHopperPath, "https://d2ap6ypl1xbe4k.cloudfront.net/Hopper-"+hopperVer+"-demo.dmg", 0755)
 
 	mountHopper := exec.Command("hdiutil", "attach", dlHopperPath)
 	errMount := mountHopper.Run()
 	checkError(errMount, "Failed to mount "+clrYellow+"Hopper.dmg"+clrReset)
-
 	removeFile(dlHopperPath)
 
+	appName := "Hopper Disassembler v4"
 	copyDirectory("/Volumes/Hopper Disassembler/"+appName+".app", "/Applications/"+appName+".app")
 
 	unmountDmg := exec.Command("hdiutil", "unmount", "/Volumes/Hopper Disassembler")
@@ -721,18 +703,15 @@ func installHopper(adminCode string) {
 func macBegin(adminCode string) {
 	if checkExists(cmdPMS) == true {
 		macLdBar.Suffix = " Updating homebrew... "
+		macLdBar.Start()
 		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "update homebrew!\n"
-		macLdBar.Start()
 	} else {
-		needPermission(adminCode)
-
 		macLdBar.Suffix = " Installing homebrew... "
-		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
 		macLdBar.Start()
+		macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and update homebrew!\n"
 
-		installBrew()
+		installBrew(adminCode)
 	}
-
 	err := os.Chmod(brewPrefix+"share", 0755)
 	checkError(err, "Failed to change permissions on "+brewPrefix+"share to 755")
 
@@ -747,7 +726,6 @@ func macBegin(adminCode string) {
 
 func macEnv() {
 	macLdBar.Suffix = " Setting basic environment... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
 	macLdBar.Start()
 
 	if checkExists(prfPath) == true {
@@ -780,12 +758,12 @@ func macEnv() {
 	makeDirectory(homeDir() + ".config")
 	makeDirectory(homeDir() + ".cache")
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
 	macLdBar.Stop()
 }
 
 func macDependency(runOpt string) {
 	macLdBar.Suffix = " Installing dependencies... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install dependencies!\n"
 	macLdBar.Start()
 
 	brewInstall("pkg-config")
@@ -983,12 +961,12 @@ func macDependency(runOpt string) {
 		appendContents(shrcPath, shrcAppend, 0644)
 	}
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install dependencies!\n"
 	macLdBar.Stop()
 }
 
 func macTerminal(runOpt string) {
 	macLdBar.Suffix = " Installing zsh with useful tools... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
 	macLdBar.Start()
 
 	confA4s()
@@ -1079,12 +1057,12 @@ func macTerminal(runOpt string) {
 		"#vi () { $EDITOR \"$@\" }\n\n"
 	appendContents(prfPath, profileAppend, 0644)
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
 	macLdBar.Stop()
 }
 
 func macLanguage(runOpt, adminCode string) {
 	macLdBar.Suffix = " Installing computer programming language... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install languages!\n"
 	macLdBar.Start()
 
 	shrcAppend := "# CCACHE\n" +
@@ -1147,24 +1125,24 @@ func macLanguage(runOpt, adminCode string) {
 		brewInstall("stylish-haskell")
 	}
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install languages!\n"
 	macLdBar.Stop()
 }
 
 func macServer() {
 	macLdBar.Suffix = " Installing developing tools for server... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install servers!\n"
 	macLdBar.Start()
 
 	brewInstall("httpd")
 	brewInstall("tomcat")
 	brewInstall("nginx")
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install servers!\n"
 	macLdBar.Stop()
 }
 
 func macDatabase() {
 	macLdBar.Suffix = " Installing developing tools for database... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install databases!\n"
 	macLdBar.Start()
 
 	shrcAppend := "# SQLITE3\n" +
@@ -1181,12 +1159,12 @@ func macDatabase() {
 	brewRepository("mongodb/brew")
 	brewInstall("mongodb-community")
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install databases!\n"
 	macLdBar.Stop()
 }
 
 func macDevVM() {
 	macLdBar.Suffix = " Installing developer tools version management tool with plugin... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install ASDF-VM with languages!\n"
 	macLdBar.Start()
 
 	brewInstall("asdf")
@@ -1232,12 +1210,12 @@ func macDevVM() {
 	asdfInstall("haskell", "latest")
 	asdfReshim()
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install ASDF-VM with languages!\n"
 	macLdBar.Stop()
 }
 
 func macCLIApp(runOpt string) {
 	macLdBar.Suffix = " Installing CLI applications... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install CLI applications!\n"
 	macLdBar.Start()
 
 	brewInstall("unzip")
@@ -1281,7 +1259,6 @@ func macCLIApp(runOpt string) {
 		brewInstall("yq")
 		brewInstall("dasel")
 		brewInstall("asciinema")
-		//brewInstall("opencv")
 	}
 
 	if runOpt == "7" {
@@ -1294,6 +1271,7 @@ func macCLIApp(runOpt string) {
 		brewInstall("virustotal-cli")
 	}
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install CLI applications!\n"
 	macLdBar.Stop()
 }
 
@@ -1429,7 +1407,7 @@ func macGUIApp(runOpt, adminCode string) {
 		changeAppIcon("Zenmap", "Zenmap.icns", adminCode)
 		installHopper(adminCode)
 		brewInstallCask("cutter", "Cutter")
-		// Will add Ghidra // TODO: Fix this
+		// Install Ghidra // TODO: will add
 		brewInstallCask("imazing", "iMazing")
 		changeAppIcon("iMazing", "iMazing.icns", adminCode)
 		brewInstallCask("apparency", "Apparency")
@@ -1441,7 +1419,6 @@ func macGUIApp(runOpt, adminCode string) {
 
 func macEnd() {
 	macLdBar.Suffix = " Finishing... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "clean up homebrew's cache!\n"
 	macLdBar.Start()
 
 	shrcAppend := "\n######## ADD CUSTOM VALUES UNDER HERE ########\n\n\n"
@@ -1451,6 +1428,7 @@ func macEnd() {
 	brewCleanup()
 	brewRemoveCache()
 
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "clean up homebrew's cache!\n"
 	macLdBar.Stop()
 }
 
@@ -1587,6 +1565,11 @@ func macExtend(runOpt, adminCode string) {
 }
 
 func main() {
+	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
+
+	runLdBar.Suffix = " Checking network status... "
+	runLdBar.Start()
+
 	var (
 		brewSts string
 		runOpt  string
@@ -1594,11 +1577,6 @@ func main() {
 		endDiv  string
 		endMsg  string
 	)
-
-	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
-
-	runLdBar.Suffix = " Checking network status... "
-	runLdBar.Start()
 
 	if checkExists(cmdPMS) == true {
 		brewSts = "Update"
@@ -1610,7 +1588,7 @@ func main() {
 		runLdBar.FinalMSG = clrRed + "Network connect failed" + clrReset + "\n"
 		runLdBar.Stop()
 		fmt.Println(errors.New(lstDot + "Please check your internet connection.\n"))
-		goto exitOpt
+		goto exitPoint
 	}
 
 	runLdBar.Stop()
@@ -1627,7 +1605,7 @@ func main() {
 		"\t7. Specialist\n" +
 		"\t0. Exit\n")
 
-insOpt:
+runOptPoint:
 	for {
 		fmt.Print("Select command: ")
 		_, err := fmt.Scanln(&runOpt)
@@ -1650,12 +1628,12 @@ insOpt:
 			runType = "Specialist"
 		} else if runOpt == "0" || runOpt == "q" || runOpt == "e" || runOpt == "quit" || runOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
-			goto exitOpt
+			goto exitPoint
 		} else {
 			fmt.Println(fmt.Errorf(lstDot + clrYellow + runOpt + clrReset +
 				" is invalid option. Please choose number " + clrRed + "0-7" + clrReset + "."))
 			tryLoop++
-			goto insOpt
+			goto runOptPoint
 		}
 		break
 	}
@@ -1668,7 +1646,7 @@ insOpt:
 			macMain(runOpt, runType, brewSts, adminCode)
 			macExtend(runOpt, adminCode)
 		} else {
-			goto exitOpt
+			goto exitPoint
 		}
 	} else {
 		macMain(runOpt, runType, brewSts, "")
@@ -1685,6 +1663,6 @@ insOpt:
 		fmt.Println(endDiv + endMsg)
 	}
 
-exitOpt:
+exitPoint:
 	return
 }
