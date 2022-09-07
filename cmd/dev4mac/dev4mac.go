@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	appVer     = "0.4"
+	appVer     = "0.5"
 	lstDot     = " • "
 	shrcPath   = homeDir() + ".zshrc"
 	prfPath    = homeDir() + ".zprofile"
@@ -175,34 +175,20 @@ func checkPassword() (string, bool) {
 }
 
 func checkPermission(runOpt, brewStatus string) bool {
-	var expHeadMsg string
-	var expMsg string
+	expMsg := "Need " + clrYellow + "ROOT permission " + clrReset + "to install "
 
-	expHeadMsg = clrYellow + "Need ROOT permission " + clrReset + "to " + clrYellow + "install " + clrPurple
 	if runOpt == "1" || runOpt == "2" {
 		if brewStatus == "Install" {
-			fmt.Println(expHeadMsg + "Homebrew")
+			fmt.Println(expMsg + "homebrew")
 			return true
 		} else {
 			return false
 		}
 	} else {
 		if brewStatus == "Install" {
-			expMsg = expHeadMsg + "homebrew " + clrReset + "and " + clrPurple + "Applications" + clrReset + ": "
+			fmt.Println(expMsg + "homebrew and few applications")
 		} else if brewStatus == "Update" {
-			expMsg = expHeadMsg + "Applications" + clrReset + ": "
-		}
-
-		if runOpt == "3" {
-			fmt.Println(expMsg + "Loopback and BlackHole")
-		} else if runOpt == "4" {
-			fmt.Println(expMsg + "Java and BlackHole")
-		} else if runOpt == "5" {
-			fmt.Println(expMsg + "Java, BlackHole and VMware Fusion")
-		} else if runOpt == "6" {
-			fmt.Println(expMsg + "Java, Loopback and VMware Fusion")
-		} else if runOpt == "7" {
-			fmt.Println(expMsg + "Java, Loopback, VMware Fusion, Wireshark and Zenmap")
+			fmt.Println(expMsg + "few applications")
 		}
 		return true
 	}
@@ -1433,16 +1419,51 @@ func macEnd() {
 }
 
 func macMain(runOpt, runType, brewSts, adminCode string) {
-	runEx := lstDot + "Run " + clrPurple + runType + clrReset + " installation\n" +
-		lstDot + brewSts + " Homebrew with configure shell"
+	runEgMsg := lstDot + "Run " + clrPurple + runType + clrReset + " installation\n" + lstDot + brewSts + " homebrew with configure shell"
+	if runOpt == "1" {
+		fmt.Println(runEgMsg + ".")
+	} else if runOpt == "2" {
+		fmt.Println(runEgMsg + ", then install Dependencies, Languages and Terminal/CLI applications with set basic preferences.")
+	} else if runOpt == "3" {
+		fmt.Println(runEgMsg + ", then install Dependencies, Languages and Terminal/CLI/GUI applications with set basic preferences.")
+	} else if runOpt == "4" {
+		fmt.Println(runEgMsg + ", then install Dependencies, Languages and Terminal/CLI/GUI applications with set basic preferences.")
+	} else if runOpt == "5" {
+		fmt.Println(runEgMsg + ", then install Dependencies, Languages, Server, Database and Terminal/CLI/GUI applications with set basic preferences.")
+	} else if runOpt == "6" {
+		fmt.Println(runEgMsg + ", then install Dependencies, Languages, Server, Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
+	} else if runOpt == "7" {
+		fmt.Println(runEgMsg + ", then install Dependencies, Languages, Server, Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
+	}
+
+	alMsg := lstDot + "Use root permission to install "
+	if runOpt == "1" || runOpt == "2" {
+		if brewSts == "Install" {
+			fmt.Println(alMsg + "homebrew")
+		}
+	} else {
+		if brewSts == "Install" {
+			alMsg = alMsg + "homebrew " + clrReset + "and " + clrPurple + "few applications" + clrReset + ": "
+		} else if brewSts == "Update" {
+			alMsg = alMsg + "few applications" + clrReset + ": "
+		}
+		if runOpt == "3" {
+			fmt.Println(alMsg + "Loopback and BlackHole")
+		} else if runOpt == "4" {
+			fmt.Println(alMsg + "Java and BlackHole")
+		} else if runOpt == "5" {
+			fmt.Println(alMsg + "Java, BlackHole and VMware Fusion")
+		} else if runOpt == "6" {
+			fmt.Println(alMsg + "Java, Loopback and VMware Fusion")
+		} else if runOpt == "7" {
+			fmt.Println(alMsg + "Java, Loopback, VMware Fusion, Wireshark and Zenmap")
+		}
+	}
 
 	if runOpt == "1" {
-		fmt.Println(runEx + ".")
 		macBegin(adminCode)
 		macEnv()
 	} else if runOpt == "2" {
-		fmt.Println(runEx + ", then install Dependencies, Languages and Terminal/CLI applications " +
-			"with set basic preferences.")
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
@@ -1450,8 +1471,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macLanguage(runOpt, adminCode)
 		macCLIApp(runOpt)
 	} else if runOpt == "3" {
-		fmt.Println(runEx + ", then install Dependencies, Languages and Terminal/CLI/GUI applications " +
-			"with set basic preferences.")
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
@@ -1460,8 +1479,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "4" {
-		fmt.Println(runEx + ", then install Dependencies, Languages and Terminal/CLI/GUI applications " +
-			"with set basic preferences.")
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
@@ -1472,8 +1489,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "5" {
-		fmt.Println(runEx + ", then install Dependencies, Languages, Server, Database and Terminal/CLI/GUI applications " +
-			"with set basic preferences.")
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
@@ -1484,8 +1499,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "6" {
-		fmt.Println(runEx + ", then install Dependencies, Languages, Server, Database, management DevTools " +
-			"and Terminal/CLI/GUI applications with set basic preferences.")
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
@@ -1497,8 +1510,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "7" {
-		fmt.Println(runEx + ", then install Dependencies, Languages, Server, Database, management DevTools " +
-			"and Terminal/CLI/GUI applications with set basic preferences.")
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
@@ -1515,57 +1526,59 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 
 func macExtend(runOpt, adminCode string) {
 	if runOpt != "1" {
-		var g4sOpt string
-		fmt.Println(clrCyan + "\nConfigure git global easily" + clrReset)
-		fmt.Print("Enter [Y] to set git global configuration, or enter any key to exit. ")
+		var (
+			g4sOpt      string
+			osUpdateOpt string
+			osRebootOpt string
+		)
+		askOpt := "If you wish to continue type (Y) then press return: "
+
+		fmt.Print(clrCyan + "\nConfigure git global easily\n" + clrReset + "To continue we setup git global configuration.\n" + askOpt)
 		_, errG4sOpt := fmt.Scanln(&g4sOpt)
 		if errG4sOpt != nil {
 			g4sOpt = "Enter"
 		}
 		if g4sOpt == "y" || g4sOpt == "Y" || g4sOpt == "yes" || g4sOpt == "Yes" || g4sOpt == "YES" {
-			clearLine(2)
+			clearLine(3)
 			confG4s()
 		} else {
-			clearLine(3)
+			clearLine(4)
 		}
 
-		fmt.Println("\nFinished!\n") // Finish messages for update or restart OS
+		fmt.Println("\nFinished all things!\n") // Finish messages for update or restart OS
 
-		var updateOpt string
-		fmt.Println(clrCyan + "macOS software update" + clrReset)
-		fmt.Print("Enter [Y] to update macOS system, or enter any key to exit. ")
-		_, errUpdateOpt := fmt.Scanln(&updateOpt)
+		fmt.Print(clrCyan + "macOS software update\n" + clrReset + "To continue we update macOS software update.\n" + askOpt)
+		_, errUpdateOpt := fmt.Scanln(&osUpdateOpt)
 		if errUpdateOpt != nil {
-			updateOpt = "Enter"
+			osUpdateOpt = "Enter"
 		}
-		if updateOpt == "y" || updateOpt == "Y" || updateOpt == "yes" || updateOpt == "Yes" || updateOpt == "YES" {
-			clearLine(2)
+		if osUpdateOpt == "y" || osUpdateOpt == "Y" || osUpdateOpt == "yes" || osUpdateOpt == "Yes" || osUpdateOpt == "YES" {
+			clearLine(4)
 			systemUpdate()
+			systemReboot(adminCode)
 		} else {
-			clearLine(2)
+			clearLine(3)
 			if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-				var rebootOpt string
-				fmt.Println(clrCyan + "Restart macOS to apply the changes" + clrReset)
-				fmt.Print("Enter [Y] to restart macOS, or enter any key to exit. ")
-				_, errRebootOpt := fmt.Scanln(&rebootOpt)
+				fmt.Print(clrCyan + "Restart macOS to apply the changes\n" + clrReset + "To continue we restart macOS.\n" + askOpt)
+				_, errRebootOpt := fmt.Scanln(&osRebootOpt)
 				if errRebootOpt != nil {
-					rebootOpt = "Enter"
+					osRebootOpt = "Enter"
 				}
-				if rebootOpt == "y" || rebootOpt == "Y" || rebootOpt == "yes" || rebootOpt == "Yes" || rebootOpt == "YES" {
-					clearLine(2)
+				if osRebootOpt == "y" || osRebootOpt == "Y" || osRebootOpt == "yes" || osRebootOpt == "Yes" || osRebootOpt == "YES" {
+					clearLine(3)
 					systemReboot(adminCode)
 				} else {
-					clearLine(5)
+					clearLine(6)
 				}
 			} else {
-				clearLine(3)
+				clearLine(4)
 			}
 		}
 	}
 }
 
 func main() {
-	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
+	fmt.Println(clrBlue + "\nDev4mac\n" + clrGrey + "Dev4os version " + appVer + clrReset + "\n")
 
 	runLdBar.Suffix = " Checking network status... "
 	runLdBar.Start()
@@ -1574,7 +1587,6 @@ func main() {
 		brewSts string
 		runOpt  string
 		runType string
-		endDiv  string
 		endMsg  string
 	)
 
@@ -1594,16 +1606,8 @@ func main() {
 	runLdBar.Stop()
 
 	fmt.Println(clrCyan + "The Development tools of Essential and Various for macOS\n" + clrReset +
-		lstDot + "Choose an installation option.\n" +
-		lstDot + "If you need help, visit https://github.com/leelsey/Dev4os.\n" +
-		"\t1. Minimal\n" +
-		"\t2. Basic\n" +
-		"\t3. Creator\n" +
-		"\t4. Beginner\n" +
-		"\t5. Developer\n" +
-		"\t6. Professional\n" +
-		"\t7. Specialist\n" +
-		"\t0. Exit\n")
+		lstDot + "Choose an installation option.\n" + lstDot + "If you need help, visit https://github.com/leelsey/Dev4os.\n" +
+		"\t1. Minimal\n\t2. Basic\n\t3. Creator\n\t4. Beginner\n\t5. Developer\n\t6. Professional\n\t7. Specialist\n\t0. Exit\n")
 
 runOptPoint:
 	for {
@@ -1641,7 +1645,6 @@ runOptPoint:
 
 	if checkPermission(runOpt, brewSts) == true {
 		if adminCode, adminStatus := checkPassword(); adminStatus == true {
-			clearLine(1)
 			needPermission(adminCode)
 			macMain(runOpt, runType, brewSts, adminCode)
 			macExtend(runOpt, adminCode)
@@ -1653,14 +1656,12 @@ runOptPoint:
 		macExtend(runOpt, "")
 	}
 
-	endDiv = "\n----------Finished!----------\n"
-	endMsg = "Please" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
-		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
-		lstDot + "Or restart the Terminal.app by yourself.\n"
+	endMsg = "\n----------Finished!----------\nPlease" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
+		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" + lstDot + "Or restart the Terminal.app by yourself.\n"
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		fmt.Println(endDiv + endMsg + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " + "the changes.\n")
+		fmt.Println(endMsg + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " + "the changes.\n")
 	} else {
-		fmt.Println(endDiv + endMsg)
+		fmt.Println(endMsg)
 	}
 
 exitPoint:
