@@ -486,9 +486,13 @@ func brewUpgrade() {
 }
 
 func brewRepository(repo string) {
-	brewRepo := exec.Command(cmdPMS, optRepo, repo)
-	err := brewRepo.Run()
-	checkCmdError(err, "Brew failed to add ", repo)
+	brewRepo := strings.Split(repo, "/")
+	repoPath := strings.Join(brewRepo[0:1], "") + "/homebrew-" + strings.Join(brewRepo[1:2], "")
+	if checkExists(brewPrefix+"Homebrew/Library/Taps/"+repoPath) != true {
+		brewRepo := exec.Command(cmdPMS, optRepo, repo)
+		err := brewRepo.Run()
+		checkCmdError(err, "Brew failed to add ", repo)
+	}
 }
 
 func brewCleanup() {
@@ -1579,12 +1583,11 @@ func macExtend(runOpt, adminCode string) {
 
 func main() {
 	var (
-		brewSts   string
-		runOpt    string
-		runType   string
-		endDiv    string
-		endMsg    string
-		adminCode string
+		brewSts string
+		runOpt  string
+		runType string
+		endDiv  string
+		endMsg  string
 	)
 
 	fmt.Println(clrBlue + "\nDev4mac " + clrGrey + "v" + appVer + clrReset + "\n")
@@ -1657,14 +1660,15 @@ insOpt:
 		if adminCode, adminStatus := checkPassword(); adminStatus == true {
 			clearLine(1)
 			needPermission(adminCode)
+			macMain(runOpt, runType, brewSts, adminCode)
+			macExtend(runOpt, adminCode)
 		} else {
 			goto exitOpt
 		}
 	} else {
-		adminCode = ""
+		macMain(runOpt, runType, brewSts, "")
+		macExtend(runOpt, "")
 	}
-	macMain(runOpt, runType, brewSts, adminCode)
-	macExtend(runOpt, adminCode)
 
 	endDiv = "\n----------Finished!----------\n"
 	endMsg = "Please" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
