@@ -1131,8 +1131,10 @@ func macLanguage(runOpt, adminCode string) {
 		brewInstall("gcc") // fortran
 		brewInstall("go")
 		brewInstall("rust")
-		brewInstall("node")
 		brewInstall("lua")
+		brewInstall("node")
+		brewRepository("dart-lang/dart")
+		brewInstall("dart")
 		brewInstall("groovy")
 		brewInstall("kotlin")
 		brewInstall("scala")
@@ -1216,8 +1218,9 @@ func macDevVM() {
 	asdfInstall("java", "openjdk-17.0.2") // JDK LTS 17
 	asdfInstall("rust", "latest")
 	asdfInstall("golang", "latest")
-	asdfInstall("nodejs", "latest")
 	asdfInstall("lua", "latest")
+	asdfInstall("nodejs", "latest")
+	asdfInstall("dart", "latest")
 	asdfInstall("php", "latest")
 	asdfInstall("groovy", "latest")
 	asdfInstall("kotlin", "latest")
