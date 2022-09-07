@@ -19,27 +19,27 @@ import (
 )
 
 var (
-	appVer      = "0.2"
-	lstDot      = " • "
-	shrcPath    = homeDir() + ".zshrc"
-	profilePath = homeDir() + ".zprofile"
-	arm64Path   = "/opt/homebrew/"
-	amd64Path   = "/usr/local/"
-	brewPrefix  = checkBrewPrefix()
-	cmdAdmin    = "sudo"
-	cmdPMS      = checkBrewPath()
-	cmdGit      = "/usr/bin/git"
-	pmsIns      = "install"
-	pmsReIn     = "reinstall"
-	//pmsRm       = "remove"
-	pmsAlt    = "--cask"
-	pmsRepo   = "tap"
-	cmdASDF   = checkASDFPath()
+	appVer     = "0.3"
+	lstDot     = " • "
+	shrcPath   = homeDir() + ".zshrc"
+	prfPath    = homeDir() + ".zprofile"
+	arm64Path  = "/opt/homebrew/"
+	amd64Path  = "/usr/local/"
+	brewPrefix = checkBrewPrefix()
+	cmdAdmin   = "sudo"
+	cmdSh      = "/bin/bash"
+	cmdPMS     = checkBrewPath()
+	cmdGit     = "/usr/bin/git"
+	cmdASDF    = checkASDFPath()
+	optIns     = "install"
+	optReIn    = "reinstall"
+	//optUnIn    = "uninstall"
+	//optRm      = "remove"
+	optAlt    = "--cask"
+	optRepo   = "tap"
 	p10kPath  = homeDir() + ".config/p10k/"
 	p10kCache = homeDir() + ".cache/p10k-" + userName()
 	tryLoop   = 0
-	macLdBar  = spinner.New(spinner.CharSets[16], 50*time.Millisecond)
-	runLdBar  = spinner.New(spinner.CharSets[11], 50*time.Millisecond)
 	clrReset  = "\033[0m"
 	clrRed    = "\033[31m"
 	clrGreen  = "\033[32m"
@@ -48,6 +48,8 @@ var (
 	clrPurple = "\033[35m"
 	clrCyan   = "\033[36m"
 	clrGrey   = "\033[37m"
+	runLdBar  = spinner.New(spinner.CharSets[11], 50*time.Millisecond)
+	macLdBar  = spinner.New(spinner.CharSets[16], 50*time.Millisecond)
 )
 
 func messageError(handling, msg, code string) {
@@ -84,7 +86,6 @@ func checkNetStatus() bool {
 	client := http.Client{
 		Timeout: getTimeout,
 	}
-
 	_, err := client.Get("https://9.9.9.9")
 	if err != nil {
 		return false
@@ -292,7 +293,7 @@ func userName() string {
 }
 
 func rebootOS(adminCode string) {
-	runLdBar.Suffix = " Restarting macOS, please wait a moment ... "
+	runLdBar.Suffix = " Restarting OS, please wait a moment ... "
 	runLdBar.Start()
 	time.Sleep(time.Second * 3)
 
@@ -308,7 +309,7 @@ func rebootOS(adminCode string) {
 		fmt.Println(errors.New("failed to reboot macOS"))
 	}
 
-	runLdBar.FinalMSG = "⣾ Restarting macOS, please wait a moment ... "
+	runLdBar.FinalMSG = "⣾ Restarting OS, please wait a moment ... "
 	runLdBar.Stop()
 }
 
@@ -470,7 +471,7 @@ func brewUpgrade() {
 }
 
 func brewRepository(repo string) {
-	brewRepo := exec.Command(cmdPMS, pmsRepo, repo)
+	brewRepo := exec.Command(cmdPMS, optRepo, repo)
 	err := brewRepo.Run()
 	checkCmdError(err, "Brew failed to add ", repo)
 }
@@ -490,7 +491,7 @@ func brewRemoveCache() {
 func brewInstall(pkg string) {
 	if checkExists(brewPrefix+"Cellar/"+pkg) != true {
 		brewUpdate()
-		brewIns := exec.Command(cmdPMS, pmsIns, pkg)
+		brewIns := exec.Command(cmdPMS, optIns, pkg)
 		brewIns.Stderr = os.Stderr
 		err := brewIns.Run()
 		checkCmdError(err, "Brew failed to install", pkg)
@@ -500,7 +501,7 @@ func brewInstall(pkg string) {
 func brewInstallQuiet(pkg string) {
 	if checkExists(brewPrefix+"Cellar/"+pkg) != true {
 		brewUpdate()
-		brewIns := exec.Command(cmdPMS, pmsIns, "--quiet", pkg)
+		brewIns := exec.Command(cmdPMS, optIns, "--quiet", pkg)
 		err := brewIns.Run()
 		checkCmdError(err, "Brew failed to install", pkg)
 	}
@@ -510,11 +511,11 @@ func brewInstallCask(pkg, appName string) {
 	if checkExists(brewPrefix+"Caskroom/"+pkg) != true {
 		brewUpdate()
 		if checkExists("/Applications/"+appName+".app") != true {
-			brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+			brewIns := exec.Command(cmdPMS, optIns, optAlt, pkg)
 			err := brewIns.Run()
 			checkCmdError(err, "Brew failed to install cask", pkg)
 		} else {
-			brewIns := exec.Command(cmdPMS, pmsReIn, pmsAlt, pkg)
+			brewIns := exec.Command(cmdPMS, optReIn, optAlt, pkg)
 			err := brewIns.Run()
 			checkCmdError(err, "Brew failed to reinstall cask", pkg)
 		}
@@ -526,11 +527,11 @@ func brewInstallCaskSudo(pkg, appName, appPath, adminCode string) {
 		brewUpdate()
 		needPermission(adminCode)
 		if checkExists(appPath) != true {
-			brewIns := exec.Command(cmdPMS, pmsIns, pmsAlt, pkg)
+			brewIns := exec.Command(cmdPMS, optIns, optAlt, pkg)
 			err := brewIns.Run()
 			checkCmdError(err, "Brew failed to install cask", appName)
 		} else {
-			brewIns := exec.Command(cmdPMS, pmsReIn, pmsAlt, pkg)
+			brewIns := exec.Command(cmdPMS, optReIn, optAlt, pkg)
 			err := brewIns.Run()
 			checkCmdError(err, "Brew failed to install cask", appName)
 		}
@@ -545,7 +546,7 @@ func asdfInstall(plugin, version string) {
 	}
 
 	asdfReshim()
-	asdfIns := exec.Command(cmdASDF, pmsIns, plugin, version)
+	asdfIns := exec.Command(cmdASDF, optIns, plugin, version)
 	asdfIns.Env = os.Environ()
 	errIns := asdfIns.Run()
 	checkCmdError(errIns, "ASDF-VM", plugin)
@@ -593,22 +594,7 @@ func confA4s() {
 func confG4s() {
 	fmt.Println(clrCyan + "Git global configuration" + clrReset)
 
-	setGitBranch := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
-	errGitBranch := setGitBranch.Run()
-	checkError(errGitBranch, "Failed to change branch default name (master -> main)")
-	fmt.Println(lstDot + "Main git branch default name changed master -> main")
-
-	setGitColor := exec.Command(cmdGit, "config", "--global", "color.ui", "true")
-	errGitColor := setGitColor.Run()
-	checkError(errGitColor, "Failed to setup colourising")
-	fmt.Println(lstDot + "Colourising enabled")
-
-	setGitEditor := exec.Command(cmdGit, "config", "--global", "core.editor", "vi")
-	errGitEditor := setGitEditor.Run()
-	checkError(errGitEditor, "Failed to setup editor vi (vim)")
-	fmt.Println(lstDot + "Editor set to vi (vim)")
-
-	fmt.Println(lstDot + "Add user information to the global git config")
+	fmt.Println(lstDot + "Add user information")
 	consoleReader := bufio.NewScanner(os.Stdin)
 	fmt.Print("  - User name: ")
 	consoleReader.Scan()
@@ -626,17 +612,30 @@ func confG4s() {
 	clearLine(3)
 	fmt.Println(lstDot + "Saved user name(" + gitUserName + ") and email(" + gitUserEmail + ")")
 
+	setGitBranch := exec.Command(cmdGit, "config", "--global", "init.defaultBranch", "main")
+	errGitBranch := setGitBranch.Run()
+	checkError(errGitBranch, "Failed to change branch default name (master -> main)")
+	fmt.Println(lstDot + "Main git branch default name changed master -> main")
+
+	setGitColor := exec.Command(cmdGit, "config", "--global", "color.ui", "true")
+	errGitColor := setGitColor.Run()
+	checkError(errGitColor, "Failed to setup colourising")
+	fmt.Println(lstDot + "Colourising enabled")
+
+	setGitEditor := exec.Command(cmdGit, "config", "--global", "core.editor", "vi")
+	errGitEditor := setGitEditor.Run()
+	checkError(errGitEditor, "Failed to setup editor vi (vim)")
+	fmt.Println(lstDot + "Editor set to vi (vim)")
+
 	ignoreDirPath := homeDir() + ".config/git/"
 	ignorePath := ignoreDirPath + "gitignore_global"
 
 	makeDirectory(ignoreDirPath)
 	downloadFile(ignorePath, "https://raw.githubusercontent.com/leelsey/Git4set/main/gitignore-sample", 0644)
-
 	setExcludesFile := exec.Command(cmdGit, "config", "--global", "core.excludesfile", ignorePath)
 	errExcludesFile := setExcludesFile.Run()
 	checkError(errExcludesFile, "Failed to set git global ignore file")
-
-	fmt.Println(lstDot + "Complete setup \"gitignore_global\" in " + ignoreDirPath)
+	fmt.Println(lstDot + "Ignore list set in \"" + ignoreDirPath + "gitignore_global\"")
 }
 
 func installBrew() {
@@ -660,7 +659,7 @@ func installBrew() {
 
 func installCabal() {
 	brewInstall("haskell-stack")
-	stackIns := exec.Command("stack", pmsIns, "cabal-install")
+	stackIns := exec.Command("stack", optIns, "cabal-install")
 	err := stackIns.Run()
 	checkCmdError(err, "Stack(haskell) failed to install", "cabal")
 }
@@ -731,8 +730,8 @@ func macEnv() {
 	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "setup zsh environment!\n"
 	macLdBar.Start()
 
-	if checkExists(profilePath) == true {
-		copyFile(profilePath, homeDir()+".zprofile.bck")
+	if checkExists(prfPath) == true {
+		copyFile(prfPath, homeDir()+".zprofile.bck")
 	}
 	if checkExists(shrcPath) == true {
 		copyFile(shrcPath, homeDir()+".zshrc.bck")
@@ -747,7 +746,7 @@ func macEnv() {
 		"#  " + userName() + "’s zsh profile\n\n" +
 		"# HOMEBREW\n" +
 		"eval \"$(" + cmdPMS + " shellenv)\"\n\n"
-	makeFile(profilePath, profileContents, 0644)
+	makeFile(prfPath, profileContents, 0644)
 
 	shrcContents := "#   ______ _____ _    _ _____   _____\n" +
 		"#  |___  // ____| |  | |  __ \\ / ____|\n" +
@@ -967,6 +966,101 @@ func macDependency(runOpt string) {
 	macLdBar.Stop()
 }
 
+func macTerminal(runOpt string) {
+	macLdBar.Suffix = " Installing zsh with useful tools... "
+	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
+	macLdBar.Start()
+
+	confA4s()
+	brewInstall("zsh-completions")
+	brewInstall("zsh-syntax-highlighting")
+	brewInstall("zsh-autosuggestions")
+	brewInstall("z")
+	brewInstall("tree")
+
+	makeFile(homeDir()+".z", "", 0644)
+	makeDirectory(p10kPath)
+	makeDirectory(p10kCache)
+
+	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		brewInstall("fzf")
+		brewInstall("tmux")
+		brewInstall("tmuxinator")
+		brewInstall("neofetch")
+
+		dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
+		downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
+	}
+
+	brewRepository("romkatv/powerlevel10k")
+	brewInstall("romkatv/powerlevel10k/powerlevel10k")
+	dlP10kTerm := p10kPath + "p10k-term.zsh"
+	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0644)
+
+	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
+		profileAppend := "# POWERLEVEL10K\n" +
+			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+			"fi\n" +
+			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
+		appendContents(prfPath, profileAppend, 0644)
+	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+		dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
+		downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0644)
+		dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
+		downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0644)
+		dlP10kEtc := p10kPath + "p10k-etc.zsh"
+		downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0644)
+
+		profileAppend := "# ZSH\n" +
+			"export SHELL=zsh\n\n" +
+			"# POWERLEVEL10K\n" +
+			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
+			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+			"fi\n" +
+			"if [[ -d /Applications/iTerm.app ]]; then\n" +
+			"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
+			"    [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
+			"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n" +
+			"    [[ ! -f " + p10kPath + "p10k-iterm2.zsh ]] || source " + p10kPath + "p10k-iterm2.zsh\n" +
+			"    echo ''; neofetch --bold off\n" +
+			"  elif [[ $TERM_PROGRAM = \"tmux\" ]]; then\n" +
+			"    [[ ! -f " + p10kPath + "p10k-tmux.zsh ]] || source " + p10kPath + "p10k-tmux.zsh\n" +
+			"    echo ''; neofetch --bold off\n" +
+			"  else\n" +
+			"    [[ ! -f " + p10kPath + "p10k-etc.zsh ]] || source " + p10kPath + "p10k-etc.zsh\n" +
+			"  fi\n" +
+			"else\n" +
+			"  [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
+			"fi\n\n"
+		appendContents(prfPath, profileAppend, 0644)
+	}
+
+	profileAppend := "# ZSH-COMPLETIONS\n" +
+		"if type brew &>/dev/null; then\n" +
+		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
+		"  autoload -Uz compinit\n" +
+		"  compinit\n" +
+		"fi\n\n" +
+		"# ZSH SYNTAX HIGHLIGHTING\n" +
+		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
+		"# ZSH AUTOSUGGESTIONS\n" +
+		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+		"# Z\n" +
+		"source " + brewPrefix + "etc/profile.d/z.sh\n\n" +
+		"# ALIAS4SH\n" +
+		"source " + homeDir() + "/.config/alias4sh/alias4.sh\n\n" +
+		"# Edit\n" +
+		"export EDITOR=/usr/bin/vi\n" +
+		"edit () { $EDITOR \"$@\" }\n" +
+		"#vi () { $EDITOR \"$@\" }\n\n"
+	appendContents(prfPath, profileAppend, 0644)
+
+	macLdBar.Stop()
+}
+
 func macLanguage(runOpt, adminCode string) {
 	macLdBar.Suffix = " Installing computer programming language... "
 	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install languages!\n"
@@ -1007,7 +1101,7 @@ func macLanguage(runOpt, adminCode string) {
 			"eval \"$(pyenv init -)\"\n\n"
 		appendContents(shrcPath, shrcAppend, 0644)
 
-		nvmIns := exec.Command("nvm", pmsIns, "--lts")
+		nvmIns := exec.Command("nvm", optIns, "--lts")
 		nvmIns.Stderr = os.Stderr
 		err := nvmIns.Run()
 		checkCmdError(err, "NVM failed to install", "LTS")
@@ -1113,102 +1207,6 @@ func macDevVM() {
 	asdfInstall("gleam", "latest")
 	asdfInstall("haskell", "latest")
 	asdfReshim()
-
-	macLdBar.Stop()
-}
-
-func macTerminal(runOpt string) {
-	macLdBar.Suffix = " Installing zsh with useful tools... "
-	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install and configure for terminal!\n"
-	macLdBar.Start()
-
-	confA4s()
-	brewInstall("zsh-completions")
-	brewInstall("zsh-syntax-highlighting")
-	brewInstall("zsh-autosuggestions")
-	brewInstall("z")
-	brewInstall("tree")
-	brewRepository("romkatv/powerlevel10k")
-	brewInstall("romkatv/powerlevel10k/powerlevel10k")
-
-	makeFile(homeDir()+".z", "", 0644)
-	makeDirectory(p10kPath)
-	makeDirectory(p10kCache)
-
-	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		brewInstall("fzf")
-		brewInstall("tmux")
-		brewInstall("tmuxinator")
-		brewInstall("neofetch")
-
-		dliTerm2Conf := homeDir() + "Library/Preferences/com.googlecode.iterm2.plist"
-		downloadFile(dliTerm2Conf, "https://raw.githubusercontent.com/leelsey/ConfStore/main/iterm2/iTerm2.plist", 0644)
-	}
-
-	dlP10kTerm := p10kPath + "p10k-term.zsh"
-	downloadFile(dlP10kTerm, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devsimple.zsh", 0644)
-
-	if runOpt == "2" || runOpt == "3" || runOpt == "4" {
-		profileAppend := "# POWERLEVEL10K\n" +
-			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
-			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
-			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
-			"fi\n" +
-			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
-		appendContents(profilePath, profileAppend, 0644)
-	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
-		dlP10kiTerm2 := p10kPath + "p10k-iterm2.zsh"
-		dlP10kTMUX := p10kPath + "p10k-tmux.zsh"
-		dlP10kEtc := p10kPath + "p10k-etc.zsh"
-
-		downloadFile(dlP10kiTerm2, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devwork.zsh", 0644)
-		downloadFile(dlP10kTMUX, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devhelp.zsh", 0644)
-		downloadFile(dlP10kEtc, "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-devbegin.zsh", 0644)
-
-		profileAppend := "# ZSH\n" +
-			"export SHELL=zsh\n\n" +
-			"# POWERLEVEL10K\n" +
-			"source " + brewPrefix + "opt/powerlevel10k/powerlevel10k.zsh-theme\n" +
-			"if [[ -r \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
-			"  source \"${XDG_CACHE_HOME:-" + p10kCache + "}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
-			"fi\n" +
-			"if [[ -d /Applications/iTerm.app ]]; then\n" +
-			"  if [[ $TERM_PROGRAM = \"Apple_Terminal\" ]]; then\n" +
-			"    [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
-			"  elif [[ $TERM_PROGRAM = \"iTerm.app\" ]]; then\n" +
-			"    echo ''; neofetch --bold off\n" +
-			"    [[ ! -f " + p10kPath + "p10k-iterm2.zsh ]] || source " + p10kPath + "p10k-iterm2.zsh\n" +
-			"  elif [[ $TERM_PROGRAM = \"tmux\" ]]; then\n" +
-			"    echo ''; neofetch --bold off\n" +
-			"    [[ ! -f " + p10kPath + "p10k-tmux.zsh ]] || source " + p10kPath + "p10k-tmux.zsh\n" +
-			"  else\n" +
-			"    [[ ! -f " + p10kPath + "p10k-etc.zsh ]] || source " + p10kPath + "p10k-etc.zsh\n" +
-			"  fi\n" +
-			"else\n" +
-			"  [[ ! -f " + p10kPath + "p10k-term.zsh ]] || source " + p10kPath + "p10k-term.zsh\n" +
-			"fi\n\n"
-		appendContents(profilePath, profileAppend, 0644)
-	}
-
-	profileAppend := "# ZSH-COMPLETIONS\n" +
-		"if type brew &>/dev/null; then\n" +
-		"  FPATH=" + brewPrefix + "share/zsh-completions:$FPATH\n" +
-		"  autoload -Uz compinit\n" +
-		"  compinit\n" +
-		"fi\n\n" +
-		"# ZSH SYNTAX HIGHLIGHTING\n" +
-		"source " + brewPrefix + "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n\n" +
-		"# ZSH AUTOSUGGESTIONS\n" +
-		"source " + brewPrefix + "share/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
-		"# Z\n" +
-		"source " + brewPrefix + "etc/profile.d/z.sh\n\n" +
-		"# ALIAS4SH\n" +
-		"source " + homeDir() + "/.config/alias4sh/alias4.sh\n\n" +
-		"# Edit\n" +
-		"export EDITOR=/usr/bin/vi\n" +
-		"edit () { $EDITOR \"$@\" }\n" +
-		"#vi () { $EDITOR \"$@\" }\n\n"
-	appendContents(profilePath, profileAppend, 0644)
 
 	macLdBar.Stop()
 }
@@ -1445,8 +1443,8 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
-		macLanguage(runOpt, adminCode)
 		macTerminal(runOpt)
+		macLanguage(runOpt, adminCode)
 		macCLIApp(runOpt)
 	} else if runOpt == "3" {
 		fmt.Println(runEx + ", then install Dependencies, Languages and Terminal/CLI/GUI applications " +
@@ -1454,8 +1452,8 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
-		macLanguage(runOpt, adminCode)
 		macTerminal(runOpt)
+		macLanguage(runOpt, adminCode)
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "4" {
@@ -1464,10 +1462,10 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
+		macTerminal(runOpt)
 		macLanguage(runOpt, adminCode)
 		macServer()
 		macDatabase()
-		macTerminal(runOpt)
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "5" {
@@ -1476,10 +1474,10 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
+		macTerminal(runOpt)
 		macLanguage(runOpt, adminCode)
 		macServer()
 		macDatabase()
-		macTerminal(runOpt)
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "6" {
@@ -1488,11 +1486,11 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
+		macTerminal(runOpt)
 		macLanguage(runOpt, adminCode)
 		macServer()
 		macDatabase()
 		macDevVM()
-		macTerminal(runOpt)
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	} else if runOpt == "7" {
@@ -1501,15 +1499,14 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macBegin(adminCode)
 		macEnv()
 		macDependency(runOpt)
+		macTerminal(runOpt)
 		macLanguage(runOpt, adminCode)
 		macServer()
 		macDatabase()
 		macDevVM()
-		macTerminal(runOpt)
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
 	}
-
 	macEnd()
 }
 
