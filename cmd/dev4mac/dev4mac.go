@@ -1548,11 +1548,13 @@ func macExtend(runOpt, adminCode string) {
 			clearLine(2)
 			confG4s()
 		} else {
-			clearLine(2)
+			clearLine(3)
 		}
 
+		fmt.Println("\nFinished!\n") // Finish messages for update or restart OS
+
 		var updateOpt string
-		fmt.Println(clrCyan + "\nmacOS software update" + clrReset)
+		fmt.Println(clrCyan + "macOS software update" + clrReset)
 		fmt.Print("Enter [Y] to update macOS system, or enter any key to exit. ")
 		_, errUpdateOpt := fmt.Scanln(&updateOpt)
 		if errUpdateOpt != nil {
@@ -1563,23 +1565,23 @@ func macExtend(runOpt, adminCode string) {
 			systemUpdate()
 		} else {
 			clearLine(2)
-		}
-
-	}
-
-	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		var rebootOpt string
-		fmt.Println(clrCyan + "\nRestart macOS to apply the changes" + clrReset)
-		fmt.Print("Enter [Y] to restart macOS, or enter any key to exit. ")
-		_, errRebootOpt := fmt.Scanln(&rebootOpt)
-		if errRebootOpt != nil {
-			rebootOpt = "Enter"
-		}
-		if rebootOpt == "y" || rebootOpt == "Y" || rebootOpt == "yes" || rebootOpt == "Yes" || rebootOpt == "YES" {
-			clearLine(1)
-			systemReboot(adminCode)
-		} else {
-			clearLine(2)
+			if runOpt == "3" || runOpt == "6" || runOpt == "7" {
+				var rebootOpt string
+				fmt.Println(clrCyan + "Restart macOS to apply the changes" + clrReset)
+				fmt.Print("Enter [Y] to restart macOS, or enter any key to exit. ")
+				_, errRebootOpt := fmt.Scanln(&rebootOpt)
+				if errRebootOpt != nil {
+					rebootOpt = "Enter"
+				}
+				if rebootOpt == "y" || rebootOpt == "Y" || rebootOpt == "yes" || rebootOpt == "Yes" || rebootOpt == "YES" {
+					clearLine(2)
+					systemReboot(adminCode)
+				} else {
+					clearLine(5)
+				}
+			} else {
+				clearLine(3)
+			}
 		}
 	}
 }
@@ -1678,7 +1680,7 @@ insOpt:
 		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" +
 		lstDot + "Or restart the Terminal.app by yourself.\n"
 	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		fmt.Println(endDiv + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " + "the changes.\n" + endMsg)
+		fmt.Println(endDiv + endMsg + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " + "the changes.\n")
 	} else {
 		fmt.Println(endDiv + endMsg)
 	}
