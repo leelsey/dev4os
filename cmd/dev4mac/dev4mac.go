@@ -1321,7 +1321,7 @@ func macGUIApp(runOpt, adminCode string) {
 	} else if runOpt == "5" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
-		changeAppIcon("IntelliJ IDE", "IntelliJ IDE.icns", adminCode)
+		changeAppIcon("IntelliJ IDEA", "IntelliJ IDEA.icns", adminCode)
 		brewInstallCask("visual-studio-code", "Visual Studio Code")
 		brewInstallCask("atom", "Atom")
 		brewInstallCask("neovide", "Neovide")
