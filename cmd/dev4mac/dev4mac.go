@@ -646,13 +646,6 @@ func installBrew(adminCode string) {
 	}
 }
 
-func installCabal() {
-	brewInstall("haskell-stack")
-	stackIns := exec.Command("stack", optIns, "cabal-install")
-	err := stackIns.Run()
-	checkCmdError(err, "Stack(haskell) failed to install", "cabal")
-}
-
 func installXAMPP(adminCode string) {
 	xamppVer := netJSON("https://formulae.brew.sh/api/cask/xampp-vm.json", "version")
 	xamppName := "xampp-osx-" + xamppVer + "-vm"
@@ -1059,17 +1052,20 @@ func macLanguage(runOpt, adminCode string) {
 
 	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
 		brewInstall("php")
-		brewInstall("openjdk@8")
+		if checkArchitecture() == false {
+			brewInstall("openjdk@8")
+		}
 		brewInstall("openjdk@11")
 		brewInstall("openjdk@17")
 		addJavaHome("", "", adminCode)
 		addJavaHome("@17", "-17", adminCode)
 		addJavaHome("@11", "-11", adminCode)
-		addJavaHome("@8", "-8", adminCode)
+		if checkArchitecture() == false {
+			addJavaHome("@8", "-8", adminCode)
+		}
 	}
 
 	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
-		installCabal()
 		brewInstall("nvm")
 		brewInstall("pyenv")
 		brewInstall("pyenv-virtualenv")
@@ -1086,10 +1082,10 @@ func macLanguage(runOpt, adminCode string) {
 			"eval \"$(pyenv init -)\"\n\n"
 		appendContents(shrcPath, shrcAppend, 0644)
 
-		nvmIns := exec.Command("nvm", optIns, "--lts")
-		nvmIns.Stderr = os.Stderr
-		err := nvmIns.Run()
-		checkCmdError(err, "NVM failed to install", "LTS")
+		//nvmIns := exec.Command("nvm", optIns, "--lts")
+		//nvmIns.Stderr = os.Stderr
+		//err := nvmIns.Run()
+		//checkCmdError(err, "NVM failed to install", "LTS")
 	} else if runOpt == "6" || runOpt == "7" {
 		brewInstall("llvm")
 		brewInstall("gcc") // fortran
