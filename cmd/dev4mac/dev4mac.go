@@ -310,14 +310,14 @@ func makeDirectory(dirPath string) {
 	}
 }
 
-func copyDirectory(srcPath, dstPath string) {
-	if checkExists(dstPath) != true {
-		cpDir := exec.Command("cp", "-rf", srcPath, dstPath)
-		cpDir.Stderr = os.Stderr
-		err := cpDir.Run()
-		checkError(err, "Failed to copy directory from \""+srcPath+"\" to \""+dstPath+"\"")
-	}
-}
+//func copyDirectory(srcPath, dstPath string) {
+//	if checkExists(dstPath) != true {
+//		cpDir := exec.Command("cp", "-rf", srcPath, dstPath)
+//		cpDir.Stderr = os.Stderr
+//		err := cpDir.Run()
+//		checkError(err, "Failed to copy directory from \""+srcPath+"\" to \""+dstPath+"\"")
+//	}
+//}
 
 func makeFile(filePath, fileContents string, fileMode int) {
 	targetFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(fileMode))
@@ -415,10 +415,10 @@ func downloadFile(filePath, urlPath string, fileMode int) {
 	makeFile(filePath, netHTTP(urlPath), fileMode)
 }
 
-func runApplication(appName string) {
+func startApplication(appName string) {
 	runApp := exec.Command("open", "/Applications/"+appName+".app")
 	err := runApp.Run()
-	checkCmdError(err, "ASDF-VM failed to add", appName)
+	checkCmdError(err, "Failed to run ", appName+".app")
 }
 
 func changeAppIcon(appName, icnName, adminCode string) {
@@ -653,32 +653,6 @@ func installXAMPP(adminCode string) {
 	changeAppIcon("xampp-osx-"+xamppVer+"-vm", "XAMPP.icns", adminCode)
 }
 
-func installHopper(adminCode string) {
-	hopperRSS := strings.Split(netHTTP("https://www.hopperapp.com/rss/html_changelog.php"), " ")
-	hopperVer := strings.Join(hopperRSS[1:2], "")
-
-	dlHopperPath := workingDir() + ".Hopper.dmg"
-	downloadFile(dlHopperPath, "https://d2ap6ypl1xbe4k.cloudfront.net/Hopper-"+hopperVer+"-demo.dmg", 0755)
-
-	mountHopper := exec.Command("hdiutil", "attach", dlHopperPath)
-	errMount := mountHopper.Run()
-	checkError(errMount, "Failed to mount "+clrYellow+"Hopper.dmg"+clrReset)
-	removeFile(dlHopperPath)
-
-	appName := "Hopper Disassembler v4"
-	copyDirectory("/Volumes/Hopper Disassembler/"+appName+".app", "/Applications/"+appName+".app")
-
-	unmountDmg := exec.Command("hdiutil", "unmount", "/Volumes/Hopper Disassembler")
-	errUnmount := unmountDmg.Run()
-	checkError(errUnmount, "Failed to unmount "+clrYellow+"Hopper Disassembler"+clrReset)
-
-	if checkArchitecture() == true {
-		changeAppIcon(appName, "Hopper Disassembler ARM64.icns", adminCode)
-	} else {
-		changeAppIcon(appName, "Hopper Disassembler AMD64.icns", adminCode)
-	}
-}
-
 func macBegin(adminCode string) {
 	if checkExists(cmdPMS) == true {
 		macLdBar.Suffix = " Updating homebrew... "
@@ -811,7 +785,7 @@ func macDependency(runOpt string) {
 		brewInstall("ghc")
 	}
 
-	if runOpt == "6" || runOpt == "7" {
+	if runOpt == "6" {
 		brewInstall("krb5")
 		brewInstall("libsodium")
 		brewInstall("nettle")
@@ -959,7 +933,7 @@ func macTerminal(runOpt string) {
 	makeDirectory(p10kPath)
 	makeDirectory(p10kCache)
 
-	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+	if runOpt == "5" || runOpt == "6" {
 		brewInstall("fzf")
 		brewInstall("tmux")
 		brewInstall("tmuxinator")
@@ -981,7 +955,7 @@ func macTerminal(runOpt string) {
 			"fi\n" +
 			"[[ ! -f " + p10kPath + "p10k-terminal.zsh ]] || source " + p10kPath + "p10k-terminal.zsh\n\n"
 		appendContents(prfPath, profileAppend, 0644)
-	} else if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+	} else if runOpt == "5" || runOpt == "6" {
 		downloadFile(p10kPath+"p10k-iterm2.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-atelier.zsh", 0644)
 		downloadFile(p10kPath+"p10k-tmux.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-seeking.zsh", 0644)
 		downloadFile(p10kPath+"p10k-ops.zsh", "https://raw.githubusercontent.com/leelsey/ConfStore/main/p10k/p10k-operations.zsh", 0644)
@@ -1050,7 +1024,7 @@ func macLanguage(runOpt, adminCode string) {
 		"export PATH=\"" + brewPrefix + "opt/ruby/bin:$PATH\"\n"
 	appendContents(shrcPath, shrcAppend, 0644)
 
-	if runOpt == "4" || runOpt == "5" || runOpt == "6" || runOpt == "7" {
+	if runOpt == "4" || runOpt == "5" || runOpt == "6" {
 		brewInstall("php")
 		if checkArchitecture() == false {
 			brewInstall("openjdk@8")
@@ -1086,7 +1060,7 @@ func macLanguage(runOpt, adminCode string) {
 		//nvmIns.Stderr = os.Stderr
 		//err := nvmIns.Run()
 		//checkCmdError(err, "NVM failed to install", "LTS")
-	} else if runOpt == "6" || runOpt == "7" {
+	} else if runOpt == "6" {
 		brewInstall("llvm")
 		brewInstall("gcc") // fortran
 		brewInstall("go")
@@ -1204,7 +1178,7 @@ func macCLIApp(runOpt string) {
 	brewInstall("diffutils")
 	brewInstall("transmission-cli")
 
-	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+	if runOpt == "5" || runOpt == "6" {
 		brewInstall("openssh")
 		brewInstall("mosh")
 		brewInstall("inetutils")
@@ -1225,7 +1199,7 @@ func macCLIApp(runOpt string) {
 		appendContents(shrcPath, shrcAppend, 0644)
 	}
 
-	if runOpt == "6" || runOpt == "7" {
+	if runOpt == "6" {
 		brewInstall("make")
 		brewInstallQuiet("cmake")
 		brewInstall("ninja")
@@ -1243,16 +1217,6 @@ func macCLIApp(runOpt string) {
 		brewInstall("asciinema")
 	}
 
-	if runOpt == "7" {
-		brewInstall("tor")
-		brewInstall("torsocks")
-		brewInstall("nmap")
-		brewInstall("radare2")
-		brewInstall("sleuthkit")
-		brewInstall("autopsy")
-		brewInstall("virustotal-cli")
-	}
-
 	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install CLI applications!\n"
 	macLdBar.Stop()
 }
@@ -1261,13 +1225,8 @@ func macGUIApp(runOpt, adminCode string) {
 	macLdBar.Suffix = " Installing GUI applications... "
 	macLdBar.Start()
 
-	if runOpt != "7" {
-		brewInstallCask("appcleaner", "AppCleaner")
-		changeAppIcon("AppCleaner", "AppCleaner.icns", adminCode)
-	} else if runOpt == "7" {
-		brewInstallCask("sensei", "Sensei")
-	}
-
+	brewInstallCask("appcleaner", "AppCleaner")
+	changeAppIcon("AppCleaner", "AppCleaner.icns", adminCode)
 	brewInstallCask("keka", "Keka")
 	brewInstallCask("iina", "IINA")
 	brewInstallCask("transmission", "Transmission")
@@ -1280,28 +1239,26 @@ func macGUIApp(runOpt, adminCode string) {
 	changeAppIcon("Tor Browser", "Tor Browser.icns", adminCode)
 	brewInstallCask("spotify", "Spotify")
 	changeAppIcon("Spotify", "Spotify.icns", adminCode)
+	brewInstallCask("notion", "Notion")
+	changeAppIcon("Notion", "Notion.icns", adminCode)
 	brewInstallCask("signal", "Signal")
 	brewInstallCask("discord", "Discord")
 	brewInstallCask("slack", "Slack")
-	if runOpt == "5" || runOpt == "6" || runOpt == "7" {
+	if runOpt == "5" || runOpt == "6" {
 		brewInstallCask("jetbrains-space", "JetBrains Space")
 		changeAppIcon("JetBrains Space", "JetBrains Space.icns", adminCode)
 	}
 
-	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
-		brewInstallCask("dropbox", "Dropbox")
-		brewInstallCask("dropbox-capture", "Dropbox Capture")
+	brewInstallCaskSudo("blackhole-64ch", "BlackHole (64ch)", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver", adminCode)
+	brewInstallCask("obs", "OBS")
+	if runOpt == "3" || runOpt == "6" {
+		brewInstallCask("affinity-photo", "Affinity Photo")
+		brewInstallCask("affinity-designer", "Affinity Designer")
+		brewInstallCask("affinity-publisher", "Affinity Publisher")
 		brewInstallCask("sketch", "Sketch")
 		brewInstallCask("zeplin", "Zeplin")
 		brewInstallCask("blender", "Blender")
 		changeAppIcon("Blender", "Blender.icns", adminCode)
-		brewInstallCask("obs", "OBS")
-		brewInstallCaskSudo("loopback", "Loopback", "/Applications/Loopback.app", adminCode)
-		runApplication("Loopback")
-	}
-
-	if runOpt == "3" || runOpt == "4" || runOpt == "5" {
-		brewInstallCaskSudo("blackhole-64ch", "BlackHole (64ch)", "/Library/Audio/Plug-Ins/HAL/BlackHoleXch.driver", adminCode)
 	}
 
 	if runOpt == "3" || runOpt == "4" {
@@ -1318,7 +1275,7 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("drawio", "draw.io")
 		brewInstallCask("httpie", "HTTPie")
 		installXAMPP(adminCode)
-	} else if runOpt == "5" {
+	} else if runOpt == "5" || runOpt == "6" {
 		brewInstallCask("iterm2", "iTerm")
 		brewInstallCask("intellij-idea", "IntelliJ IDEA")
 		changeAppIcon("IntelliJ IDEA", "IntelliJ IDEA.icns", adminCode)
@@ -1329,38 +1286,22 @@ func macGUIApp(runOpt, adminCode string) {
 		brewInstallCask("github", "Github")
 		brewInstallCask("fork", "Fork")
 		brewInstallCask("docker", "Docker")
-		brewInstallCask("tableplus", "TablePlus")
-		brewInstallCask("postman", "Postman")
-		brewInstallCask("httpie", "HTTPie")
-		brewInstallCask("boop", "Boop")
-		brewInstallCask("drawio", "draw.io")
-		brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
-		changeAppIcon("Firefox Developer Edition", "Firefox Developer Edition.icns", adminCode)
-	} else if runOpt == "6" || runOpt == "7" {
-		brewInstallCask("iterm2", "iTerm")
-		brewInstallCask("intellij-idea", "IntelliJ IDEA")
-		changeAppIcon("IntelliJ IDEA", "IntelliJ IDEA.icns", adminCode)
-		brewInstallCask("visual-studio-code", "Visual Studio Code")
-		brewInstallCask("atom", "Atom")
-		brewInstallCask("neovide", "Neovide")
-		changeAppIcon("Neovide", "Neovide.icns", adminCode)
-		brewInstallCask("github", "Github")
-		brewInstallCask("fork", "Fork")
-		brewInstallCask("docker", "Docker")
+		startApplication("Docker")
 		brewInstallCaskSudo("vmware-fusion", "VMware Fusion", "/Applications/VMware Fusion.app", adminCode)
 		changeAppIcon("VMware Fusion", "VMware Fusion.icns", adminCode)
 		brewInstallCask("tableplus", "TablePlus")
-		brewInstallCask("proxyman", "Proxyman")
 		brewInstallCask("postman", "Postman")
-		brewInstallCask("paw", "Paw")
 		brewInstallCask("httpie", "HTTPie")
 		brewInstallCask("boop", "Boop")
+		brewInstallCask("firefox-developer-edition", "Firefox Developer Edition")
+		changeAppIcon("Firefox Developer Edition", "Firefox Developer Edition.icns", adminCode)
 		brewInstallCask("drawio", "draw.io")
 		brewInstallCask("staruml", "StarUML")
 		changeAppIcon("StarUML", "StarUML.icns", adminCode)
 		brewInstallCask("vnc-viewer", "VNC Viewer")
 		changeAppIcon("VNC Viewer", "VNC Viewer.icns", adminCode)
 		brewInstallCask("forklift", "ForkLift")
+		brewInstallCaskSudo("codeql", "CodeQL", brewPrefix+"Caskroom/Codeql", adminCode)
 	}
 
 	shrcAppend := "# ANDROID STUDIO\n" +
@@ -1370,30 +1311,6 @@ func macGUIApp(runOpt, adminCode string) {
 		"export PATH=$PATH:$ANDROID_HOME/tools/bin\n" +
 		"export PATH=$PATH:$ANDROID_HOME/platform-tools\n\n"
 	appendContents(shrcPath, shrcAppend, 0644)
-
-	if runOpt == "7" {
-		brewInstallCaskSudo("codeql", "CodeQL", brewPrefix+"Caskroom/Codeql", adminCode)
-		brewInstallCask("little-snitch", "Little Snitch")
-		changeAppIcon("Little Snitch", "Little Snitch.icns", adminCode)
-		brewInstallCask("micro-snitch", "Micro Snitch")
-		changeAppIcon("Micro Snitch", "Micro Snitch.icns", adminCode)
-		brewInstallCask("fsmonitor", "FSMonitor")
-		changeAppIcon("FSMonitor", "FSMonitor.icns", adminCode)
-		brewInstallCask("burp-suite-professional", "Burp Suite Professional")
-		brewInstallCask("burp-suite", "Burp Suite Community Edition")
-		brewInstallCask("owasp-zap", "OWASP ZAP")
-		changeAppIcon("OWASP ZAP", "OWASP ZAP.icns", adminCode)
-		brewInstallCaskSudo("wireshark", "Wireshark", "/Applications/Wireshark.app", adminCode)
-		changeAppIcon("Wireshark", "Wireshark.icns", adminCode)
-		brewInstallCaskSudo("zenmap", "Zenmap", "/Applications/Zenmap.app", adminCode)
-		changeAppIcon("Zenmap", "Zenmap.icns", adminCode)
-		installHopper(adminCode)
-		brewInstallCask("cutter", "Cutter")
-		// Install Ghidra // TODO: will add
-		brewInstallCask("imazing", "iMazing")
-		changeAppIcon("iMazing", "iMazing.icns", adminCode)
-		brewInstallCask("apparency", "Apparency")
-	}
 
 	macLdBar.FinalMSG = lstDot + clrGreen + "Succeed " + clrReset + "install GUI applications!\n"
 	macLdBar.Stop()
@@ -1428,8 +1345,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		fmt.Println(runEgMsg + ", then install Dependencies, Languages, Server, Database and Terminal/CLI/GUI applications with set basic preferences.")
 	} else if runOpt == "6" {
 		fmt.Println(runEgMsg + ", then install Dependencies, Languages, Server, Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
-	} else if runOpt == "7" {
-		fmt.Println(runEgMsg + ", then install Dependencies, Languages, Server, Database, management DevTools and Terminal/CLI/GUI applications with set basic preferences.")
 	}
 
 	alMsg := lstDot + "Use root permission to install "
@@ -1451,8 +1366,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 			fmt.Println(alMsg + "Java, BlackHole and VMware Fusion")
 		} else if runOpt == "6" {
 			fmt.Println(alMsg + "Java, Loopback and VMware Fusion")
-		} else if runOpt == "7" {
-			fmt.Println(alMsg + "Java, Loopback, VMware Fusion, Wireshark and Zenmap")
 		}
 	}
 
@@ -1505,17 +1418,6 @@ func macMain(runOpt, runType, brewSts, adminCode string) {
 		macDevVM()
 		macCLIApp(runOpt)
 		macGUIApp(runOpt, adminCode)
-	} else if runOpt == "7" {
-		macBegin(adminCode)
-		macEnv()
-		macDependency(runOpt)
-		macTerminal(runOpt)
-		macLanguage(runOpt, adminCode)
-		macServer()
-		macDatabase()
-		macDevVM()
-		macCLIApp(runOpt)
-		macGUIApp(runOpt, adminCode)
 	}
 	macEnd()
 }
@@ -1530,7 +1432,7 @@ func macExtend(runOpt, adminCode string) {
 		askOpt := "If you wish to continue type (Y) then press return: "
 
 		fmt.Print(clrCyan + "\nConfigure git global easily\n" + clrReset + "To continue we setup git global configuration.\n" + askOpt)
-		_, errG4sOpt := fmt.Scanln(&g4sOpt)
+		_, errG4sOpt := fmt.Scanln(&g4sOpt) // Ask configure git global
 		if errG4sOpt != nil {
 			g4sOpt = "Enter"
 		}
@@ -1544,7 +1446,7 @@ func macExtend(runOpt, adminCode string) {
 		fmt.Println("\nFinished all things!\n") // Finish messages for update or restart OS
 
 		fmt.Print(clrCyan + "macOS software update\n" + clrReset + "To continue we update macOS software update.\n" + askOpt)
-		_, errUpdateOpt := fmt.Scanln(&osUpdateOpt)
+		_, errUpdateOpt := fmt.Scanln(&osUpdateOpt) // Ask update macOS
 		if errUpdateOpt != nil {
 			osUpdateOpt = "Enter"
 		}
@@ -1554,9 +1456,9 @@ func macExtend(runOpt, adminCode string) {
 			systemReboot(adminCode)
 		} else {
 			clearLine(3)
-			if runOpt == "3" || runOpt == "6" || runOpt == "7" {
+			if runOpt == "3" || runOpt == "6" {
 				fmt.Print(clrCyan + "Restart macOS to apply the changes\n" + clrReset + "To continue we restart macOS.\n" + askOpt)
-				_, errRebootOpt := fmt.Scanln(&osRebootOpt)
+				_, errRebootOpt := fmt.Scanln(&osRebootOpt) // If not update macOS, ask macOS restart
 				if errRebootOpt != nil {
 					osRebootOpt = "Enter"
 				}
@@ -1623,9 +1525,7 @@ runOptPoint:
 		} else if runOpt == "5" {
 			runType = "Developer"
 		} else if runOpt == "6" {
-			runType = "Developer"
-		} else if runOpt == "7" {
-			runType = "Specialist"
+			runType = "Professional"
 		} else if runOpt == "0" || runOpt == "q" || runOpt == "e" || runOpt == "quit" || runOpt == "exit" {
 			fmt.Println(lstDot + "Exited Dev4mac.")
 			goto exitPoint
@@ -1654,7 +1554,7 @@ runOptPoint:
 
 	endMsg = "\n----------Finished!----------\nPlease" + clrRed + " RESTART " + clrReset + "your terminal!\n" +
 		lstDot + "Enter this on terminal: source ~/.zprofile && source ~/.zshrc\n" + lstDot + "Or restart the Terminal.app by yourself.\n"
-	if runOpt == "3" || runOpt == "6" || runOpt == "7" {
+	if runOpt == "3" || runOpt == "6" {
 		fmt.Println(endMsg + lstDot + "Also you need " + clrRed + "RESTART macOS " + clrReset + " to apply " + "the changes.\n")
 	} else {
 		fmt.Println(endMsg)
